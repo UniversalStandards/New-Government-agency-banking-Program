@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - GOFAP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-search fa-4x text-warning"></i>
+                </div>
+                <h1 class="display-1 text-warning">404</h1>
+                <h2 class="mb-4">Page Not Found</h2>
+                <p class="lead mb-4">
+                    The page you are looking for might have been removed, had its name changed, 
+                    or is temporarily unavailable.
+                </p>
+                <a href="{{ url_for('home') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-home me-1"></i>Go Home
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Go Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

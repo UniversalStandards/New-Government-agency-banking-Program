@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}GOFAP Dashboard{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5">
+            <i class="fas fa-tachometer-alt me-3"></i>
+            GOFAP Dashboard
+        </h1>
+        <p class="lead text-muted">Monitor and manage your government financial operations</p>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create Account
+                    </button>
+                    <button type="button" class="btn btn-success">
+                        <i class="fas fa-credit-card me-1"></i>Process Payment
+                    </button>
+                    <button type="button" class="btn btn-info">
+                        <i class="fas fa-exchange-alt me-1"></i>Transfer Funds
+                    </button>
+                    <button type="button" class="btn btn-warning">
+                        <i class="fas fa-file-invoice me-1"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0" id="total-accounts">Loading...</h4>
+                        <p class="mb-0">Total Accounts</p>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-wallet fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0" id="total-transactions">Loading...</h4>
+                        <p class="mb-0">Total Transactions</p>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0" id="total-volume">Loading...</h4>
+                        <p class="mb-0">Total Volume</p>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0" id="pending-transactions">Loading...</h4>
+                        <p class="mb-0">Pending</p>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Accounts -->
+<div class="row g-4">
+    <!-- Recent Transactions -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Transactions
+                </h5>
+                <a href="/api/transactions" class="btn btn-sm btn-outline-primary ajax-link">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-list">
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    Loading transactions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Summary -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-university me-2"></i>Accounts
+                </h5>
+                <a href="/api/accounts" class="btn btn-sm btn-outline-primary ajax-link">View All</a>
+            </div>
+            <div class="card-body">
+                <div id="accounts-list" class="row">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading accounts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>System Status
+                    <span id="health-indicator" class="status-indicator status-active" title="System is healthy"></span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="system-status">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-server fa-2x text-success"></i>
+                            <p class="mb-0 mt-2"><strong>Web Server</strong></p>
+                            <small class="text-success">Healthy</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-database fa-2x text-success"></i>
+                            <p class="mb-0 mt-2"><strong>Database</strong></p>
+                            <small class="text-success">Healthy</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fab fa-stripe fa-2x text-info"></i>
+                            <p class="mb-0 mt-2"><strong>Stripe</strong></p>
+                            <small class="text-info">Ready</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-university fa-2x text-info"></i>
+                            <p class="mb-0 mt-2"><strong>Modern Treasury</strong></p>
+                            <small class="text-info">Ready</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dashboard-specific JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Load dashboard data
+    loadDashboardData();
+    
+    // Refresh data every 30 seconds
+    setInterval(loadDashboardData, 30000);
+});
+
+function loadDashboardData() {
+    // Load transaction summary
+    fetch('/api/transactions/summary')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.summary) {
+                updateMetrics(data.summary);
+            }
+        })
+        .catch(error => console.error('Error loading transaction summary:', error));
+    
+    // Load recent transactions
+    fetch('/api/transactions?per_page=5')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.transactions) {
+                updateTransactionsList(data.transactions);
+            }
+        })
+        .catch(error => console.error('Error loading transactions:', error));
+    
+    // Load accounts
+    fetch('/api/accounts?per_page=3')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.accounts) {
+                updateAccountsList(data.accounts);
+            }
+        })
+        .catch(error => console.error('Error loading accounts:', error));
+}
+
+function updateMetrics(summary) {
+    document.getElementById('total-accounts').textContent = '2'; // Sample data
+    document.getElementById('total-transactions').textContent = summary.total_transactions || '0';
+    document.getElementById('total-volume').textContent = GOFAP.formatCurrency(summary.total_volume || 0);
+    document.getElementById('pending-transactions').textContent = 
+        (summary.by_status && summary.by_status.pending) ? summary.by_status.pending.count : '0';
+}
+
+function updateTransactionsList(transactions) {
+    const tbody = document.getElementById('transactions-list');
+    if (transactions.length > 0) {
+        tbody.innerHTML = transactions.map(tx => `
+            <tr>
+                <td>${tx.transaction_id}</td>
+                <td>${GOFAP.formatCurrency(tx.amount)}</td>
+                <td>
+                    <span class="badge bg-${tx.transaction_type === 'credit' ? 'success' : 'primary'}">
+                        ${tx.transaction_type}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${GOFAP.getStatusColor(tx.status)}">
+                        ${tx.status}
+                    </span>
+                </td>
+                <td>${GOFAP.formatDate(tx.created_at)}</td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No transactions found</td></tr>';
+    }
+}
+
+function updateAccountsList(accounts) {
+    const container = document.getElementById('accounts-list');
+    if (accounts.length > 0) {
+        container.innerHTML = accounts.map(account => `
+            <div class="col-12 mb-3">
+                <div class="card card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">${account.account_name}</h6>
+                            <small class="text-muted">${account.account_number}</small>
+                        </div>
+                        <div class="text-end">
+                            <strong>${GOFAP.formatCurrency(account.balance)}</strong>
+                            <br>
+                            <small class="badge bg-${account.status === 'active' ? 'success' : 'secondary'}">
+                                ${account.status}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = '<div class="col-12 text-center text-muted">No accounts found</div>';
+    }
+}
+</script>
+{% endblock %}

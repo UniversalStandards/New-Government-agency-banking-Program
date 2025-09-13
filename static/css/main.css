@@ -1,0 +1,195 @@
+/* GOFAP - Government Operations and Financial Accounting Platform Styles */
+
+/* Global Styles */
+:root {
+    --gofap-primary: #0d6efd;
+    --gofap-secondary: #6c757d;
+    --gofap-success: #198754;
+    --gofap-info: #0dcaf0;
+    --gofap-warning: #ffc107;
+    --gofap-danger: #dc3545;
+    --gofap-light: #f8f9fa;
+    --gofap-dark: #212529;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Navigation Enhancements */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin: 0 0.1rem;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Jumbotron Styles */
+.jumbotron {
+    background: linear-gradient(135deg, var(--gofap-primary) 0%, #4285f4 100%);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+/* Icons */
+.fa-3x {
+    margin-bottom: 1rem;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .jumbotron {
+        padding: 2rem 1rem !important;
+    }
+    
+    .jumbotron h1 {
+        font-size: 2rem;
+    }
+    
+    .display-4 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Loading Spinner */
+.spinner-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+}
+
+/* Alert Enhancements */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Custom Form Styles */
+.form-control:focus {
+    border-color: var(--gofap-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Progress Bars */
+.progress {
+    height: 1rem;
+    border-radius: 0.5rem;
+}
+
+/* Tables */
+.table {
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table thead th {
+    border-bottom: 2px solid var(--gofap-primary);
+    background-color: var(--gofap-light);
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: var(--gofap-light);
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-active { background-color: var(--gofap-success); }
+.status-inactive { background-color: var(--gofap-secondary); }
+.status-pending { background-color: var(--gofap-warning); }
+.status-error { background-color: var(--gofap-danger); }
+
+/* Custom Components */
+.feature-card {
+    border-left: 4px solid var(--gofap-primary);
+    padding: 1rem;
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+}
+
+.feature-card:hover {
+    border-left-color: var(--gofap-success);
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}

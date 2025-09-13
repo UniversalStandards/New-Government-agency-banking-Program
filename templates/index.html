@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}GOFAP Dashboard - Government Operations and Financial Accounting Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">
+                <i class="fas fa-university me-3"></i>
+                Welcome to GOFAP
+            </h1>
+            <p class="lead">
+                Government Operations and Financial Accounting Platform - 
+                Your comprehensive solution for modern government finance management.
+            </p>
+            <hr class="my-4 border-light">
+            <p>
+                Streamline financial operations, manage digital accounts, process payments, 
+                and optimize treasury functions with our integrated platform.
+            </p>
+            <a class="btn btn-light btn-lg" href="/api/health" role="button">
+                <i class="fas fa-heartbeat me-2"></i>Check System Status
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Key Features Grid -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">
+            <i class="fas fa-cogs me-2"></i>Key Capabilities
+        </h2>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Digital Wallets -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-primary">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-wallet fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Digital Wallets</h5>
+                <p class="card-text">
+                    Create supervised bank accounts instantly for employees, contractors, 
+                    and citizens. Send and receive payments with ease.
+                </p>
+                <a href="/api/accounts" class="btn btn-primary">Manage Accounts</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Operations -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-success">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-credit-card fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Payment Operations</h5>
+                <p class="card-text">
+                    Accept credit cards, ACH payments, run payroll, and quickly 
+                    disburse funds to individuals and vendors.
+                </p>
+                <a href="/api/transactions" class="btn btn-success">View Transactions</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Treasury Management -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-info">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-chart-line fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">Treasury Management</h5>
+                <p class="card-text">
+                    Optimize cash positions, manage investments, execute transfers, 
+                    and analyze financial performance.
+                </p>
+                <a href="#" class="btn btn-info">Treasury Tools</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budgeting & Planning -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-warning">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-chart-pie fa-3x text-warning"></i>
+                </div>
+                <h5 class="card-title">Budgeting & Planning</h5>
+                <p class="card-text">
+                    Automatically categorize transactions, visualize budgets, 
+                    and model endless budget scenarios.
+                </p>
+                <a href="#" class="btn btn-warning">Budget Tools</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Procurement -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-danger">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-shopping-cart fa-3x text-danger"></i>
+                </div>
+                <h5 class="card-title">Procurement & Expenses</h5>
+                <p class="card-text">
+                    Manage purchase requisitions, vendor relationships, 
+                    fuel & fleet, travel booking, and reimbursements.
+                </p>
+                <a href="#" class="btn btn-danger">Procurement Portal</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- HR Management -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-secondary">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-users fa-3x text-secondary"></i>
+                </div>
+                <h5 class="card-title">HR Management</h5>
+                <p class="card-text">
+                    Manage hiring, onboarding, training, evaluations, 
+                    and maintain digital personnel records.
+                </p>
+                <a href="#" class="btn btn-secondary">HR Portal</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>System Overview
+        </h3>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4 class="text-primary">
+                    <i class="fas fa-database me-2"></i>0
+                </h4>
+                <p class="card-text">Total Accounts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4 class="text-success">
+                    <i class="fas fa-exchange-alt me-2"></i>0
+                </h4>
+                <p class="card-text">Total Transactions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4 class="text-info">
+                    <i class="fas fa-dollar-sign me-2"></i>$0.00
+                </h4>
+                <p class="card-text">Total Volume</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4 class="text-warning">
+                    <i class="fas fa-users me-2"></i>0
+                </h4>
+                <p class="card-text">Active Users</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fas fa-phone me-2"></i>Need Support?
+                </h5>
+                <p class="card-text">
+                    Contact the Office of Finance, Accounting, and Procurement Services (OFAPS)
+                </p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <p>
+                            <i class="fas fa-phone text-primary"></i><br>
+                            <strong>(844) 697-7877 ext 6327</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p>
+                            <i class="fas fa-envelope text-primary"></i><br>
+                            <strong>gofap@ofaps.spurs.gov</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p>
+                            <i class="fas fa-quote-left text-primary"></i><br>
+                            <em>"We Account for Everything"</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add any dashboard-specific JavaScript here
+    console.log('GOFAP Dashboard loaded successfully');
+    
+    // You can add AJAX calls to populate real-time stats here
+    // Example:
+    // fetchSystemStats();
+</script>
+{% endblock %}

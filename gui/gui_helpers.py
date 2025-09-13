@@ -1,12 +1,18 @@
 import logging
 import time
+import asyncio
 from typing import Any, Dict, Optional, Callable
 import os
 from functools import wraps
-import asyncio
 
-from modern_treasury.main import create_modern_treasury_account_async
-from stripe.main import create_stripe_customer_async
+# Import the actual helper modules
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'modern_treasury'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'stripe'))
+
+from modern_treasury.modern_treasury_helpers import create_modern_treasury_account_async
+from stripe.stripe_helpers import create_stripe_customer_async
 
 # Set logger to display messages based on the LOG_LEVEL environment variable
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -46,21 +52,69 @@ async def create_modern_account(api_key: str, params: Dict[str, Any]) -> Optiona
 @backoff()
 async def create_stripe_account(api_key: str, params: Dict[str, Any]) -> Optional[str]:
     customer = await create_stripe_customer_async(api_key, params)
-    return await process_response(customer, 'id')
+    if customer and hasattr(customer, 'id'):
+        return customer.id
+    return None
+
+# Synchronous wrapper functions for GUI integration
+def create_accounts(service: str, api_key: str = None, params: Dict[str, Any] = None) -> Optional[str]:
+    """
+    Synchronous wrapper for account creation - used by GUI
+    """
+    if not api_key:
+        api_key = os.environ.get(f'{service.upper()}_API_KEY', 'test_key')
+    
+    if not params:
+        params = get_default_params(service)
+    
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(create_accounts_async(service, api_key, params))
+        loop.close()
+        return result
+    except Exception as e:
+        logger.error(f"Error in synchronous account creation: {e}")
+        return None
 
 # Controller function to route to the correct asynchronous account creation function
-async def create_accounts(service: str, api_key: str, params: Dict[str, Any]) -> Optional[str]:
+async def create_accounts_async(service: str, api_key: str, params: Dict[str, Any]) -> Optional[str]:
     service_creation_map = {
         'modern_treasury': create_modern_account,
         'stripe': create_stripe_account
     }
 
-    if service not in service_creation_map or (service == 'modern_treasury' and not api_key):
-        logger.error("Invalid service or missing API key for Modern Treasury.")
+    if service not in service_creation_map:
+        logger.error(f"Invalid service: {service}")
+        return None
+
+    if service == 'modern_treasury' and not api_key:
+        logger.error("Missing API key for Modern Treasury.")
         return None
 
     creation_func = service_creation_map[service]
     return await creation_func(api_key, params)
 
-# Update if additional features or enhancements are needed
-# ...
+def get_default_params(service: str) -> Dict[str, Any]:
+    """Get default parameters for each service"""
+    if service == 'modern_treasury':
+        return {
+            'name': 'Government Account',
+            'type': 'checking',
+            'description': 'Government operations account',
+            'routing_number': '123456789',
+            'account_number': '987654321',
+            'currency': 'USD',
+        }
+    elif service == 'stripe':
+        return {
+            'name': 'Government Entity',
+            'email': 'admin@government.gov',
+            'phone': '+1-555-GOV-MENT',
+            'metadata': {
+                'type': 'government',
+                'department': 'Treasury'
+            }
+        }
+    else:
+        return {}
