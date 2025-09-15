@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import ttk
 import json
-import requests
+import requests  # This line can be removed if not used
 from datetime import datetime
 from typing import Dict, Any
 
