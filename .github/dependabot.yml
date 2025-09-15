@@ -1,63 +1,30 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/frontend"
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
       interval: "daily"
       time: "10:00"
       timezone: "America/New_York"
     open-pull-requests-limit: 5
-    target-branch: "develop"
-    assignees:
-      - "frontend-team"
     labels:
-      - "frontend"
+      - "python"
       - "dependencies"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
 
-  - package-ecosystem: "pip"
-    directory: "/backend"
-    schedule:
-      interval: "daily"
-      time: "12:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "backend-team"
-    labels:
-      - "backend"
-      - "dependencies"
-
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
       timezone: "America/New_York"
-    labels:
-      - "docker"
-      - "infrastructure"
-
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
-    schedule:
-      interval: "monthly"
     open-pull-requests-limit: 3
-    reviewers:
-      - "devops-team"
     labels:
       - "github-actions"
       - "ci-cd"
-
-  - package-ecosystem: "terraform"
-    directory: "/infrastructure"
-    schedule: 
-      interval: "weekly"
-      day: "tuesday"
-      time: "14:00"
-      timezone: "America/New_York"
-    assignees:
-      - "infrastructure-team"
-    labels:
-      - "infrastructure"
-      - "terraform"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
