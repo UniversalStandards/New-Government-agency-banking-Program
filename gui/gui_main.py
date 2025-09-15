@@ -1,7 +1,7 @@
 """Enhanced GUI interface for GOFAP using tkinter."""
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 import json
 import requests
 from datetime import datetime
