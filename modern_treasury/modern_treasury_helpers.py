@@ -1,6 +1,6 @@
 """Modern Treasury integration helpers for GOFAP."""
 
-import os
+import requests
 import requests
 import logging
 from typing import Dict, Any, Optional
