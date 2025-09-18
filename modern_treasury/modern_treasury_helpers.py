@@ -3,7 +3,7 @@
 import requests
 import requests
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from configs.settings import MODERN_TREASURY_API_KEY, MODERN_TREASURY_ORG_ID
 
 logger = logging.getLogger(__name__)
