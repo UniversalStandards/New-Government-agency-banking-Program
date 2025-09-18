@@ -11,7 +11,7 @@ try:
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
-    SECRET_KEY = 'dev-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
     DATABASE_URI = 'sqlite:///gofap.db'
 
 # Initialize Flask application
