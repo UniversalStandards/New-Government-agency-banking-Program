@@ -5,7 +5,7 @@ import time
 import logging
 import threading
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import Dict, Any
 from main import app, db
 from models import (
     User, Account, Transaction, PayrollRecord, Budget, UtilityPayment,
