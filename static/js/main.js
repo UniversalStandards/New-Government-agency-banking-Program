@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Re-enable after 3 seconds (adjust as needed)
                 setTimeout(() => {
                     this.disabled = false;
-                    this.innerHTML = originalText;
+                    this.textContent = originalText;
                 }, 3000);
             }
         });
