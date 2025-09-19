@@ -106,7 +106,7 @@ def validate_config():
     """Validate configuration settings."""
     errors = []
     
-    if is_production() and SECRET_KEY == 'dev-key-change-in-production':
+    if is_production() and SECRET_KEY == os.environ.get('DEV_SECRET_KEY'):
         errors.append("SECRET_KEY must be changed in production")
     
     if is_production() and not SESSION_COOKIE_SECURE:
