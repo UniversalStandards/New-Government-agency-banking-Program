@@ -5,7 +5,9 @@ from pathlib import Path
 Path("LICENSE").touch()
 Path("Procfile").touch()
 with open("README.md", "w") as f:
-    f.write("# Payment Processor Project\n## Government Operations and Financial Accounting Platform (GOFAP)")
+    f.write(
+        "# Payment Processor Project\n## Government Operations and Financial Accounting Platform (GOFAP)"
+    )
 
 with open("runtime.txt", "w") as f:
     f.write("python-3.8.1")
@@ -30,7 +32,8 @@ for folder in folders:
 
 # Sample files
 with open("main.py", "w") as f:
-    f.write("""import os
+    f.write(
+        """import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -58,18 +61,21 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="127.0.0.1", port=port, debug=DEBUG)
-""")
+"""
+    )
 
 with open("app.py", "w") as f:
     f.write("from main import app\n\nif __name__ == '__main__':\n    app.run()")
 
 with open("requirements.txt", "w") as f:
-    f.write("""flask
+    f.write(
+        """flask
 flask-sqlalchemy
 flask-migrate
 stripe
 requests
-""")
+"""
+    )
 
 # Issuer folders
 issuer_folders = ["issuers/credit_card", "issuers/paypal", "issuers/stripe"]
@@ -114,7 +120,8 @@ with open("services/stripe/stripe.py", "w") as f:
 
 # Enhanced configuration - merging main branch with improvements
 with open("configs/settings.py", "w") as f:
-    f.write("""\"\"\"Configuration settings for GOFAP (Government Operations and Financial Accounting Platform).\"\"\"
+    f.write(
+        """\"\"\"Configuration settings for GOFAP (Government Operations and Financial Accounting Platform).\"\"\"
 
 import os
 from typing import Any
@@ -141,7 +148,8 @@ VERSION = "1.0.0"
 def get_config(key: str, default: Any = None) -> Any:
     \"\"\"Get configuration value with fallback to default.\"\"\"
     return os.environ.get(key, default)
-""")
+"""
+    )
     f.write("DEBUG=True")
 
 with open("tests/test_transactions.py", "w") as f:

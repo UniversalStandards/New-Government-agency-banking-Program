@@ -8,15 +8,17 @@ except ImportError:
     DEBUG = True
 
 app = Flask(__name__)
-app.config['DEBUG'] = DEBUG
+app.config["DEBUG"] = DEBUG
 
-@app.route('/')
+
+@app.route("/")
 def home():
-    return 'Welcome to the Payment Processor App!'
+    return "Welcome to the Payment Processor App!"
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='127.0.0.1', port=port, debug=DEBUG)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="127.0.0.1", port=port, debug=DEBUG)
 import logging
 from flask import (
     Flask,
@@ -115,7 +117,10 @@ def api_create_account():
 
     except Exception as e:
         logging.exception("Exception occurred while creating account")
-        return jsonify({"error": "An internal error occurred. Please try again later."}), 500
+        return (
+            jsonify({"error": "An internal error occurred. Please try again later."}),
+            500,
+        )
     except Exception:
         logging.exception("Exception occurred while creating account")
         return (
