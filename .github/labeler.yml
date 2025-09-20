@@ -1,0 +1,89 @@
+# Auto-labeling configuration for GOFAP repository
+# This file defines rules for automatically applying labels to PRs and issues
+
+# File-based labeling rules
+backend:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.py', '!gui/**', '!test*']
+  - base-branch: ['main', 'develop']
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: ['gui/**', 'static/**', 'templates/**', '**/*.html', '**/*.css', '**/*.js']
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.md', 'docs/**', 'README*']
+
+testing:
+  - changed-files:
+    - any-glob-to-any-file: ['test*.py', 'tests/**', 'pytest.ini', '**/test_*']
+
+ci-cd:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**', '**/*.yml', '**/*.yaml']
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: ['requirements.txt', 'Pipfile*', 'pyproject.toml', 'setup.py', 'setup.cfg']
+
+security:
+  - changed-files:
+    - any-glob-to-any-file: ['SECURITY.md', '**/security*', '**/auth*']
+
+payment-integration:
+  - changed-files:
+    - any-glob-to-any-file: ['stripe/**', 'modern_treasury/**', '**/payment*']
+
+configuration:
+  - changed-files:
+    - any-glob-to-any-file: ['configs/**', '*.ini', '*.cfg', '*.conf', '.env*']
+
+database:
+  - changed-files:
+    - any-glob-to-any-file: ['models.py', 'models/**', '**/*.sql', '**/migration*']
+
+build:
+  - changed-files:
+    - any-glob-to-any-file: ['build.py', 'buildscript.bash', 'setup.sh', 'Dockerfile*', 'docker-compose*']
+
+automation:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/workflows/**', '**/auto-*', '**/automated*']
+
+bug-fix:
+  - head-branch: ['fix/**', 'bugfix/**', 'hotfix/**']
+
+feature:
+  - head-branch: ['feature/**', 'feat/**']
+
+enhancement:
+  - head-branch: ['enhancement/**', 'improve/**', 'upgrade/**']
+
+refactor:
+  - head-branch: ['refactor/**', 'cleanup/**']
+
+chore:
+  - head-branch: ['chore/**', 'maintenance/**']
+
+release:
+  - head-branch: ['release/**', 'v*']
+
+hotfix:
+  - head-branch: ['hotfix/**', 'urgent/**']
+
+# Size-based labels
+small:
+  - changed-files:
+    - any-glob-to-any-file: ['*']
+    - count: '<=10'
+
+medium:
+  - changed-files:
+    - any-glob-to-any-file: ['*']
+    - count: '11-50'
+
+large:
+  - changed-files:
+    - any-glob-to-any-file: ['*']
+    - count: '>50'

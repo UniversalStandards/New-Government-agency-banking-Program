@@ -1,0 +1,143 @@
+---
+name: 🚀 Feature Request
+description: Suggest a new feature or enhancement for GOFAP
+title: "[FEATURE] "
+labels: ["enhancement", "feature-request"]
+assignees:
+  - UniversalStandards
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please provide as much detail as possible to help us understand your request.
+
+  - type: checkboxes
+    id: feature-checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please check the following before submitting your feature request
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't already been requested
+          required: true
+        - label: I have checked the documentation to confirm this feature doesn't already exist
+          required: true
+        - label: This feature request is specific to GOFAP and not a general Python/Flask question
+          required: true
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: 📝 Feature Description
+      description: A clear and concise description of the feature you'd like to see added
+      placeholder: Describe the feature you would like to see implemented...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-solution
+    attributes:
+      label: 🎯 Problem and Solution
+      description: What problem does this feature solve? How would it benefit users?
+      placeholder: |
+        **Problem**: What problem are you trying to solve?
+        **Solution**: How would this feature address the problem?
+        **Benefits**: Who would benefit and how?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: 📂 Feature Category
+      description: What area of GOFAP does this feature relate to?
+      options:
+        - Payment Processing (Stripe)
+        - Treasury Management (Modern Treasury)
+        - API Endpoints
+        - Web Interface
+        - Database/Models
+        - Security
+        - Authentication
+        - Reporting/Analytics
+        - GUI Application
+        - Documentation
+        - Testing
+        - CI/CD
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: ⚡ Priority Level
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be helpful
+        - High - Important for my use case
+        - Critical - Blocking my work
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: 💼 Use Cases
+      description: Provide specific use cases or scenarios where this feature would be valuable
+      placeholder: |
+        1. As a [user type], I want to [action] so that [benefit]
+        2. When [situation], users need to [capability]
+        3. This would help with [specific scenario]
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-implementation
+    attributes:
+      label: 🔧 Proposed Implementation (Optional)
+      description: If you have ideas about how this could be implemented, please share them
+      placeholder: |
+        - API endpoints needed
+        - Database changes
+        - UI components
+        - Third-party integrations
+        - Code examples
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternatives Considered
+      description: Have you considered any alternative approaches to solving this problem?
+      placeholder: Describe any alternative solutions or workarounds you've considered...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📋 Additional Context
+      description: Add any other context, screenshots, mockups, or examples that would help us understand the request
+      placeholder: |
+        - Screenshots or mockups
+        - Links to similar features in other tools
+        - Technical specifications
+        - Related issues or discussions
+
+  - type: checkboxes
+    id: implementation-offer
+    attributes:
+      label: 🤝 Implementation
+      description: Are you interested in contributing to the implementation?
+      options:
+        - label: I would be willing to work on this feature
+        - label: I can help with testing once implemented
+        - label: I can provide additional requirements/feedback during development
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Note**: Feature requests are automatically labeled and assigned for review. High-priority requests will be addressed first. We appreciate detailed feature requests as they help us build better software!
+        
+        This issue will be automatically triaged and assigned to the appropriate team members based on the category selected.
