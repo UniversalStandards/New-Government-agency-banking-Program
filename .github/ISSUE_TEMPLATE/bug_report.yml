@@ -1,0 +1,199 @@
+---
+name: 🐛 Bug Report
+description: Report a bug or issue with GOFAP
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees:
+  - UniversalStandards
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please provide as much detail as possible to help us reproduce and fix the issue quickly.
+
+  - type: checkboxes
+    id: bug-checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please check the following before submitting your bug report
+      options:
+        - label: I have searched existing issues to ensure this bug hasn't already been reported
+          required: true
+        - label: I have checked the documentation and this is not expected behavior
+          required: true
+        - label: I can reproduce this bug consistently
+          required: true
+        - label: This is a bug in GOFAP and not a general Python/Flask issue
+          required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: 🐛 Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe the bug you encountered...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: 🔄 Steps to Reproduce
+      description: Please provide detailed steps to reproduce the issue
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Execute '...'
+        4. See error
+      value: |
+        1. 
+        2. 
+        3. 
+        4. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: ✅ Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what you expected to happen...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: ❌ Actual Behavior
+      description: What actually happened instead?
+      placeholder: Describe what actually happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: 📋 Error Messages/Logs
+      description: Please paste any error messages, stack traces, or relevant logs
+      placeholder: |
+        Paste error messages or logs here...
+        
+        If the logs are very long, please use a code block:
+        ```
+        Error message here
+        ```
+      render: shell
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 🚨 Severity Level
+      description: How severe is this bug?
+      options:
+        - Low - Minor issue, workaround exists
+        - Medium - Moderate impact on functionality
+        - High - Major feature broken or significant impact
+        - Critical - Application crash, security issue, or data loss
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bug-category
+    attributes:
+      label: 📂 Bug Category
+      description: What area of GOFAP is affected?
+      options:
+        - Web Application (Flask)
+        - API Endpoints
+        - Database/Models
+        - Payment Processing (Stripe)
+        - Treasury Management (Modern Treasury)
+        - GUI Application
+        - Authentication/Security
+        - Configuration
+        - Build/Deployment
+        - Testing
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🖥️ Environment Information
+      description: Please provide details about your environment
+      placeholder: |
+        - Operating System: (e.g., Ubuntu 20.04, Windows 10, macOS 12)
+        - Python Version: (e.g., 3.12.0)
+        - Flask Version: (from pip show flask)
+        - Browser (if web-related): (e.g., Chrome 91, Firefox 89)
+        - GOFAP Version/Commit: (e.g., latest main branch, commit abc123)
+      value: |
+        - Operating System: 
+        - Python Version: 
+        - Flask Version: 
+        - Browser (if applicable): 
+        - GOFAP Version/Commit: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: ⚙️ Configuration Details
+      description: Relevant configuration settings (remove sensitive information)
+      placeholder: |
+        - Environment variables set (without values)
+        - Configuration file contents (sanitized)
+        - Command line arguments used
+        - Any custom settings
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📸 Screenshots/Additional Context
+      description: Add screenshots, code samples, or additional context that helps explain the problem
+      placeholder: |
+        - Screenshots of error messages or unexpected behavior
+        - Code samples that trigger the bug
+        - Related issues or pull requests
+        - Additional context that might help
+
+  - type: checkboxes
+    id: workaround
+    attributes:
+      label: 🔧 Workaround
+      description: Have you found any workarounds?
+      options:
+        - label: I have found a temporary workaround for this issue
+        - label: No workaround is available
+        - label: Workaround exists but is not practical for production use
+
+  - type: textarea
+    id: workaround-details
+    attributes:
+      label: 🛠️ Workaround Details
+      description: If you found a workaround, please describe it
+      placeholder: Describe any workaround you found...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 🤝 Contribution
+      description: Are you interested in helping fix this issue?
+      options:
+        - label: I would be willing to submit a pull request to fix this issue
+        - label: I can help with testing the fix
+        - label: I can provide additional information if needed
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Note**: Bug reports are automatically triaged and assigned based on severity and category. Critical and high-severity bugs will be prioritized. Please be as detailed as possible to help us resolve the issue quickly!
+        
+        This issue will be automatically labeled and assigned to the appropriate team members for investigation.
