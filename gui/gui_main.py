@@ -53,8 +53,6 @@ class AccountCreationGUI:
         ttk.Label(
             self.modern_treasury_tab, text="Modern Treasury Account Creation"
         ).grid(column=0, row=0, pady=10)
-        
-        ).grid(column=0, row=0)
         ttk.Button(
             self.modern_treasury_tab,
             text="Create Account",
@@ -64,7 +62,6 @@ class AccountCreationGUI:
         # Status label for feedback
         self.mt_status = ttk.Label(self.modern_treasury_tab, text="")
         self.mt_status.grid(column=0, row=2, pady=5)
-        ).grid(column=0, row=1)
 
     def create_stripe_widgets(self):
         # Widgets for Stripe tab
@@ -113,14 +110,6 @@ class AccountCreationGUI:
         except Exception as e:
             self.stripe_status.config(text=f"Error: {str(e)}")
             logger.error(f"Error creating Stripe customer: {e}")
-            column=0, row=0
-        )
-        ttk.Button(
-            self.stripe_tab, text="Create Customer", command=self.create_stripe_customer
-        ).grid(column=0, row=1)
-
-    def create_modern_treasury_account(self):
-        # Call the function to create a Modern Treasury account
         create_accounts("modern_treasury", api_key=MODERN_TREASURY_API_KEY)
 
     def create_stripe_customer(self):

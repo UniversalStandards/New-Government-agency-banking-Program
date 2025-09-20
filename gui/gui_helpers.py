@@ -36,9 +36,6 @@ def backoff(start_sleep_time=0.1, factor=2, max_sleep_time=3):
 
 
 # Process responses for consistency and to centralize error handling
-async def process_response(
-    response: Dict[str, Any], service: str
-) -> Optional[str]:
 async def process_response(response: Dict[str, Any], service: str) -> Optional[str]:
     if response.get("success"):
         return response.get(service)
@@ -70,7 +67,6 @@ async def create_stripe_account(
 
 
 # Controller function to route to the correct asynchronous account creation function
-async def create_accounts_async(
 async def create_accounts(
     service: str, api_key: str, params: Dict[str, Any]
 ) -> Optional[str]:
@@ -112,7 +108,7 @@ def create_accounts(
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(
-            create_accounts_async(service, api_key, params)
+            create_accounts(service, api_key, params)
         )
         loop.close()
         return result
