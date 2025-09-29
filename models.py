@@ -103,7 +103,6 @@ class Department(db.Model):
     code = db.Column(db.String(10), unique=True, nullable=False)
     description = db.Column(db.Text)
     budget_allocated = db.Column(db.Numeric(precision=15, scale=2), default=0.00)
-    budget_allocated = db.Column(db.Numeric(precision=15, scale=2), default=0.00)
     budget_spent = db.Column(db.Numeric(precision=15, scale=2), default=0.00)
     head_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     is_active = db.Column(db.Boolean, default=True)
