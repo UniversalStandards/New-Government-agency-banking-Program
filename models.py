@@ -38,7 +38,6 @@ class Account(db.Model):
     account_number = db.Column(db.String(50), unique=True, nullable=False)
     account_name = db.Column(db.String(100), nullable=False)
     account_type = db.Column(db.String(50), nullable=False)  # checking, savings, etc.
-    account_type = db.Column(db.String(50), nullable=False)  # checking, savings, etc.
     balance = db.Column(db.Numeric(precision=15, scale=2), default=0.00)
     currency = db.Column(db.String(3), default="USD")
     bank_name = db.Column(db.String(100))
