@@ -3,6 +3,7 @@ Authentication routes and functionality for GOFAP.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from models import User, UserRole, db
@@ -31,7 +32,13 @@ def login():
             login_user(user, remember=remember)
             logger.info(f"User {username} logged in successfully")
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+            if next_page:
+                # Remove backslashes and validate that the redirect target is a relative path
+                cleaned_next = next_page.replace('\\', '')
+                parts = urlparse(cleaned_next)
+                if not parts.netloc and not parts.scheme:
+                    return redirect(cleaned_next)
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password', 'error')
             logger.warning(f"Failed login attempt for username: {username}")
