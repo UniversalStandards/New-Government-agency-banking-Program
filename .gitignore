@@ -219,6 +219,17 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+
+# Gulp build artifacts
+.gulp-cache/
+build/js/
+build/css/
+dist/
+
+# Test coverage
+coverage/
+.nyc_output/
 
 # Government-specific sensitive files
 *.pem
