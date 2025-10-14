@@ -98,14 +98,11 @@ jobs:
 
       - name: Verify Gulp installation
         run: |
-          if ! command -v gulp &> /dev/null; then
-            echo "Installing Gulp CLI globally"
-            npm install -g gulp-cli
-          fi
+          npm install -g gulp-cli
           gulp --version
 
-      - name: Run Gulp default tasks
-        run: gulp default
+      - name: Run Gulp build
+        run: gulp build
         env:
           NODE_ENV: development
 
@@ -131,12 +128,7 @@ jobs:
       - name: Build production artifacts
         run: |
           mkdir -p build dist
-          if gulp build --tasks-simple | grep -q "build"; then
-            NODE_ENV=production gulp build
-          else
-            echo "No build task found, running default gulp task"
-            NODE_ENV=production gulp
-          fi
+          NODE_ENV=production gulp build
         env:
           NODE_ENV: production
 
