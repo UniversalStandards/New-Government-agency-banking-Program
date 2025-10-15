@@ -39,8 +39,6 @@ async def process_response(response: Dict[str, Any], service: str) -> Optional[s
         return response.get(service)
     else:
         logger.error(
-            f"Error processing {service} response: "
-            f"{response.get('error', 'Unknown error')}"
             f"Error processing {service} response: {response.get('error', 'Unknown error')}"
         )
         return None
@@ -95,7 +93,9 @@ def create_accounts(service: str, api_key: str = None, params: Dict[str, Any] = 
         # Run the async function in the event loop
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(create_accounts(service, api_key, params))
+        result = loop.run_until_complete(
+            create_accounts(service, api_key, params)
+        )
         loop.close()
         return result
     except Exception as e:

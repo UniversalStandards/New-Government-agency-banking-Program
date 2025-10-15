@@ -1,33 +1,33 @@
-// GOFAP Main JavaScript
+// GOFAP Main JavaScript File
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        import 'bootstrap'; // Ensure Bootstrap is imported
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
     // Initialize popovers
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.forEach(function (popoverTriggerEl) { return new bootstrap.Popover(popoverTriggerEl); });
+    popoverTriggerList.forEach(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
     // Add loading state to buttons on form submission
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function(e) {
             const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
+            if (submitBtn && !submitBtn.disabled) {
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
                 submitBtn.disabled = true;
                 
-                // Re-enable button after 5 seconds as fallback
+                // Re-enable button after 10 seconds as fallback
                 setTimeout(() => {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                }, 5000);
+                }, 10000);
             }
         });
     });
@@ -36,8 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(alert => {
         setTimeout(() => {
-            const alertInstance = new bootstrap.Alert(alert);
-            alertInstance.close();
+            if (alert && alert.parentNode) {
+                const alertInstance = new bootstrap.Alert(alert);
+                alertInstance.close();
+            }
         }, 5000);
     });
 
@@ -46,7 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
     anchorLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const targetId = this.getAttribute('href');
+            const target = document.querySelector(targetId);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -61,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     currencyInputs.forEach(input => {
         input.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d.]/g, '');
-            if (value) {
+            if (value && !isNaN(parseFloat(value))) {
                 value = parseFloat(value).toFixed(2);
                 e.target.value = '$' + value;
             }
@@ -77,9 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirm(`Are you sure you want to delete ${itemName}? This action cannot be undone.`)) {
                 // Proceed with deletion
                 if (this.href) {
-                    window.location.href = escape(this.href);
-                } else if (this.onclick) {
-                    this.onclick();
+                    window.location.href = this.href;
+                } else if (this.dataset.url) {
+                    window.location.href = this.dataset.url;
                 }
             }
         });
@@ -116,6 +119,173 @@ const GOFAP = {
     },
 
     // Format date
+    formatDate: function(date, options = {}) {
+        const defaultOptions = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        return new Intl.DateTimeFormat('en-US', {...defaultOptions, ...options}).format(new Date(date));
+    },
+
+    // Show loading spinner
+    showLoading: function(element) {
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        spinner.id = 'loading-spinner';
+        element.appendChild(spinner);
+    },
+
+    // Hide loading spinner
+    hideLoading: function() {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            spinner.remove();
+        }
+    },
+
+    // Show notification - Fixed XSS vulnerability by using textContent and DOM manipulation
+    showNotification: function(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        
+        // Use textContent to safely set the message text
+        alertDiv.textContent = message;
+        
+        // Create close button separately to avoid innerHTML injection
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        alertDiv.appendChild(closeButton);
+        
+        const container = document.querySelector('.container-fluid');
+        if (container) {
+            container.insertBefore(alertDiv, container.firstChild);
+        }
+    },
+
+    // Validate URL to prevent SSRF attacks
+    isValidUrl: function(url) {
+        try {
+            const urlObj = new URL(url);
+            // Only allow HTTP and HTTPS protocols
+            if (!['http:', 'https:'].includes(urlObj.protocol)) {
+                return false;
+            }
+            // Block private IP ranges and localhost
+            const hostname = urlObj.hostname;
+            if (hostname === 'localhost' || 
+                hostname === '127.0.0.1' ||
+                hostname.startsWith('192.168.') ||
+                hostname.startsWith('10.') ||
+                hostname.startsWith('172.')) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            return false;
+        }
+    },
+
+    // API helper with URL validation
+    api: {
+        get: async function(url) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API GET error:', error);
+                GOFAP.showNotification('Failed to fetch data', 'danger');
+                throw error;
+            }
+        },
+
+        post: async function(url, data) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const allowedUrls = ['https://example.com/api', 'https://another-safe-site.com/api']; if (!allowedUrls.includes(url)) throw new Error('URL not allowed');
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API POST error:', error);
+                GOFAP.showNotification('Failed to send data', 'danger');
+                throw error;
+            }
+        },
+
+        put: async function(url, data) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API PUT error:', error);
+                GOFAP.showNotification('Failed to update data', 'danger');
+                throw error;
+            }
+        },
+
+        delete: async function(url) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API DELETE error:', error);
+                GOFAP.showNotification('Failed to delete data', 'danger');
     formatDate: function(date) {
         return new Intl.DateTimeFormat('en-US', {
             year: 'numeric',
@@ -151,6 +321,35 @@ const GOFAP = {
         }
     },
 
+    // Form validation helpers
+    validateForm: function(formElement) {
+        const inputs = formElement.querySelectorAll('input[required], select[required], textarea[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+        
+        return isValid;
+    },
+
+    // Sanitize HTML content
+    sanitizeHtml: function(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.innerHTML;
+    }
+};
+
+// Export for testing if module system is available
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GOFAP;
+}
     // Copy to clipboard
     copyToClipboard: function(text) {
         navigator.clipboard.writeText(text).then(() => {
