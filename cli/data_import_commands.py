@@ -4,6 +4,7 @@ Flask CLI commands for data import operations.
 
 import click
 # Remove the unused import statement
+import logging
 from flask import current_app
 from flask.cli import with_appcontext
 
