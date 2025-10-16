@@ -242,8 +242,8 @@ This repository uses **12 GitHub Actions workflows** for automated testing, secu
 - **Python Publish** (`python-publish.yml`) - PyPI package publishing on releases
 
 ### Workflow Status
-![CI Status](https://github.com/UniversalStandards/New-Government-agency-banking-Program/workflows/Comprehensive%20CI/badge.svg)
-![CodeQL](https://github.com/UniversalStandards/New-Government-agency-banking-Program/workflows/CodeQL/badge.svg)
+![CI Status](https://github.com/UniversalStandards/New-Government-agency-banking-Program/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/UniversalStandards/New-Government-agency-banking-Program/actions/workflows/codeql.yml/badge.svg)
 
 For detailed documentation on workflows, see [.github/WORKFLOWS.md](.github/WORKFLOWS.md).
 
