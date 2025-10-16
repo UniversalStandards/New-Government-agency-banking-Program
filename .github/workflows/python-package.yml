@@ -42,4 +42,4 @@ jobs:
         python -c "from main import app, db; app.app_context().push(); db.create_all(); print('Database initialized')" || echo "Database initialization skipped"
     - name: Test with pytest
       run: |
-        pytest --maxfail=1 --disable-warnings -q || true
+        pytest --maxfail=1 --disable-warnings -q || code=$?; if [ "$code" -ne 5 ]; then exit "$code"; else echo "No tests collected (exit 5)"; fi
