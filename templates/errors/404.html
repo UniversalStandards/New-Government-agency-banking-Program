@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - GOFAP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <div class="error-template">
+            <h1 class="display-1 text-primary">404</h1>
+            <h2>Page Not Found</h2>
+            <div class="error-details mb-4">
+                Sorry, the page you are looking for could not be found.
+            </div>
+            <div class="error-actions">
+                <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>Take Me Home
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Go Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
