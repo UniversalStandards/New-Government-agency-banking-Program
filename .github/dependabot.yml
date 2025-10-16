@@ -1,72 +1,79 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/frontend"
-    schedule:
-      interval: "daily"
-      time: "10:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
-    target-branch: "develop"
-    assignees:
-      - "frontend-team"
-      - "*"
-    labels:
-      - "frontend"
-      - "dependencies"
-      - "*"
-
+  # Python dependencies
   - package-ecosystem: "pip"
-    directory: "/backend"
+    directory: "/"
     schedule:
       interval: "daily"
-      time: "12:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    assignees:
+      - "*"
     reviewers:
-      - "backend-team"
       - "*"
     labels:
-      - "backend"
       - "dependencies"
+      - "python"
+      - "automated"
+    commit-message:
+      prefix: "⬆️ "
+      prefix-development: "⬆️ dev"
+      include: "scope"
+    # Group related updates
+    groups:
+      flask:
+        patterns:
+          - "flask*"
+          - "werkzeug"
+          - "jinja2"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage"
+      security:
+        patterns:
+          - "cryptography"
+          - "stripe"
+      linting:
+        patterns:
+          - "flake8"
+          - "black"
+          - "mypy"
 
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    assignees:
+      - "*"
+    labels:
+      - "github-actions"
+      - "ci-cd"
+      - "automated"
+    commit-message:
+      prefix: "🔧 "
+      include: "scope"
+
+  # Docker (if Dockerfile exists in future)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
+      day: "wednesday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
     labels:
       - "docker"
       - "infrastructure"
+      - "automated"
 
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 3
-    reviewers:
-      - "devops-team"
-    labels:
-      - "github-actions"
-      - "ci-cd"
-
-  - package-ecosystem: "terraform"
-    directory: "/infrastructure"
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "14:00"
-      timezone: "America/New_York"
-    assignees:
-      - "infrastructure-team"
-    labels:
-      - "terraform"
-      - "infrastructure"
-
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  status: write
+# Security and vulnerability alerts
+# Enable security updates for all ecosystems
+enable-security-updates: true

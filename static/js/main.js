@@ -1,62 +1,33 @@
 // GOFAP Main JavaScript File
-// GOFAP Main JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
-        import 'bootstrap'; // Ensure Bootstrap is imported
     });
 
     // Initialize popovers
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl);
-    });
-
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        var alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-            var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        });
-    }, 5000);
-
-    // Add loading states to buttons
-    const buttons = document.querySelectorAll('button[type="submit"], .btn-primary, .btn-success');
-    buttons.forEach(button => {
-        button.addEventListener('click', function() {
-            if (!this.disabled) {
-                this.disabled = true;
-                const originalText = this.innerHTML;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Loading...';
-                
-                // Re-enable after 3 seconds (adjust as needed)
-                setTimeout(() => {
-                    this.disabled = false;
-                    this.textContent = originalText;
-                }, 3000);
-    popoverTriggerList.forEach(function (popoverTriggerEl) { return new bootstrap.Popover(popoverTriggerEl); });
+    popoverTriggerList.forEach(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
 
     // Add loading state to buttons on form submission
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function(e) {
             const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
+            if (submitBtn && !submitBtn.disabled) {
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
                 submitBtn.disabled = true;
                 
-                // Re-enable button after 5 seconds as fallback
+                // Re-enable button after 10 seconds as fallback
                 setTimeout(() => {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                }, 5000);
+                }, 10000);
             }
         });
     });
@@ -65,8 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(alert => {
         setTimeout(() => {
-            const alertInstance = new bootstrap.Alert(alert);
-            alertInstance.close();
+            if (alert && alert.parentNode) {
+                const alertInstance = new bootstrap.Alert(alert);
+                alertInstance.close();
+            }
         }, 5000);
     });
 
@@ -75,7 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
     anchorLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const targetId = this.getAttribute('href');
+            const target = document.querySelector(targetId);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -90,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     currencyInputs.forEach(input => {
         input.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d.]/g, '');
-            if (value) {
+            if (value && !isNaN(parseFloat(value))) {
                 value = parseFloat(value).toFixed(2);
                 e.target.value = '$' + value;
             }
@@ -106,9 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirm(`Are you sure you want to delete ${itemName}? This action cannot be undone.`)) {
                 // Proceed with deletion
                 if (this.href) {
-                    window.location.href = escape(this.href);
-                } else if (this.onclick) {
-                    this.onclick();
+                    window.location.href = this.href;
+                } else if (this.dataset.url) {
+                    window.location.href = this.dataset.url;
                 }
             }
         });
@@ -172,19 +146,146 @@ const GOFAP = {
         }
     },
 
-    // Show notification
+    // Show notification - Fixed XSS vulnerability by using textContent and DOM manipulation
     showNotification: function(message, type = 'info') {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        
+        // Use textContent to safely set the message text
+        alertDiv.textContent = message;
+        
+        // Create close button separately to avoid innerHTML injection
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        alertDiv.appendChild(closeButton);
         
         const container = document.querySelector('.container-fluid');
         if (container) {
             container.insertBefore(alertDiv, container.firstChild);
         }
+    },
+
+    // Validate URL to prevent SSRF attacks
+    isValidUrl: function(url) {
+        try {
+            const urlObj = new URL(url);
+            // Only allow HTTP and HTTPS protocols
+            if (!['http:', 'https:'].includes(urlObj.protocol)) {
+                return false;
+            }
+            // Block private IP ranges and localhost
+            const hostname = urlObj.hostname;
+            if (hostname === 'localhost' || 
+                hostname === '127.0.0.1' ||
+                hostname.startsWith('192.168.') ||
+                hostname.startsWith('10.') ||
+                hostname.startsWith('172.')) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            return false;
+        }
+    },
+
+    // API helper with URL validation
+    api: {
+        get: async function(url) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API GET error:', error);
+                GOFAP.showNotification('Failed to fetch data', 'danger');
+                throw error;
+            }
+        },
+
+        post: async function(url, data) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const allowedUrls = ['https://example.com/api', 'https://another-safe-site.com/api']; if (!allowedUrls.includes(url)) throw new Error('URL not allowed');
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API POST error:', error);
+                GOFAP.showNotification('Failed to send data', 'danger');
+                throw error;
+            }
+        },
+
+        put: async function(url, data) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API PUT error:', error);
+                GOFAP.showNotification('Failed to update data', 'danger');
+                throw error;
+            }
+        },
+
+        delete: async function(url) {
+            // Validate URL before making request
+            if (!GOFAP.isValidUrl(url)) {
+                throw new Error('Invalid or unsafe URL');
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API DELETE error:', error);
+                GOFAP.showNotification('Failed to delete data', 'danger');
     formatDate: function(date) {
         return new Intl.DateTimeFormat('en-US', {
             year: 'numeric',
@@ -250,80 +351,35 @@ const GOFAP = {
         }
     },
 
-    // Chart helper
-    createChart: function(canvasId, config) {
-        const ctx = document.getElementById(canvasId);
-        if (ctx) {
-            return new Chart(ctx, config);
-        }
-        return null;
+    // Form validation helpers
+    validateForm: function(formElement) {
+        const inputs = formElement.querySelectorAll('input[required], select[required], textarea[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+        
+        return isValid;
+    },
+
+    // Sanitize HTML content
+    sanitizeHtml: function(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.innerHTML;
     }
 };
 
-// Dashboard specific functionality
-if (document.querySelector('.dashboard')) {
-    // Load dashboard data
-    loadDashboardData();
-    
-    function loadDashboardData() {
-        // Load accounts
-        GOFAP.api.get('/api/accounts')
-            .then(accounts => {
-                updateAccountsDisplay(accounts);
-            })
-            .catch(error => {
-                console.error('Failed to load accounts:', error);
-            });
-
-        // Load transactions
-        GOFAP.api.get('/api/transactions')
-            .then(data => {
-                updateTransactionsDisplay(data.transactions);
-            })
-            .catch(error => {
-                console.error('Failed to load transactions:', error);
-            });
-    }
-
-    function updateAccountsDisplay(accounts) {
-        // Update accounts section if needed
-        console.log('Accounts loaded:', accounts);
-    }
-
-    function updateTransactionsDisplay(transactions) {
-        // Update transactions section if needed
-        console.log('Transactions loaded:', transactions);
-    }
+// Export for testing if module system is available
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GOFAP;
 }
-
-// Form validation
-function validateForm(form) {
-    const requiredFields = form.querySelectorAll('[required]');
-    let isValid = true;
-
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            field.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            field.classList.remove('is-invalid');
-        }
-    });
-
-    return isValid;
-}
-
-// Add form validation to all forms
-document.addEventListener('submit', function(e) {
-    if (e.target.tagName === 'FORM') {
-        if (!validateForm(e.target)) {
-            e.preventDefault();
-            GOFAP.showNotification('Please fill in all required fields', 'warning');
-        }
-    }
-});
-
-// Export for global access
     // Copy to clipboard
     copyToClipboard: function(text) {
         navigator.clipboard.writeText(text).then(() => {

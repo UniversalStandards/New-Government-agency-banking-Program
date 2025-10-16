@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Login - GOFAP{% endblock %}
@@ -5,22 +6,37 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
-        <div class="card">
-            <div class="card-header text-center">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
                 <h4 class="mb-0">
-                    <i class="fas fa-sign-in-alt me-2"></i>Login to GOFAP
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    Login to GOFAP
                 </h4>
             </div>
-            <div class="card-body">
-                <form method="POST">
+            <div class="card-body p-4">
+                <form method="POST" novalidate>
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-1"></i>Username
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               required
+                               autocomplete="username">
                     </div>
                     
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Password
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               required
+                               autocomplete="current-password">
                     </div>
                     
                     <div class="mb-3 form-check">
@@ -30,19 +46,33 @@
                         </label>
                     </div>
                     
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
                 </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="mb-2">Don't have an account?</p>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <a href="#" class="text-decoration-none">Forgot Password?</a>
+                    </small>
+                </div>
             </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">
-                    Don't have an account? 
-                    <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Register here</a>
-                </p>
-            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Government Operations and Financial Accounting Platform<br>
+                "We Account for Everything"
+            </small>
         </div>
     </div>
 </div>

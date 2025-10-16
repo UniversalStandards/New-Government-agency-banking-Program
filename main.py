@@ -5,21 +5,23 @@ Main application entry point with comprehensive Flask setup.
 
 import os
 import logging
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from flask import (
     Flask,
     request,
     jsonify,
     render_template,
+    flash,
+    redirect,
+    url_for
 )
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash
-import json
+from flask_login import LoginManager, login_required, current_user
+from models import db
 
-# Configure basic logging
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -46,18 +48,34 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = os.environ.get("FLASK_DEBUG", "True").lower() in ("true", "1", "yes", "on")
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production-2024")
     DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///gofap.db")
 
 # Initialize Flask application
 app = Flask(__name__)
+app.config['DEBUG'] = DEBUG
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Initialize the database connection
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///payment_processor.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress warning
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Import models to ensure they are known to Flask-Migrate
 app.config["DEBUG"] = DEBUG
 app.config["SECRET_KEY"] = SECRET_KEY
 
 # Initialize the database connection
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -74,6 +92,13 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
 
 # Import models after db initialization
 from models import db, User, Account, Transaction, Budget, BudgetItem, AuditLog, UserRole, AccountType, TransactionType, TransactionStatus
@@ -92,13 +117,66 @@ def load_user(user_id):
     return User.query.get(user_id)
 # Import models after db initialization
 try:
-    from models import User, Account, Transaction, Department, Budget
+    from models import User, Account, Transaction, Department, Budget  # noqa: F401
 except ImportError:
     # Models module not yet created - this is expected during initial setup
     try:
         from models import *
     except ImportError:
         pass
+
+# Flask-Login user loader
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
+# Register authentication blueprint
+try:
+    from auth import auth_bp
+    app.register_blueprint(auth_bp)
+    logging.info("Authentication routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register authentication routes: {e}")
+
+# Template context processor
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.now().year}
+
+# Add cache control headers for static files in development
+@app.after_request
+def add_header(response):
+    """Add headers to prevent caching of static files during development."""
+    if DEBUG and request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
+# Register blueprints
+try:
+    from routes import data_import_bp
+    app.register_blueprint(data_import_bp)
+    logging.info("Data import routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register data import routes: {e}")
+
+# Register payment routes
+try:
+    from routes.payments import payments_bp
+    app.register_blueprint(payments_bp)
+    logging.info("Payment routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register payment routes: {e}")
+
+# Register CLI commands
+try:
+    from cli import register_data_import_commands
+    register_data_import_commands(app)
+    logging.info("Data import CLI commands registered")
+except ImportError as e:
+    logging.warning(f"Could not register data import CLI commands: {e}")
 
 # Register blueprints
 try:
@@ -136,19 +214,66 @@ def home():
 @app.route("/")
 def home():
     """Home page route for the GOFAP Payment Processor."""
-    try:
-        return render_template("index.html")
-    except:
-        return "Welcome to the Government Operations and Financial Accounting Platform (GOFAP)!"
+    return '''
+    <h1>Welcome to the Government Operations and Financial Accounting Platform (GOFAP)!</h1>
+    <p>Your comprehensive finance management platform for government entities.</p>
+    <h2>Available Services:</h2>
+    <ul>
+        <li><a href="/data-import/">Data Import Dashboard</a> - Manage data synchronization with external services</li>
+    </ul>
+    <h2>Features:</h2>
+    <ul>
+        <li>💳 Digital Account & Card Creation</li>
+        <li>💰 Revenue & Spend Management</li>
+        <li>💸 Payment Operations</li>
+        <li>📈 Treasury Tools</li>
+        <li>🔄 Data Import & Synchronization</li>
+    </ul>
+    '''
+
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint."""
+    return {'status': 'healthy', 'service': 'GOFAP'}
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='127.0.0.1', port=port, debug=DEBUG)
+    return render_template("index.html")
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
     """Dashboard page showing system overview."""
     try:
+        from models import Account, Transaction, Budget
+        
+        # Get user's accounts
+        user_accounts = Account.query.filter_by(user_id=current_user.id).all()
+        total_balance = sum(acc.balance for acc in user_accounts)
+        
+        # Get recent transactions
+        recent_transactions = Transaction.query.join(Account).filter(
+            Account.user_id == current_user.id
+        ).order_by(Transaction.created_at.desc()).limit(10).all()
+        
+        # Get budget information
+        user_budgets = Budget.query.join(Department).join(Account).filter(
+            Account.user_id == current_user.id
+        ).all()
+        
+        return render_template("dashboard.html", 
+                             accounts=user_accounts,
+                             total_balance=total_balance,
+                             recent_transactions=recent_transactions,
+                             budgets=user_budgets)
+    except Exception as e:
+        logging.error(f"Dashboard error: {e}")
+        flash("Error loading dashboard data", "error")
         return render_template("dashboard.html")
-    except:
-        return jsonify({"message": "GOFAP Dashboard - System Overview"})
 
 
 @app.route("/accounts")
@@ -252,23 +377,16 @@ def get_accounts():
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
 
-@app.route('/api/transactions', methods=['GET'])
+@app.route("/payments")
 @login_required
-def get_transactions():
-    """API endpoint to get user's transactions."""
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
-    
-    transactions = Transaction.query.filter_by(user_id=current_user.id)\
-        .order_by(Transaction.created_at.desc())\
-        .paginate(page=page, per_page=per_page, error_out=False)
-    
-    return jsonify({
-        'transactions': [transaction.to_dict() for transaction in transactions.items],
-        'total': transactions.total,
-        'pages': transactions.pages,
-        'current_page': page
-    })
+def payments():
+    """Payment processing page."""
+    try:
+        return render_template("payments.html")
+    except:
+        return jsonify({"message": "GOFAP Payment Processing"})
+
+
 @app.route('/health')
 def health_check():
     """Health check endpoint."""
@@ -327,4 +445,4 @@ if __name__ == "__main__":
         db.create_all()
 
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="127.0.0.1", port=port, debug=DEBUG)
+    app.run(host="0.0.0.0", port=port, debug=DEBUG)

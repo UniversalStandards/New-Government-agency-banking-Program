@@ -209,9 +209,7 @@ def create_modern_treasury_account(
     return response
 
 
-def get_modern_treasury_account(
-    api_key: str, account_id: str
-) -> requests.Response:
+def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Get a Modern Treasury account by ID."""
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -237,9 +235,7 @@ def update_modern_treasury_account(
     return response
 
 
-def delete_modern_treasury_account(
-    api_key: str, account_id: str
-) -> requests.Response:
+def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Delete a Modern Treasury account."""
     headers = {
         "Authorization": f"Bearer {api_key}",

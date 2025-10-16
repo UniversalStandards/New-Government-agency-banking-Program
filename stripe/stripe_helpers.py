@@ -37,7 +37,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
 def create_stripe_customer(params):
     """Create a Stripe customer."""
     return stripe.Customer.create(**params)

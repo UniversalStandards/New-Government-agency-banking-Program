@@ -1,0 +1,69 @@
+# CODEOWNERS file for automated code review assignments
+# This file defines who should be automatically requested for review
+# when changes are made to specific parts of the codebase
+
+# Global owners - automatically assigned to all PRs
+* @UniversalStandards
+
+# Core application files
+main.py @UniversalStandards
+models.py @UniversalStandards
+app.py @UniversalStandards
+
+# Configuration and settings
+configs/ @UniversalStandards
+requirements.txt @UniversalStandards
+runtime.txt @UniversalStandards
+Procfile @UniversalStandards
+
+# Payment integration modules
+stripe/ @UniversalStandards
+modern_treasury/ @UniversalStandards
+
+# Database and models
+models/ @UniversalStandards
+*.sql @UniversalStandards
+
+# Testing
+test*.py @UniversalStandards
+tests/ @UniversalStandards
+pytest.ini @UniversalStandards
+
+# CI/CD and automation
+.github/ @UniversalStandards
+.github/workflows/ @UniversalStandards
+.github/dependabot.yml @UniversalStandards
+
+# Build and deployment
+build.py @UniversalStandards
+buildscript.bash @UniversalStandards
+setup.sh @UniversalStandards
+
+# Documentation
+README.md @UniversalStandards
+README_UPDATED.md @UniversalStandards
+CONTRIBUTING.md @UniversalStandards
+docs/ @UniversalStandards
+*.md @UniversalStandards
+
+# Security and compliance
+SECURITY.md @UniversalStandards
+CODE_OF_CONDUCT.md @UniversalStandards
+LICENSE @UniversalStandards
+
+# GUI components
+gui/ @UniversalStandards
+
+# Templates and static files
+templates/ @UniversalStandards
+static/ @UniversalStandards
+index.html @UniversalStandards
+
+# Service modules
+services/ @UniversalStandards
+issuers/ @UniversalStandards
+
+# Development configuration
+.replit @UniversalStandards
+replit.nix @UniversalStandards
+.gitignore @UniversalStandards

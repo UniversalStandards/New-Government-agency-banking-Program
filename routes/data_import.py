@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from datetime import datetime
 
 from data_import.config import load_config
+from data_import.sync_engine import SyncEngine  # Remove this line
 from data_import.sync_engine import SyncEngine
 from data_import.scheduler import create_scheduler
 from data_import.exceptions import ImportError, SyncError

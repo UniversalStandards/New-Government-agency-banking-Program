@@ -10,7 +10,7 @@ WTForms>=3.0.1
 # API integrations
 stripe>=6.0.0
 requests>=2.32.4
-aiohttp>=3.8.5
+aiohttp>=3.12.14
 
 # Modern Treasury integration
 # modern-treasury>=1.0.0
@@ -18,11 +18,10 @@ aiohttp>=3.8.5
 # Security and utilities
 python-dotenv>=1.0.0
 cryptography>=42.0.4
-Werkzeug>=2.3.7
+werkzeug>=3.0.6
 
-# Database
-psycopg2-binary>=2.9.7  # PostgreSQL support
-pymysql>=1.1.0  # MySQL support
+# Database support
+pymysql>=1.1.1
 
 # Development dependencies
 pytest>=7.4.2
@@ -35,8 +34,5 @@ isort>=5.12.0
 
 # Production server
 gunicorn>=22.0.0
-
-# Additional utilities
-python-dateutil>=2.8.2
-pytz>=2023.3
-email-validator>=2.0.0
+flask-login
+psycopg2-binary
