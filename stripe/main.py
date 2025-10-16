@@ -17,18 +17,6 @@ customer_params = {
         'postal_code': 'Customer Postal Code',
         'country': 'Customer Country'
     }
-    # Add other required parameters
-    "name": "Customer Name",
-    "email": "customer@email.com",
-    "phone": "Customer Phone",
-    "address": {
-        "line1": "Customer Address Line 1",
-        "line2": "Customer Address Line 2",
-        "city": "Customer City",
-        "state": "Customer State",
-        "postal_code": "Customer Postal Code",
-        "country": "Customer Country",
-    },
 }
 
 # Create a Stripe customer
