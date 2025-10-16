@@ -12,8 +12,8 @@ from .exceptions import ImportError, SyncError, ConfigurationError
 __version__ = "1.0.0"
 __all__ = [
     "BaseImporter",
-    "ImportConfig", 
+    "ImportConfig",
     "ImportError",
     "SyncError",
-    "ConfigurationError"
+    "ConfigurationError",
 ]
