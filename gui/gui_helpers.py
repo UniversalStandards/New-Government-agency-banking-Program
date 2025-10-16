@@ -3,7 +3,23 @@ from typing import Any, Dict, Optional
 import os
 from functools import wraps
 import asyncio
+import tkinter as tk
+from tkinter import messagebox
 
+# Import the async functions from the respective modules
+try:
+    from modern_treasury.modern_treasury_helpers import create_modern_treasury_account_async
+except ImportError:
+    # Fallback if import fails
+    async def create_modern_treasury_account_async(api_key, params):
+        return {'success': False, 'error': 'Modern Treasury integration not available'}
+
+try:
+    from stripe.stripe_helpers import create_stripe_customer_async
+except ImportError:
+    # Fallback if import fails
+    async def create_stripe_customer_async(api_key, params):
+        return {'success': False, 'error': 'Stripe integration not available'}
 from modern_treasury.modern_treasury_helpers import (
     create_modern_treasury_account_async,
 )
