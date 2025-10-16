@@ -102,7 +102,7 @@ The repository uses 12 workflows to ensure code quality, security, and proper de
 - Python
 - JavaScript
 
-**Permissions**: `actions: write`, `contents: write`, `security-events: write`
+**Permissions**: `actions: write`, `security-events: write`
 
 ---
 
