@@ -29,7 +29,9 @@ class TestCreateAccountsFunctions:
     async def test_async_function_calls_correct_service(self):
         """Test that create_accounts_async routes to correct service function."""
         # Mock the service-specific functions
-        with patch("gui.gui_helpers.create_modern_account", new_callable=AsyncMock) as mock_modern:
+        with patch(
+            "gui.gui_helpers.create_modern_account", new_callable=AsyncMock
+        ) as mock_modern:
             mock_modern.return_value = "test_account_id"
 
             result = await create_accounts_async(
@@ -43,10 +45,14 @@ class TestCreateAccountsFunctions:
     def test_sync_function_no_recursion(self):
         """Test that synchronous create_accounts doesn't cause infinite recursion."""
         # Mock the async function to prevent actual API calls
-        with patch("gui.gui_helpers.create_accounts_async", new_callable=AsyncMock) as mock_async:
+        with patch(
+            "gui.gui_helpers.create_accounts_async", new_callable=AsyncMock
+        ) as mock_async:
             mock_async.return_value = "test_result"
 
-            result = create_accounts("stripe", "test_key", {"email": "test@example.com"})
+            result = create_accounts(
+                "stripe", "test_key", {"email": "test@example.com"}
+            )
 
             # Verify that create_accounts_async was called (not create_accounts itself)
             mock_async.assert_called_once()
@@ -54,7 +60,9 @@ class TestCreateAccountsFunctions:
 
     def test_sync_function_default_params(self):
         """Test that synchronous create_accounts uses default params."""
-        with patch("gui.gui_helpers.create_accounts_async", new_callable=AsyncMock) as mock_async:
+        with patch(
+            "gui.gui_helpers.create_accounts_async", new_callable=AsyncMock
+        ) as mock_async:
             mock_async.return_value = "test_result"
 
             # Call without params
@@ -69,10 +77,14 @@ class TestCreateAccountsFunctions:
 
     def test_sync_function_error_handling(self):
         """Test that synchronous create_accounts handles errors gracefully."""
-        with patch("gui.gui_helpers.create_accounts_async", new_callable=AsyncMock) as mock_async:
+        with patch(
+            "gui.gui_helpers.create_accounts_async", new_callable=AsyncMock
+        ) as mock_async:
             mock_async.side_effect = Exception("Test error")
 
-            result = create_accounts("stripe", "test_key", {"email": "test@example.com"})
+            result = create_accounts(
+                "stripe", "test_key", {"email": "test@example.com"}
+            )
 
             # Should return None on error, not raise exception
             assert result is None
