@@ -1,7 +1,6 @@
-from .stripe.stripe import StripeService
-from .paypal.paypal import PaypalService
 from .modern_treasury.modern_treasury import ModernTreasuryService
-
+from .paypal.paypal import PaypalService
+from .stripe.stripe import StripeService
 
 def get_service(service_name: str):
     """Factory function to get service instances."""
@@ -15,6 +14,5 @@ def get_service(service_name: str):
         raise ValueError(f"Unknown service: {service_name}")
 
     return services[service_name]()
-
 
 __all__ = ["StripeService", "PaypalService", "ModernTreasuryService", "get_service"]

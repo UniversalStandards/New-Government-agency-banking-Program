@@ -2,17 +2,17 @@
 Test cases for GUI helper functions.
 """
 
-import pytest
 import asyncio
-from unittest.mock import patch, AsyncMock, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, patch
+
+import pytest
 
 # Add parent directory to path to import gui modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from gui.gui_helpers import create_accounts, create_accounts_async
-
 
 class TestCreateAccountsFunctions:
     """Test that create_accounts functions are properly separated."""
@@ -66,7 +66,7 @@ class TestCreateAccountsFunctions:
             mock_async.return_value = "test_result"
 
             # Call without params
-            result = create_accounts("stripe")
+            create_accounts("stripe")
 
             # Verify default params were used
             call_args = mock_async.call_args

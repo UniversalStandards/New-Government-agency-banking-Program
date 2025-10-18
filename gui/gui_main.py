@@ -1,7 +1,7 @@
+import logging
+import os
 import tkinter as tk
 from tkinter import ttk
-import os
-import logging
 
 # Try to import the newer async helpers first, fall back to compatibility mode
 try:
@@ -17,7 +17,6 @@ except ImportError:
         logging.info(f"Creating {service} account (compatibility mode)")
         return f"mock_{service}_account"
 
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,8 +25,8 @@ logger = logging.getLogger(__name__)
 stripe_api_key = os.environ.get("STRIPE_SECRET_KEY", "")
 modern_treasury_api_key = os.environ.get("MODERN_TREASURY_API_KEY", "")
 from gui_helpers import create_accounts
-from configs.settings import STRIPE_SECRET_KEY, MODERN_TREASURY_API_KEY
 
+from configs.settings import MODERN_TREASURY_API_KEY, STRIPE_SECRET_KEY
 
 class AccountCreationGUI:
     def __init__(self, root):
@@ -117,7 +116,6 @@ class AccountCreationGUI:
     def create_stripe_customer(self):
         # Call the function to create a Stripe customer
         create_accounts("stripe", api_key=STRIPE_SECRET_KEY, params={})
-
 
 if __name__ == "__main__":
     root = tk.Tk()
