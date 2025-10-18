@@ -3,19 +3,15 @@ Modern Treasury API helper functions for GOFAP.
 Provides comprehensive integration with Modern Treasury for government financial operations.
 """
 
-import requests
 import logging
-from typing import Dict, Any, Optional, List
-import json
+from typing import Any, Dict, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 
-
 class ModernTreasuryError(Exception):
     """Custom exception for Modern Treasury API errors."""
-
-    pass
-
 
 class ModernTreasuryClient:
     """Client for interacting with Modern Treasury API."""
@@ -104,7 +100,6 @@ class ModernTreasuryClient:
         )
         return self._make_request("GET", endpoint)
 
-
 # Legacy function wrappers for backward compatibility
 def create_modern_treasury_account(
     api_key: str, account_params: Dict[str, Any]
@@ -127,7 +122,6 @@ def create_modern_treasury_account(
         logger.error(f"Failed to create account: {e}")
         raise
 
-
 def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Legacy function to get Modern Treasury account."""
     client = ModernTreasuryClient(api_key, "")
@@ -145,7 +139,6 @@ def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Respo
     except ModernTreasuryError as e:
         logger.error(f"Failed to get account: {e}")
         raise
-
 
 def update_modern_treasury_account(
     api_key: str, account_id: str, update_params: Dict[str, Any]
@@ -167,7 +160,6 @@ def update_modern_treasury_account(
         logger.error(f"Failed to update account: {e}")
         raise
 
-
 def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Legacy function to delete Modern Treasury account."""
     client = ModernTreasuryClient(api_key, "")
@@ -186,14 +178,12 @@ def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Re
         logger.error(f"Failed to delete account: {e}")
         raise
 
-
 # Async versions for modern usage
 async def create_modern_treasury_account_async(
     api_key: str, account_params: Dict[str, Any]
 ) -> Dict[str, Any]:
     """Async function to create Modern Treasury account."""
     import aiohttp
-    import asyncio
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -220,17 +210,15 @@ async def create_modern_treasury_account_async(
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+import logging
+from typing import Any, Dict, Optional
 
 import requests
-import asyncio
-from typing import Dict, Any, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
 # Modern Treasury API base URL
 MT_BASE_URL = "https://app.moderntreasury.com/api"
-
 
 def create_modern_treasury_account(
     api_key: str, account_params: Dict[str, Any]
@@ -245,7 +233,6 @@ def create_modern_treasury_account(
     response = requests.post(url, json=account_params, headers=headers, timeout=10)
     return response
 
-
 def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Get a Modern Treasury account by ID."""
     headers = {
@@ -256,7 +243,6 @@ def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Respo
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
     response = requests.get(url, headers=headers)
     return response
-
 
 def update_modern_treasury_account(
     api_key: str, account_id: str, update_params: Dict[str, Any]
@@ -271,7 +257,6 @@ def update_modern_treasury_account(
     response = requests.patch(url, json=update_params, headers=headers)
     return response
 
-
 def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Delete a Modern Treasury account."""
     headers = {
@@ -282,7 +267,6 @@ def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Re
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
     response = requests.delete(url, headers=headers)
     return response
-
 
 async def create_modern_treasury_account_async(
     api_key: str, params: Dict[str, Any]

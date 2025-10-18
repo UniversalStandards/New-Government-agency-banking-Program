@@ -1,8 +1,9 @@
 import os
-import requests
-from typing import Dict, Any, Optional
-from ..service import Service
+from typing import Any, Dict, Optional
 
+import requests
+
+from ..service import Service
 
 class ModernTreasuryService(Service):
     """Modern Treasury service for cash management."""

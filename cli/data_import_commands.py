@@ -5,14 +5,11 @@ Flask CLI commands for data import operations.
 import click
 
 # Remove the unused import statement
-import logging
-from flask import current_app
 from flask.cli import with_appcontext
 
 from data_import.config import load_config
-from data_import.sync_engine import SyncEngine
 from data_import.scheduler import create_scheduler
-
+from data_import.sync_engine import SyncEngine
 
 def register_data_import_commands(app):
     """Register data import CLI commands with the Flask app."""
@@ -20,7 +17,6 @@ def register_data_import_commands(app):
     @app.cli.group()
     def data_import():
         """Data import management commands."""
-        pass
 
     @data_import.command()
     @click.option("--service", help="Specific service to sync (linear, github)")
@@ -251,7 +247,7 @@ def register_data_import_commands(app):
         """Initialize the database tables for data import."""
         try:
             config = load_config()
-            sync_engine = SyncEngine(config)
+            SyncEngine(config)
 
             # The SyncEngine constructor already creates tables
             click.echo("✅ Database tables initialized successfully.")

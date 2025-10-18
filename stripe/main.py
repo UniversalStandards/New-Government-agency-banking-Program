@@ -1,5 +1,6 @@
-import stripe
 from stripe_helpers import create_stripe_customer
+
+import stripe
 
 # Set your Stripe API key
 stripe.api_key = "stripe_api_key"
