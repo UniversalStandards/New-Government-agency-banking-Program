@@ -7,7 +7,7 @@ for integrating with various external services including Linear, GitHub, and oth
 
 from .base_importer import BaseImporter
 from .config import ImportConfig
-from .exceptions import ImportError, SyncError, ConfigurationError
+from .exceptions import ConfigurationError, ImportError, SyncError
 
 __version__ = "1.0.0"
 __all__ = [

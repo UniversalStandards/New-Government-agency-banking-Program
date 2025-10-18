@@ -1,8 +1,9 @@
-import stripe
 import os
-from typing import Dict, Any, Optional
-from ..service import Service
+from typing import Any, Dict, Optional
 
+import stripe
+
+from ..service import Service
 
 class StripeService(Service):
     """Complete Stripe payment service implementation."""

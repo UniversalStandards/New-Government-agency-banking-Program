@@ -2,13 +2,13 @@
 GitHub API client for fetching data from GitHub repositories.
 """
 
-import requests
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .exceptions import AuthenticationError, RateLimitError, ImportError
+import requests
 
+from .exceptions import AuthenticationError, ImportError, RateLimitError
 
 class GitHubClient:
     """Client for interacting with the GitHub API."""

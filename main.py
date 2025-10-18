@@ -3,14 +3,14 @@ GOFAP - Government Operations and Financial Accounting Platform
 Main application entry point with comprehensive Flask setup.
 """
 
-import os
 import logging
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+import os
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
+
+from flask import Flask, flash, jsonify, render_template, request
+from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
-from flask_login import LoginManager, login_required, current_user
+
 from models import db
 
 # Configure logging
@@ -20,7 +20,7 @@ logging.basicConfig(
 
 # Import configuration settings
 try:
-    from configs.settings import *
+    pass
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
@@ -57,24 +57,13 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
 
-# Import models after db initialization
-from models import (
-    db,
-    User,
-    Account,
-    Transaction,
-    Budget,
-    BudgetItem,
-    AuditLog,
-    UserRole,
-    AccountType,
-    TransactionType,
-    TransactionStatus,
-)
+from api import api_bp
 
 # Import blueprints
 from auth import auth_bp
-from api import api_bp
+
+# Import models after db initialization
+from models import Account, Budget, Transaction, User, UserRole, db
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -82,14 +71,13 @@ app.register_blueprint(api_bp)
 
 # Import models after db initialization
 try:
-    from models import User, Account, Transaction, Department, Budget  # noqa: F401
+    from models import Account, Budget, Department, Transaction, User  # noqa: F401
 except ImportError:
     # Models module not yet created - this is expected during initial setup
     try:
-        from models import *
+        pass
     except ImportError:
         pass
-
 
 # Flask-Login user loader
 @login_manager.user_loader
@@ -98,12 +86,10 @@ def load_user(user_id):
 
     return User.query.get(user_id)
 
-
 # Template context processor
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
-
 
 # Add cache control headers for static files in development
 @app.after_request
@@ -116,7 +102,6 @@ def add_header(response):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
-
 
 # Register blueprints
 try:
@@ -145,18 +130,15 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
-
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template("errors/404.html"), 404
 
-
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
     return render_template("errors/500.html"), 500
-
 
 # Main routes
 @app.route("/")
@@ -166,19 +148,17 @@ def home():
         return render_template("dashboard.html", user=current_user)
     return render_template("index.html")
 
-
 @app.route("/health")
 def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "service": "GOFAP"}
-
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
     """Dashboard page showing system overview."""
     try:
-        from models import Account, Transaction, Budget
+        from models import Account, Budget, Transaction
 
         # Get user's accounts
         user_accounts = Account.query.filter_by(user_id=current_user.id).all()
@@ -213,7 +193,6 @@ def dashboard():
         flash("Error loading dashboard data", "error")
         return render_template("dashboard.html")
 
-
 @app.route("/accounts")
 def accounts():
     """Accounts management page."""
@@ -222,7 +201,6 @@ def accounts():
     except:
         return jsonify({"message": "GOFAP Account Management"})
 
-
 @app.route("/accounts/create")
 def create_account():
     """Account creation page."""
@@ -230,7 +208,6 @@ def create_account():
         return render_template("create_account.html")
     except:
         return jsonify({"message": "GOFAP Account Creation"})
-
 
 @app.route("/api/accounts/create", methods=["POST"])
 def api_create_account():
@@ -261,7 +238,6 @@ def api_create_account():
             500,
         )
 
-
 @app.route("/transactions")
 def transactions():
     """Transactions page."""
@@ -269,7 +245,6 @@ def transactions():
         return render_template("transactions.html")
     except:
         return jsonify({"message": "GOFAP Transaction Management"})
-
 
 @app.route("/budgets")
 def budgets():
@@ -279,7 +254,6 @@ def budgets():
     except:
         return jsonify({"message": "GOFAP Budget Management"})
 
-
 @app.route("/reports")
 def reports():
     """Reports and analytics page."""
@@ -288,14 +262,12 @@ def reports():
     except:
         return jsonify({"message": "GOFAP Reports and Analytics"})
 
-
 @app.route("/api/accounts", methods=["GET"])
 @login_required
 def get_accounts():
     """API endpoint to get user's accounts."""
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
-
 
 @app.route("/payments")
 @login_required
@@ -305,7 +277,6 @@ def payments():
         return render_template("payments.html")
     except:
         return jsonify({"message": "GOFAP Payment Processing"})
-
 
 @app.route("/api/budgets", methods=["GET"])
 @login_required
@@ -319,7 +290,6 @@ def get_budgets():
         ).all()
 
     return jsonify([budget.to_dict() for budget in budgets])
-
 
 if __name__ == "__main__":
     # Create tables and initialize database
