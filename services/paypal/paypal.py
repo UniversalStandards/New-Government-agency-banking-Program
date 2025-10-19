@@ -1,9 +1,10 @@
-import os
-import requests
 import base64
-from typing import Dict, Any, Optional
-from ..service import Service
+import os
+from typing import Any, Dict, Optional
 
+import requests
+
+from ..service import Service
 
 class PaypalService(Service):
     """Complete PayPal payment service implementation."""

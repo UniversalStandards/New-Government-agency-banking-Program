@@ -5,12 +5,11 @@ Base importer class providing common functionality for all data importers.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from .config import ImportConfig
-from .exceptions import ImportError, SyncError, RateLimitError
-
+from .exceptions import ImportError, RateLimitError
 
 class BaseImporter(ABC):
     """Abstract base class for all data importers."""
@@ -42,7 +41,6 @@ class BaseImporter(ABC):
         Returns:
             List of data items to import
         """
-        pass
 
     @abstractmethod
     def transform_data(self, raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -54,7 +52,6 @@ class BaseImporter(ABC):
         Returns:
             Transformed data ready for storage
         """
-        pass
 
     @abstractmethod
     def store_data(self, transformed_data: List[Dict[str, Any]]) -> int:
@@ -66,7 +63,6 @@ class BaseImporter(ABC):
         Returns:
             Number of items stored
         """
-        pass
 
     def sync(self, full_sync: bool = False) -> Dict[str, Any]:
         """Perform a data synchronization.
@@ -184,7 +180,7 @@ class BaseImporter(ABC):
         """
         try:
             # Try to fetch a small amount of data to test connection
-            test_data = self.fetch_data()
+            self.fetch_data()
             return True
         except Exception as e:
             self.logger.error(

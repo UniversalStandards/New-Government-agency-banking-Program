@@ -2,15 +2,13 @@
 GitHub data importer for syncing GitHub repository data.
 """
 
-import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from .base_importer import BaseImporter
-from .github_client import GitHubClient
 from .config import ImportConfig
 from .exceptions import ImportError
-
+from .github_client import GitHubClient
 
 class GitHubImporter(BaseImporter):
     """Importer for GitHub repository data."""

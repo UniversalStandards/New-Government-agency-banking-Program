@@ -2,14 +2,14 @@
 Database models for GOFAP (Government Operations and Financial Accounting Platform).
 """
 
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from enum import Enum
 import uuid
+from datetime import datetime
+from enum import Enum
+
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
-
 
 class UserRole(Enum):
     ADMIN = "admin"
@@ -20,14 +20,12 @@ class UserRole(Enum):
     EMPLOYEE = "employee"
     CITIZEN = "citizen"
 
-
 class AccountType(Enum):
     CHECKING = "checking"
     SAVINGS = "savings"
     CREDIT = "credit"
     DEBIT = "debit"
     EXTERNAL = "external"
-
 
 class TransactionType(Enum):
     DEPOSIT = "deposit"
@@ -38,14 +36,12 @@ class TransactionType(Enum):
     REFUND = "refund"
     FEE = "fee"
 
-
 class TransactionStatus(Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
-
 
 class User(db.Model):
     """User model for authentication and authorization."""
@@ -94,7 +90,6 @@ class User(db.Model):
             "last_login": self.last_login.isoformat() if self.last_login else None,
         }
 
-
 class Account(db.Model):
     """Account model for financial accounts."""
 
@@ -137,7 +132,6 @@ class Account(db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-
 
 class Transaction(db.Model):
     """Transaction model for financial transactions."""
@@ -183,7 +177,6 @@ class Transaction(db.Model):
             ),
         }
 
-
 class Budget(db.Model):
     """Budget model for financial planning."""
 
@@ -226,7 +219,6 @@ class Budget(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
-
 class BudgetItem(db.Model):
     """Budget item model for detailed budget breakdown."""
 
@@ -258,7 +250,6 @@ class BudgetItem(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
-
 class AuditLog(db.Model):
     """Audit log model for tracking system changes."""
 
@@ -289,7 +280,6 @@ class AuditLog(db.Model):
             "user_agent": self.user_agent,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-
 
 class Department(db.Model):
     """Department model for government departments."""

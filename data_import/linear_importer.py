@@ -2,15 +2,13 @@
 Linear data importer for syncing Linear workspace data.
 """
 
-import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from .base_importer import BaseImporter
-from .linear_client import LinearClient
 from .config import ImportConfig
 from .exceptions import ImportError
-
+from .linear_client import LinearClient
 
 class LinearImporter(BaseImporter):
     """Importer for Linear workspace data."""

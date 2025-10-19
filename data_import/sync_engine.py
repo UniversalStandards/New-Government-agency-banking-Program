@@ -3,17 +3,18 @@ Core sync engine for managing data synchronization across multiple services.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from data_models.imported_data import Base, ImportedData, SyncStatus
 
 from .config import ImportConfig
-from .linear_importer import LinearImporter
+from .exceptions import SyncError
 from .github_importer import GitHubImporter
-from .exceptions import ImportError, SyncError
-from data_models.imported_data import SyncStatus, ImportedData, Base
-
+from .linear_importer import LinearImporter
 
 class SyncEngine:
     """Core engine for managing data synchronization."""

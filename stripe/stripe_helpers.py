@@ -1,13 +1,11 @@
-import stripe
 import asyncio
-import aiohttp
-from typing import Dict, Any
+from typing import Any, Dict
 
+import stripe
 
 def create_stripe_customer(params):
     """Synchronous function to create Stripe customer."""
     return stripe.Customer.create(**params)
-
 
 async def create_stripe_customer_async(
     api_key: str, params: Dict[str, Any]
@@ -33,17 +31,14 @@ async def create_stripe_customer_async(
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-
-from typing import Dict, Any
 import logging
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
-
 
 def create_stripe_customer(params):
     """Create a Stripe customer."""
     return stripe.Customer.create(**params)
-
 
 async def create_stripe_customer_async(
     api_key: str, params: Dict[str, Any]
