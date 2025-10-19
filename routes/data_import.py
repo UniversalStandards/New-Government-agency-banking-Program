@@ -3,14 +3,12 @@ Flask routes for data import management.
 """
 
 import logging
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
-from datetime import datetime
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from data_import.config import load_config
-from data_import.sync_engine import SyncEngine  # Remove this line
-from data_import.sync_engine import SyncEngine
 from data_import.scheduler import create_scheduler
-from data_import.exceptions import ImportError, SyncError
+from data_import.sync_engine import SyncEngine  # Remove this line
 
 # Create blueprint
 data_import_bp = Blueprint("data_import", __name__, url_prefix="/data-import")
@@ -18,7 +16,6 @@ data_import_bp = Blueprint("data_import", __name__, url_prefix="/data-import")
 # Global scheduler instance
 scheduler = None
 logger = logging.getLogger(__name__)
-
 
 def get_scheduler():
     """Get or create the global scheduler instance."""
@@ -31,7 +28,6 @@ def get_scheduler():
             logger.error(f"Failed to create scheduler: {e}")
             scheduler = None
     return scheduler
-
 
 @data_import_bp.route("/")
 def dashboard():
@@ -52,7 +48,6 @@ def dashboard():
             "data_import/dashboard.html", error=f"Dashboard error: {e}"
         )
 
-
 @data_import_bp.route("/status")
 def status():
     """Get sync status as JSON."""
@@ -65,7 +60,6 @@ def status():
     except Exception as e:
         logger.error(f"Status error: {e}")
         return jsonify({"error": "An internal error has occurred"}), 500
-
 
 @data_import_bp.route("/sync", methods=["POST"])
 def trigger_sync():
@@ -108,7 +102,6 @@ def trigger_sync():
             flash(f"Sync error: {e}", "error")
             return redirect(url_for("data_import.dashboard"))
 
-
 @data_import_bp.route("/scheduler/start", methods=["POST"])
 def start_scheduler():
     """Start the sync scheduler."""
@@ -137,7 +130,6 @@ def start_scheduler():
             flash(f"Failed to start scheduler: {e}", "error")
             return redirect(url_for("data_import.dashboard"))
 
-
 @data_import_bp.route("/scheduler/stop", methods=["POST"])
 def stop_scheduler():
     """Stop the sync scheduler."""
@@ -165,7 +157,6 @@ def stop_scheduler():
         else:
             flash(f"Failed to stop scheduler: {e}", "error")
             return redirect(url_for("data_import.dashboard"))
-
 
 @data_import_bp.route("/data")
 def view_data():
@@ -215,7 +206,6 @@ def view_data():
             "data_import/data.html", error=f"Error loading data: {e}"
         )
 
-
 @data_import_bp.route("/data/api")
 def api_data():
     """Get imported data as JSON."""
@@ -248,7 +238,6 @@ def api_data():
         logger.error(f"API data error: {e}")
         return jsonify({"error": str(e)}), 500
 
-
 @data_import_bp.route("/config")
 def config():
     """View and edit configuration."""
@@ -275,7 +264,6 @@ def config():
         return render_template(
             "data_import/config.html", error=f"Error loading configuration: {e}"
         )
-
 
 @data_import_bp.route("/test-connections")
 def test_connections():

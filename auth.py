@@ -1,13 +1,13 @@
 """Authentication system for GOFAP."""
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Department
 import re
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
 
+from models import Department, User, db
+
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 def validate_password(password):
     """Validate password strength."""
@@ -24,7 +24,6 @@ def validate_password(password):
         return False, "Password must contain at least one number"
 
     return True, "Password is valid"
-
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -56,7 +55,6 @@ def login():
             flash("Invalid username or password", "error")
 
     return render_template("auth/login.html")
-
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -117,12 +115,11 @@ def register():
             flash("Registration successful! Please log in.", "success")
             return redirect(url_for("auth.login"))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             flash("Registration failed. Please try again.", "error")
 
     return render_template("auth/register.html", departments=departments)
-
 
 @auth_bp.route("/logout")
 @login_required
@@ -132,13 +129,11 @@ def logout():
     flash("You have been logged out successfully", "info")
     return redirect(url_for("home"))
 
-
 @auth_bp.route("/profile")
 @login_required
 def profile():
     """User profile."""
     return render_template("auth/profile.html", user=current_user)
-
 
 @auth_bp.route("/change-password", methods=["GET", "POST"])
 @login_required

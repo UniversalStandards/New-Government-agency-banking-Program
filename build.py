@@ -61,7 +61,6 @@ with open("services/stripe/__init__.py", "w") as f:
 with open("services/stripe/stripe.py", "w") as f:
     f.write("from .service import Service\nclass StripeService(Service):\n    pass")
 
-
 with open("configs/settings.py", "w") as f:
     f.write("DEBUG=True")
 
@@ -173,7 +172,7 @@ with open("templates/login.html", "w") as f:
     <link rel='stylesheet' href='/static/style.css'>
 </head>
 <body>
-    <h1>Login to your account</h1> 
+    <h1>Login to your account</h1>
 </body>
 </html>"""
     )
