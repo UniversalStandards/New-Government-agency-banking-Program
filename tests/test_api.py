@@ -9,14 +9,8 @@ import pytest
 from flask import Flask
 from flask_login import LoginManager
 
-from models import (
-    Account,
-    AccountType,  # noqa: F401; Transaction,
-    TransactionType,
-    User,
-    UserRole,
-    db,
-)
+from models import AccountType  # noqa: F401; Transaction,
+from models import Account, TransactionType, User, UserRole, db
 
 @pytest.fixture
 def app():
