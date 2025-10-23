@@ -2,7 +2,7 @@
 
 import stripe
 import logging
-from typing import Dict, Any  # Removed Optional as it is not used
+from typing import Dict, Any
 from configs.settings import STRIPE_SECRET_KEY
 
 logger = logging.getLogger(__name__)
