@@ -7,7 +7,7 @@ import threading
 from datetime import datetime, timedelta
 from typing import Dict, Any
 from main import app, db
-from models import Account, Transaction, PayrollRecord, Budget, UtilityPayment, TransactionStatus, TransactionType
+from models import (
     User, Account, Transaction, PayrollRecord, Budget, UtilityPayment,
     TransactionStatus, TransactionType
 )
