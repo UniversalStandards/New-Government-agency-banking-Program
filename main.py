@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime  # Removed timedelta since it's not used
+import logging
 from flask import Flask, request, jsonify, render_template_string
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -33,6 +34,9 @@ except ImportError:
     # Models module not yet created - this is expected during initial setup
     pass
 
+
+# Set up basic logging configuration
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def home():
@@ -120,7 +124,9 @@ def users():
             } for user in users_list])
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the exception internally for debugging
+        logging.exception("Exception in /api/users endpoint")
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 
 @app.route('/api/accounts', methods=['GET', 'POST'])
