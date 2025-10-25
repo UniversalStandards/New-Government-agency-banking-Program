@@ -1,4 +1,4 @@
-# <span style="color: #1E90FF;">Government Operations and Financial Accounting Platform</span> | <span style="color: #FF4500;">GOFAP</span>
+# <span style="color: #1E90FF;">Government Operations, Financial, Aqusistions, and Personnel System</span> | <span style="color: #FF4500;">GOFAPS</span>
 
 The <span style="color: #FFA500;">**Government Operations and Financial Accounting Platform (GOFAP)**</span> is an all-in-one finance management platform built specifically for government entities to manage accounting, payments, treasury and more. By integrating with various modern APIs, GOFAP provides robust capabilities tailored for the unique needs of public sector organizations.
 
@@ -30,7 +30,7 @@ The <span style="color: #FFA500;">**Government Operations and Financial Accounti
 - 🗄 **Knowledge Management**    
   Create, organize and share information across the organization     
 
-## ✅ Why the Government Operations and Financial Accounting Platform (GOFAP)?
+## ✅ Why the Government Operations, Financial, Aqusistions, and Personnel System (GOFAPS)?
 
 GOFAP empowers governments to:       
 
