@@ -1,0 +1,493 @@
+# Comprehensive Security Scanning and Monitoring
+# This workflow provides continuous security monitoring for the GOFAP platform
+
+name: 🔒 Security Scan & Monitoring
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run security scans daily at 1 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - code-only
+        - dependency-only
+        - secrets-only
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Static Code Security Analysis
+  code-security:
+    name: 🔍 Static Code Security Analysis
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.scan_type == 'full' || 
+      github.event.inputs.scan_type == 'code-only'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install security scanning tools
+      run: |
+        pip install --upgrade pip
+        pip install bandit[toml] semgrep safety pip-audit
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r . -f json -o bandit-results.json || true
+        bandit -r . -f txt || true
+
+    - name: Run Semgrep security scan
+      run: |
+        semgrep --config=auto --json --output=semgrep-results.json . || true
+        semgrep --config=auto . || true
+
+    - name: Upload Bandit results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: bandit-results.json
+      continue-on-error: true
+
+    - name: Process security scan results
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          let securityIssues = [];
+          
+          // Process Bandit results
+          try {
+            if (fs.existsSync('bandit-results.json')) {
+              const banditData = JSON.parse(fs.readFileSync('bandit-results.json', 'utf8'));
+              if (banditData.results && banditData.results.length > 0) {
+                securityIssues.push(`### Bandit Security Issues (${banditData.results.length})`);
+                banditData.results.forEach((issue, index) => {
+                  const severity = issue.issue_severity || 'MEDIUM';
+                  securityIssues.push(`${index + 1}. **${issue.test_name}** (${severity})`);
+                  securityIssues.push(`   - File: \`${issue.filename}:${issue.line_number}\``);
+                  securityIssues.push(`   - Issue: ${issue.issue_text}`);
+                  securityIssues.push(`   - Confidence: ${issue.issue_confidence}`);
+                  securityIssues.push('');
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Error processing Bandit results:', e.message);
+          }
+          
+          // Process Semgrep results
+          try {
+            if (fs.existsSync('semgrep-results.json')) {
+              const semgrepData = JSON.parse(fs.readFileSync('semgrep-results.json', 'utf8'));
+              if (semgrepData.results && semgrepData.results.length > 0) {
+                securityIssues.push(`### Semgrep Security Issues (${semgrepData.results.length})`);
+                semgrepData.results.forEach((issue, index) => {
+                  securityIssues.push(`${index + 1}. **${issue.check_id}**`);
+                  securityIssues.push(`   - File: \`${issue.path}:${issue.start.line}\``);
+                  securityIssues.push(`   - Message: ${issue.extra.message}`);
+                  securityIssues.push(`   - Severity: ${issue.extra.severity || 'INFO'}`);
+                  securityIssues.push('');
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Error processing Semgrep results:', e.message);
+          }
+          
+          // Create security issue if problems found
+          if (securityIssues.length > 0) {
+            const title = `🔒 Security Vulnerabilities Detected - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 🔒 Security Scan Results\n\n${securityIssues.join('\n')}\n\n` +
+              `**Scan Date:** ${new Date().toISOString()}\n` +
+              `**Branch:** ${context.ref}\n` +
+              `**Commit:** ${context.sha.substring(0, 7)}\n\n` +
+              `**⚠️ Action Required:** Please review and address these security issues immediately.`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'vulnerability', 'automated', 'high-priority']
+            });
+          }
+
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          bandit-results.json
+          semgrep-results.json
+
+  # Dependency Vulnerability Scanning
+  dependency-security:
+    name: 🔐 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.scan_type == 'full' || 
+      github.event.inputs.scan_type == 'dependency-only'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies and scanning tools
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety pip-audit cyclonedx-bom
+
+    - name: Generate SBOM (Software Bill of Materials)
+      run: |
+        cyclonedx-py -o gofap-sbom.json
+
+    - name: Run Safety dependency scan
+      run: |
+        safety check --json --output safety-results.json || true
+        safety check || true
+
+    - name: Run pip-audit vulnerability scan
+      run: |
+        pip-audit --format=json --output=pip-audit-results.json || true
+        pip-audit || true
+
+    - name: Process dependency scan results
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          let dependencyIssues = [];
+          
+          // Process Safety results
+          try {
+            if (fs.existsSync('safety-results.json')) {
+              const safetyData = JSON.parse(fs.readFileSync('safety-results.json', 'utf8'));
+              if (safetyData.length > 0) {
+                dependencyIssues.push(`### Safety Vulnerability Scan (${safetyData.length} issues)`);
+                safetyData.forEach((vuln, index) => {
+                  dependencyIssues.push(`${index + 1}. **${vuln.package}** ${vuln.installed_version}`);
+                  dependencyIssues.push(`   - Advisory: ${vuln.advisory}`);
+                  dependencyIssues.push(`   - CVE: ${vuln.cve || 'N/A'}`);
+                  dependencyIssues.push(`   - Affected: ${vuln.vulnerable_spec}`);
+                  dependencyIssues.push('');
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Error processing Safety results:', e.message);
+          }
+          
+          // Process pip-audit results
+          try {
+            if (fs.existsSync('pip-audit-results.json')) {
+              const auditData = JSON.parse(fs.readFileSync('pip-audit-results.json', 'utf8'));
+              if (auditData.vulnerabilities && auditData.vulnerabilities.length > 0) {
+                dependencyIssues.push(`### Pip-Audit Vulnerabilities (${auditData.vulnerabilities.length} issues)`);
+                auditData.vulnerabilities.forEach((vuln, index) => {
+                  dependencyIssues.push(`${index + 1}. **${vuln.package}** ${vuln.installed_version}`);
+                  dependencyIssues.push(`   - Description: ${vuln.description}`);
+                  dependencyIssues.push(`   - CVE: ${vuln.id}`);
+                  dependencyIssues.push(`   - Fix Available: ${vuln.fix_available ? 'Yes' : 'No'}`);
+                  dependencyIssues.push('');
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Error processing pip-audit results:', e.message);
+          }
+          
+          // Create dependency issue if vulnerabilities found
+          if (dependencyIssues.length > 0) {
+            const title = `📦 Dependency Vulnerabilities Detected - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 📦 Dependency Vulnerability Scan Results\n\n${dependencyIssues.join('\n')}\n\n` +
+              `**Scan Date:** ${new Date().toISOString()}\n` +
+              `**Branch:** ${context.ref}\n\n` +
+              `**🔧 Recommended Actions:**\n` +
+              `1. Update vulnerable packages to secure versions\n` +
+              `2. Check for alternative packages if updates aren't available\n` +
+              `3. Consider adding security patches or workarounds\n\n` +
+              `**Note:** Dependabot will automatically create PRs for dependency updates where possible.`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['dependencies', 'security', 'vulnerability', 'automated']
+            });
+          }
+
+    - name: Upload dependency artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-scan-results
+        path: |
+          safety-results.json
+          pip-audit-results.json
+          gofap-sbom.json
+
+  # Secret Scanning
+  secret-scan:
+    name: 🔑 Secret Detection Scan
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.scan_type == 'full' || 
+      github.event.inputs.scan_type == 'secrets-only'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install secret scanning tools
+      run: |
+        # Install truffleHog for secret detection
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+        
+        # Install git-secrets
+        git clone https://github.com/awslabs/git-secrets.git
+        cd git-secrets && make install
+
+    - name: Run TruffleHog secret scan
+      run: |
+        trufflehog git file://. --json > trufflehog-results.json || true
+        trufflehog git file://. || true
+
+    - name: Run git-secrets scan
+      run: |
+        git secrets --register-aws
+        git secrets --scan || true
+
+    - name: Process secret scan results
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          let secretIssues = [];
+          
+          try {
+            if (fs.existsSync('trufflehog-results.json')) {
+              const content = fs.readFileSync('trufflehog-results.json', 'utf8');
+              const lines = content.trim().split('\n').filter(line => line.trim());
+              
+              if (lines.length > 0) {
+                secretIssues.push(`### TruffleHog Secret Detection (${lines.length} potential secrets)`);
+                lines.forEach((line, index) => {
+                  try {
+                    const result = JSON.parse(line);
+                    secretIssues.push(`${index + 1}. **${result.DetectorName}** secret detected`);
+                    secretIssues.push(`   - File: \`${result.SourceMetadata?.Data?.Git?.file || 'Unknown'}\``);
+                    secretIssues.push(`   - Line: ${result.SourceMetadata?.Data?.Git?.line || 'Unknown'}`);
+                    secretIssues.push(`   - Verified: ${result.Verified ? '✅ Yes' : '❓ Unverified'}`);
+                    secretIssues.push('');
+                  } catch (e) {
+                    console.log('Error parsing TruffleHog result:', e.message);
+                  }
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Error processing TruffleHog results:', e.message);
+          }
+          
+          // Create secret detection issue if secrets found
+          if (secretIssues.length > 0) {
+            const title = `🔑 Potential Secrets Detected - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 🔑 Secret Detection Scan Results\n\n${secretIssues.join('\n')}\n\n` +
+              `**⚠️ CRITICAL:** Potential secrets have been detected in the codebase.\n\n` +
+              `**Immediate Actions Required:**\n` +
+              `1. Review each detected secret carefully\n` +
+              `2. Remove any confirmed secrets from the codebase\n` +
+              `3. Rotate any compromised credentials immediately\n` +
+              `4. Update .gitignore to prevent future secret commits\n` +
+              `5. Use environment variables for sensitive data\n\n` +
+              `**Scan Date:** ${new Date().toISOString()}\n` +
+              `**Branch:** ${context.ref}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'secrets', 'critical', 'automated']
+            });
+          }
+
+    - name: Upload secret scan artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: secret-scan-results
+        path: |
+          trufflehog-results.json
+
+  # Security Summary Report
+  security-report:
+    name: 📊 Security Summary Report
+    runs-on: ubuntu-latest
+    needs: [code-security, dependency-security, secret-scan]
+    if: always()
+    
+    steps:
+    - name: Download all security artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./security-reports
+
+    - name: Generate security summary
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          let summary = {
+            codeIssues: 0,
+            dependencyVulns: 0,
+            secretsFound: 0,
+            totalIssues: 0
+          };
+          
+          // Count code security issues
+          try {
+            const banditFile = path.join('./security-reports/security-scan-results/bandit-results.json');
+            if (fs.existsSync(banditFile)) {
+              const banditData = JSON.parse(fs.readFileSync(banditFile, 'utf8'));
+              summary.codeIssues = banditData.results ? banditData.results.length : 0;
+            }
+          } catch (e) {
+            console.log('Error reading Bandit results:', e.message);
+          }
+          
+          // Count dependency vulnerabilities
+          try {
+            const safetyFile = path.join('./security-reports/dependency-scan-results/safety-results.json');
+            if (fs.existsSync(safetyFile)) {
+              const safetyData = JSON.parse(fs.readFileSync(safetyFile, 'utf8'));
+              summary.dependencyVulns = Array.isArray(safetyData) ? safetyData.length : 0;
+            }
+          } catch (e) {
+            console.log('Error reading Safety results:', e.message);
+          }
+          
+          // Count secrets
+          try {
+            const secretsFile = path.join('./security-reports/secret-scan-results/trufflehog-results.json');
+            if (fs.existsSync(secretsFile)) {
+              const content = fs.readFileSync(secretsFile, 'utf8');
+              const lines = content.trim().split('\n').filter(line => line.trim());
+              summary.secretsFound = lines.length;
+            }
+          } catch (e) {
+            console.log('Error reading TruffleHog results:', e.message);
+          }
+          
+          summary.totalIssues = summary.codeIssues + summary.dependencyVulns + summary.secretsFound;
+          
+          // Create or update security dashboard issue
+          const title = '🛡️ Security Dashboard - Current Status';
+          const body = `## 🛡️ GOFAP Security Dashboard
+          
+          **Last Updated:** ${new Date().toISOString()}
+          **Branch:** ${context.ref}
+          **Commit:** ${context.sha.substring(0, 7)}
+          
+          ### 📊 Security Metrics
+          
+          | Category | Count | Status |
+          |----------|--------|--------|
+          | 🔍 Code Security Issues | ${summary.codeIssues} | ${summary.codeIssues === 0 ? '✅ Clean' : '⚠️ Needs Attention'} |
+          | 📦 Dependency Vulnerabilities | ${summary.dependencyVulns} | ${summary.dependencyVulns === 0 ? '✅ Secure' : '⚠️ Updates Needed'} |
+          | 🔑 Potential Secrets | ${summary.secretsFound} | ${summary.secretsFound === 0 ? '✅ No Secrets' : '🚨 Review Required'} |
+          | **Total Issues** | **${summary.totalIssues}** | ${summary.totalIssues === 0 ? '✅ All Clear' : '⚠️ Action Required'} |
+          
+          ### 🎯 Security Score: ${summary.totalIssues === 0 ? '100/100 🏆' : Math.max(0, 100 - (summary.totalIssues * 10)) + '/100'}
+          
+          ### 📈 Recommendations
+          ${summary.totalIssues === 0 
+            ? '🎉 Excellent! Your security posture is strong. Keep up the good work!'
+            : `- ${summary.codeIssues > 0 ? '🔍 Review and fix code security issues' : '✅ Code security looks good'}
+          - ${summary.dependencyVulns > 0 ? '📦 Update vulnerable dependencies' : '✅ Dependencies are secure'}
+          - ${summary.secretsFound > 0 ? '🔑 Remove any confirmed secrets from codebase' : '✅ No secrets detected'}`
+          }
+          
+          ---
+          *This dashboard is automatically updated after each security scan.*
+          *For detailed reports, check individual security scan issues.*`;
+          
+          // Check if dashboard issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'security-dashboard',
+            per_page: 100
+          });
+          
+          const dashboardIssue = issues.data.find(issue => issue.title.includes('Security Dashboard'));
+          
+          if (dashboardIssue) {
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: dashboardIssue.number,
+              body: body
+            });
+            console.log('Updated existing security dashboard');
+          } else {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'dashboard', 'automated', 'pinned']
+            });
+            console.log('Created new security dashboard');
+          }
+          
+          console.log('Security Summary:', summary);

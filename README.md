@@ -1,219 +1,249 @@
-# <span style="color: #1E90FF;">Government Operations and Financial Accounting Platform</span> | <span style="color: #FF4500;">GOFAP</span>
-
-The <span style="color: #FFA500;">**Government Operations and Financial Accounting Platform (GOFAP)**</span> is an all-in-one finance management platform built specifically for government entities to manage accounting, payments, treasury and more. By integrating with various modern APIs, GOFAP provides robust capabilities tailored for the unique needs of public sector organizations.
-
-## 💡 Overview
-
-The <span style="color: #FFA500;">**Government Operations and Financial Accounting Platform (GOFAP)**</span> enables seamless and automated management critical financial processes including:
-
-- 💳 **Digital Account & Digital Card Creation**   
-  Create and configure bank accounts and Digital Debit/Credit Cards instantly through integrations with platforms like [ModernTreasury.com](http://moderntreasury.com) [Stripe.com](http://stripe.com), [SolidFi.com](http://solidfi.com) and [Unit.co](http://unit.co)
-
-- 💰 **Revenue & Spend Management**    
-  Track budgets, process revenue, manage expenses and run analytics  
-
-- 💸 **Payment Operations**     
-  Accept payments, process payroll, collect taxes and remit payments leveraging [PayPal](http://paypal.com), [Stripe](http://stripe.com) and other payment APIs  
-
-- 📈 **Treasury Tools**    
-  Forecast cash flows, optimize investments, execute interfund transfers and more using [Modern Treasury](http://moderntreasury.com) API    
-
-- 👥 **HR Management**    
-  Manage hiring, onboarding, training, evaluations, records and more  
-
-- 👤 **Constituent Services**   
-  Provide online services tailored to agency function like utility payments, public works requests, police reporting, etc.  
-
-- 📞 **Citizen Relationship Management**    
-  Build constituent profiles to provide personalized services and engage via preferred channels      
-
-- 🗄 **Knowledge Management**    
-  Create, organize and share information across the organization     
-
-## ✅ Why the Government Operations and Financial Accounting Platform (GOFAP)?
-
-GOFAP empowers governments to:       
-
-✅ <span style="color: #32CD32;">**Unlock efficiency**</span> through streamlined financial operations and instant transactions       
-
-✅ <span style="color: #32CD32;">**Gain insights**</span> into past spend while intelligently planning budgets    
-
-✅ <span style="color: #32CD32;">**Improve security**</span> with role-based access control, audit logs and bank-grade protections  
-
-✅ <span style="color: #32CD32;">**Enhance agility**</span> by rapidly deploying new digital finance tools aligned to unique needs     
-
-✅ <span style="color: #32CD32;">**Strengthen citizen relationships**</span> with seamless omnichannel experiences       
-
-Ultimately leading to improved public services and policy outcomes.
-
-## 🛠 Key Capabilities  
-
-GOFAP includes robust functionality for essential government finance use cases:
-
-### Digital Wallets  
-
-- ➕ Instantly open supervised bank accounts for:
-  - New hires, existing employees and staff
-  - Contractors and temporary workers
-  - Constituents without bank accounts      
-
-- 💷 Send and receive payments from anywhere:
-  - Simplify payroll for those without direct deposit
-  - Offer a faster way to pay vendors and contractors  
-  - Meet expectations of taxpayers for prompt funds settlement
-  - Process reimbursements and payouts same day
-  - Provide a unique solution not normally seen in government    
-
-- 🔒 Securely store funds across custodial accounts
-  - Ensure tax dollars are securely managed
-  - Exceed industry privacy, security and risk standards
-  
-### Budgeting & Planning
-       
-- 📊 Automatically categorize transactions    
-- 📈 Visualize budgets: proposals vs requests vs appropriations vs actuals
-- 🔎 Model and compare endless budget scenarios      
-- 📉 Drill down from overall budget into line-item details  
-
-### Payment Operations    
-
-- 💳 Accept credit cards, ACH and more       
-- 💵 Run payroll with a single click          
-- 💶Quickly disburse funds to individuals   
-- 💷 Remit taxes and obligations       
-
-### Treasury Management     
-
-- 💱 Connect bank accounts for consolidated visibility       
-- 📊 Optimize cash positions across integrated balance sheet   
-- 📈 Manage investments, debt and complex transfers         
-- 🔎 Analyze interest costs and arbitrage 
-
-### HR Management       
-
-- 👔 Post openings and manage hiring     
-- 👥 Onboard new hires  
-- 🎓 Setup employee training and development        
-- 📝 Conduct performance evaluations     
-- 🗃 Maintain digital personnel records      
-
-### Constituent Services       
-
-- ⚡Accept utility payments         
-- 🚧 Submit public works requests          
-- 👮 File police reports    
-- 🔨 And more based on agency function       
-
-### Citizen Relationship Management     
-
-- 👥 Maintain constituent profiles and contact history         
-- 👪 Segment and group citizens for targeted outreach     
-- ✉️ Send personalized notifications and reminders  
-- 📊 Monitor service quality and satisfaction        
-
-### Knowledge Management      
-
-- 🗄 Central repository for policies, procedures, guidelines      
-- 👥 Collaboration tools to create and review content         
-- 🔐 Flexible access controls and permissions     
-- 🎓 Integrated training and learning management
-
-### Integrations  
-
-GOFAP connects with various mission-critical platforms leveraging modern APIs including:
-
-**Enterprise Systems**
-
-- [Oracle Cloud ERP](https://www.oracle.com/erp/)
-- [Workday HCM](https://www.workday.com/en-us/products/human-capital-management-hcm.html)    
-- [Salesforce CRM](https://www.salesforce.com/crm/) 
-- And more!
-
-**Support for custom integrations available.**
-
-## 🛒 Procurement & Expenses       
-
-GOFAP equips Local, State; and Federal Governments with tools to holistically manage procure-to-pay programs encompassing:
-
-### Purchasing
-
-- 📝 Raise and track purchase requisitions
-- 📑 Propose, create, correct, submit, approve, and archive contracting processes
-- 💼 View and update Vendor and Contractor information, history, pricing, performance   
-- 🔍 Source goods/services competitively
-- 📃 Execute and manage contracts
-- ✅ Enforce approval workflows
-
-### Fuel & Fleet Management     
-
-- ⛽ Fuel purchase tracking by vehicle, driver, team, department, card, time period, octane
-- 🚘 Maintenance schedules, history, alerts and reminders
-- 📡 Telematics data integration
-- 🗺 Route optimization  
-- 🚦 Accept, review, update and close vehicle service, procurement, use, transfer and accident requests
-
-### Payroll      
-
-- 💵 Process payroll for all employment types        
-- 📋 Automatically handle taxes and remittances
-- 🌐 Offer online self-service portal    
-- ⚡ Same-day payroll disbursement prior to 6 PM PST M-F with 8 reconciliations daily
-- 🆘 Weekend and holiday emergency payroll available 
-
-### Purchase Cards     
-
-- 💳 Configure virtual and physical cards     
-- 🔒 Set customized purchase controls      
-- 📈 Monitor real-time spending      
-
-### Travel, Hotel & Vehicle Booking      
-
-- ✈️ Out-of-the-box TMC integrations
-- 🛫 Capture itemized itineraries     
-- 🧾 Attach e-receipts to bookings  
-- 🚫 Set restrictions and limitations
-- ⏰ Book travel 24/7/365
-- 📵 Cancel up to 2 hours before arrival with no fees
-
-### Short/Long-term Rentals & Space Mgmt  
-
-- 🔎 Search availability and book facilities     
-- 🔄 Recurring room/space charges
-- 🧺 Amenities and packages
-- 🏢 Commercial properties available
-- 🏘 Other government facilities
-- 🏠 Housing
-- 🚪 Storage
-
-### Reimbursements      
-
-- 📱 Submit claims via mobile       
-- 🧾 Attach receipts and documentation
-- ✅ Configurable approval flows     
-- ⚡ Same-day direct deposit
-
-**With 360° visibility, prevent budget abuse and cut invoice costs 90%!**
-
-## 💰 Licensing         
-
-GOFAP offers flexible and transparent licensing models:
-
-- **By User Count** - Ideal for smaller teams      
-
-- **Tiered Organization Licenses** - Packaged capabilities catered to use cases and organization size
-
-- **By Service** - For organizations that only need a few services     
-
-Volume pricing and annual subscriptions available for even more savings! Get in touch at [gofap@ofaps.spurs.gov](mailto:gofap@ofaps.spurs.gov) for details.
-
-## 📞 Contact Us       
-
-For more on GOFAP or to schedule a demo, contact:  
-
-**Office of Finance, Accounting, and Procurement Services (OFAPS)** 
-
-📞 (844) 697-7877 ext 6327
-
-✉️ [gofap@ofaps.spurs.gov](mailto:gofap@ofaps.spurs.gov)
-
-"We Account for Everything"
+# 🏛️ GOFAP - Government Operations and Financial Accounting Platform
+
+![GOFAP Logo](https://img.shields.io/badge/GOFAP-Government%20Platform-blue?style=for-the-badge)
+![Flask](https://img.shields.io/badge/Flask-3.1.2-green?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square)
+
+The **Government Operations and Financial Accounting Platform (GOFAP)** is a comprehensive, secure, and production-ready financial management system specifically designed for government entities. Built with modern web technologies and following government security standards.
+
+## ✨ Key Features
+
+### 🏦 **Digital Banking & Treasury Management**
+- **Account Creation**: Seamlessly create and manage digital bank accounts through Modern Treasury and Stripe integrations
+- **Treasury Operations**: Advanced cash flow management, investment optimization, and inter-fund transfers
+- **Multi-Currency Support**: Handle transactions in USD, EUR, GBP, CAD, and more
+
+### 💰 **Financial Operations**
+- **Payment Processing**: Accept payments, process payroll, handle tax collection and remittances
+- **Budget Management**: Department-level budget tracking, allocations, and spending analytics
+- **Transaction Management**: Real-time transaction processing with comprehensive audit trails
+
+### 🔒 **Security & Compliance**
+- **Role-Based Access Control**: Granular permissions based on user roles and departments
+- **Audit Logging**: Complete transaction and activity logging for compliance
+- **Bank-Grade Security**: Industry-standard encryption and security protocols
+
+### 📊 **Analytics & Reporting**
+- **Financial Analytics**: Comprehensive spending analysis and budget performance
+- **Custom Reports**: Generate detailed financial reports for compliance and planning
+- **Real-Time Dashboards**: Live financial data visualization and KPIs
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.12+
+- pip (Python package manager)
+- Modern web browser
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/UniversalStandards/New-Government-agency-banking-Program.git
+   cd New-Government-agency-banking-Program
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   # Copy and edit the environment file
+   cp .env.example .env
+   # Edit .env with your API keys and configuration
+   ```
+
+4. **Initialize the database**
+   ```bash
+   python main.py
+   # Database will be created automatically on first run
+   ```
+
+5. **Launch the application**
+   ```bash
+   python main.py
+   ```
+
+6. **Access the application**
+   - Open your browser to `http://127.0.0.1:5000`
+   - Default admin credentials will be displayed in the console
+
+## 🏗️ Architecture
+
+### Technology Stack
+- **Backend**: Flask 3.1.2, SQLAlchemy, Flask-Migrate
+- **Frontend**: Bootstrap 5, Font Awesome 6, Modern JavaScript
+- **Database**: SQLite (development), PostgreSQL (production)
+- **Security**: Flask-Login, Werkzeug Security, Cryptography
+- **APIs**: Stripe, Modern Treasury, PayPal integration ready
+
+### Project Structure
+```
+├── main.py                 # Flask application entry point
+├── models.py               # Database models
+├── configs/                # Configuration files
+├── templates/              # HTML templates
+├── static/                 # CSS, JavaScript, images
+├── modern_treasury/        # Modern Treasury integration
+├── stripe/                 # Stripe integration
+├── gui/                    # GUI helper functions
+└── tests/                  # Test suite
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env` file with the following variables:
+
+```env
+# Flask Configuration
+FLASK_DEBUG=True
+SECRET_KEY=your-secret-key-here
+
+# Database
+DATABASE_URL=sqlite:///gofap.db
+
+# API Keys
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+MODERN_TREASURY_API_KEY=your-mt-api-key
+MODERN_TREASURY_ORG_ID=your-org-id
+
+# Security
+BCRYPT_LOG_ROUNDS=12
+```
+
+### Database Models
+- **User**: User authentication and profile management
+- **Account**: Financial account management
+- **Transaction**: Transaction records and processing
+- **Department**: Government department organization
+- **Budget**: Budget allocation and tracking
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=.
+
+# Run specific test file
+python -m pytest test_main.py -v
+```
+
+## 🎨 User Interface
+
+GOFAP features a modern, responsive web interface designed specifically for government use:
+
+- **Professional Government Styling**: Clean, accessible design following government UX standards
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Accessibility**: WCAG 2.1 compliant for government accessibility requirements
+- **Modern Components**: Bootstrap 5 with custom government-themed styling
+
+### Main Pages
+- **Dashboard**: System overview with key metrics and quick actions
+- **Account Management**: Create and manage financial accounts
+- **Transactions**: View and process financial transactions
+- **Budget Management**: Department budget allocation and tracking
+- **Reports & Analytics**: Financial reporting and data visualization
+
+## 🔐 Security Features
+
+- **Multi-Factor Authentication**: Optional MFA for enhanced security
+- **Session Management**: Secure session handling with timeout
+- **Input Validation**: Comprehensive input sanitization and validation
+- **SQL Injection Protection**: Parameterized queries and ORM protection
+- **XSS Protection**: Content Security Policy and output encoding
+- **CSRF Protection**: Cross-site request forgery protection
+
+## 📈 API Documentation
+
+### Account Creation API
+```http
+POST /api/accounts/create
+Content-Type: application/json
+
+{
+  "service": "stripe",
+  "account_type": "checking",
+  "account_name": "Department Treasury Account",
+  "department": "treasury"
+}
+```
+
+### Response
+```json
+{
+  "success": true,
+  "message": "Account created successfully",
+  "account_id": "acct_1234567890"
+}
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+
+1. **Set up production environment**
+   ```bash
+   pip install gunicorn
+   export FLASK_ENV=production
+   ```
+
+2. **Configure database**
+   ```bash
+   # Use PostgreSQL for production
+   export DATABASE_URL=postgresql://user:pass@localhost/gofap
+   ```
+
+3. **Run with Gunicorn**
+   ```bash
+   gunicorn -w 4 -b 0.0.0.0:8000 main:app
+   ```
+
+### Docker Deployment
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and questions:
+
+**Office of Finance, Accounting, and Procurement Services (OFAPS)**
+
+📞 **Phone**: (844) 697-7877 ext 6327  
+✉️ **Email**: [gofap@ofaps.spurs.gov](mailto:gofap@ofaps.spurs.gov)  
+🌐 **Website**: [gofap.gov](https://gofap.gov)
+
+---
+
+<div align="center">
+  <strong>"We Account for Everything"</strong><br>
+  <em>Secure, Compliant Financial Management for Government Agencies</em>
+</div>

@@ -28,3 +28,80 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    assignees:
+      - "*"
+    reviewers:
+      - "*"
+    labels:
+      - "dependencies"
+      - "python"
+      - "automated"
+    commit-message:
+      prefix: "⬆️ "
+      prefix-development: "⬆️ dev"
+      include: "scope"
+    # Group related updates
+    groups:
+      flask:
+        patterns:
+          - "flask*"
+          - "werkzeug"
+          - "jinja2"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage"
+      security:
+        patterns:
+          - "cryptography"
+          - "stripe"
+      linting:
+        patterns:
+          - "flake8"
+          - "black"
+          - "mypy"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    assignees:
+      - "*"
+    labels:
+      - "github-actions"
+      - "ci-cd"
+      - "automated"
+    commit-message:
+      prefix: "🔧 "
+      include: "scope"
+
+  # Docker (if Dockerfile exists in future)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "docker"
+      - "infrastructure"
+      - "automated"
+
+# Security and vulnerability alerts
+# Enable security updates for all ecosystems
+enable-security-updates: true

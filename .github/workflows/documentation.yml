@@ -1,0 +1,732 @@
+# Documentation Generation and Maintenance Workflow
+# Automatically generates and updates documentation for the GOFAP platform
+
+name: 📚 Documentation Automation
+
+on:
+  push:
+    branches: [main, develop]
+    paths: 
+      - '**/*.py'
+      - '**/*.md'
+      - 'requirements.txt'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/*.py'
+      - '**/*.md'
+  schedule:
+    # Weekly documentation update on Sundays at 4 AM UTC
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      doc_type:
+        description: 'Type of documentation to generate'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - api
+        - readme
+        - contributing
+        - security
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  pages: write
+  id-token: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Generate API Documentation
+  api-docs:
+    name: 📖 Generate API Documentation
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.doc_type == 'all' || 
+      github.event.inputs.doc_type == 'api'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install documentation dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pdoc3 sphinx sphinx-rtd-theme
+
+    - name: Create docs directory
+      run: |
+        mkdir -p docs/api
+        mkdir -p docs/guides
+        mkdir -p docs/assets
+
+    - name: Generate API documentation
+      run: |
+        # Generate API docs with pdoc3
+        pdoc3 --html --output-dir docs/api --force main
+        pdoc3 --html --output-dir docs/api --force configs
+        pdoc3 --html --output-dir docs/api --force stripe
+        pdoc3 --html --output-dir docs/api --force modern_treasury
+        pdoc3 --html --output-dir docs/api --force models
+
+    - name: Generate module documentation
+      run: |
+        python3 -c "
+        import os
+        import importlib
+        import inspect
+        from pathlib import Path
+
+        def generate_module_docs(module_name, output_file):
+            try:
+                module = importlib.import_module(module_name)
+                with open(output_file, 'w') as f:
+                    f.write(f'# {module_name.title()} Module Documentation\n\n')
+                    f.write(f'**Module:** \`{module_name}\`\n\n')
+                    
+                    if hasattr(module, '__doc__') and module.__doc__:
+                        f.write(f'**Description:** {module.__doc__.strip()}\n\n')
+                    
+                    f.write('## Functions\n\n')
+                    for name, obj in inspect.getmembers(module, inspect.isfunction):
+                        if not name.startswith('_'):
+                            f.write(f'### \`{name}\`\n\n')
+                            if obj.__doc__:
+                                f.write(f'{obj.__doc__.strip()}\n\n')
+                            
+                            try:
+                                sig = inspect.signature(obj)
+                                f.write(f'**Signature:** \`{name}{sig}\`\n\n')
+                            except:
+                                pass
+                    
+                    f.write('## Classes\n\n')
+                    for name, obj in inspect.getmembers(module, inspect.isclass):
+                        if not name.startswith('_'):
+                            f.write(f'### \`{name}\`\n\n')
+                            if obj.__doc__:
+                                f.write(f'{obj.__doc__.strip()}\n\n')
+                                
+                print(f'Generated documentation for {module_name}')
+            except Exception as e:
+                print(f'Could not generate docs for {module_name}: {e}')
+
+        # Generate documentation for available modules
+        modules = ['main', 'models']
+        for module in modules:
+            if os.path.exists(f'{module}.py'):
+                generate_module_docs(module, f'docs/api/{module}-module.md')
+        "
+
+    - name: Create comprehensive README
+      if: |
+        github.event_name != 'workflow_dispatch' || 
+        github.event.inputs.doc_type == 'all' || 
+        github.event.inputs.doc_type == 'readme'
+      run: |
+        python3 -c "
+        import os
+        import subprocess
+        import json
+        from datetime import datetime
+
+        def get_project_stats():
+            stats = {}
+            try:
+                # Count Python files
+                result = subprocess.run(['find', '.', '-name', '*.py', '-type', 'f'], 
+                                      capture_output=True, text=True)
+                stats['python_files'] = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+                
+                # Count lines of code
+                result = subprocess.run(['find', '.', '-name', '*.py', '-exec', 'wc', '-l', '{}', '+'], 
+                                      capture_output=True, text=True)
+                if result.stdout:
+                    lines = result.stdout.strip().split('\n')
+                    total_lines = sum(int(line.strip().split()[0]) for line in lines if line.strip().split()[0].isdigit())
+                    stats['lines_of_code'] = total_lines
+                else:
+                    stats['lines_of_code'] = 0
+                
+                # Get dependency count
+                if os.path.exists('requirements.txt'):
+                    with open('requirements.txt', 'r') as f:
+                        deps = [line.strip() for line in f.readlines() if line.strip() and not line.startswith('#')]
+                        stats['dependencies'] = len(deps)
+                else:
+                    stats['dependencies'] = 0
+                    
+                return stats
+            except Exception as e:
+                print(f'Error getting stats: {e}')
+                return {'python_files': 0, 'lines_of_code': 0, 'dependencies': 0}
+
+        stats = get_project_stats()
+        
+        readme_content = f'''# 🏛️ Government Operations and Financial Accounting Platform (GOFAP)
+
+        [![Python Application](https://github.com/${{ github.repository }}/workflows/GOFAP%20CI/CD%20Pipeline/badge.svg)](https://github.com/${{ github.repository }}/actions)
+        [![Security Scan](https://github.com/${{ github.repository }}/workflows/Security%20Scan/badge.svg)](https://github.com/${{ github.repository }}/actions)
+        [![Documentation](https://github.com/${{ github.repository }}/workflows/Documentation%20Automation/badge.svg)](https://github.com/${{ github.repository }}/actions)
+
+        > A comprehensive Python-based government financial platform built with Flask, supporting payment processing via Stripe, Modern Treasury integrations, and automated operations management.
+
+        ## 📊 Project Overview
+
+        | Metric | Value |
+        |--------|-------|
+        | Python Files | {stats['python_files']} |
+        | Lines of Code | {stats['lines_of_code']:,} |
+        | Dependencies | {stats['dependencies']} |
+        | Last Updated | {datetime.now().strftime('%Y-%m-%d %H:%M UTC')} |
+
+        ## 🚀 Quick Start
+
+        ### Prerequisites
+
+        - Python 3.10+ (Recommended: 3.12)
+        - Git
+        - Virtual environment (recommended)
+
+        ### Installation
+
+        ```bash
+        # Clone the repository
+        git clone https://github.com/${{ github.repository }}.git
+        cd New-Government-agency-banking-Program
+
+        # Create and activate virtual environment
+        python -m venv venv
+        source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+
+        # Install dependencies
+        pip install -r requirements.txt
+
+        # Initialize database
+        python -c \"from main import app, db; app.app_context().push(); db.create_all(); print('Database initialized')\"
+
+        # Run the application
+        python main.py
+        ```
+
+        The application will be available at http://127.0.0.1:5000
+
+        ## 🏗️ Architecture
+
+        ### Core Components
+
+        - **Flask Web Application** (`main.py`): RESTful API and web interface
+        - **Database Layer** (`models.py`): SQLAlchemy ORM models for data persistence
+        - **Payment Integration** (`stripe/`): Stripe payment processing capabilities
+        - **Treasury Management** (`modern_treasury/`): Modern Treasury API integration
+        - **GUI Interface** (`gui/`): Tkinter desktop application interface
+        - **Configuration Management** (`configs/`): Application settings and environment configuration
+
+        ### Key Features
+
+        - 🏦 **Multi-Platform Banking**: Support for Stripe and Modern Treasury
+        - 🔐 **Security First**: Built-in security scanning and vulnerability management
+        - 🤖 **Full Automation**: Comprehensive CI/CD pipeline with automated fixes
+        - 📊 **Government Compliance**: Designed for government financial operations
+        - 🔄 **Real-time Processing**: Asynchronous payment and transaction handling
+        - 📈 **Analytics & Reporting**: Built-in reporting and analytics capabilities
+
+        ## 📚 Documentation
+
+        ### API Documentation
+        - [Main Application API](docs/api/main-module.md)
+        - [Database Models](docs/api/models-module.md)
+        - [Stripe Integration](docs/api/stripe/)
+        - [Modern Treasury Integration](docs/api/modern_treasury/)
+
+        ### Guides
+        - [Installation Guide](docs/guides/installation.md)
+        - [Configuration Guide](docs/guides/configuration.md)
+        - [Development Guide](docs/guides/development.md)
+        - [Deployment Guide](docs/guides/deployment.md)
+        - [API Usage Examples](docs/guides/api-examples.md)
+
+        ## 🛠️ Development
+
+        ### Prerequisites for Development
+
+        ```bash
+        # Install development dependencies
+        pip install -r requirements.txt
+
+        # Install additional development tools
+        pip install black flake8 mypy pytest-cov
+        ```
+
+        ### Code Quality
+
+        ```bash
+        # Format code
+        black .
+
+        # Lint code
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+        # Type checking
+        mypy --ignore-missing-imports .
+
+        # Run tests
+        pytest -v --cov=.
+        ```
+
+        ### Testing
+
+        ```bash
+        # Run all tests
+        pytest
+
+        # Run with coverage
+        pytest --cov=. --cov-report=html
+
+        # Run specific test file
+        pytest test_main.py -v
+        ```
+
+        ## 🔄 Automation Features
+
+        This repository includes comprehensive automation:
+
+        ### 🤖 Automated Workflows
+        - **Continuous Integration**: Automatic testing, linting, and security scanning
+        - **Dependency Management**: Automated updates via Dependabot
+        - **Issue Management**: Auto-labeling, assignment, and resolution tracking
+        - **Code Fixes**: Automatic formatting and common issue fixes
+        - **Documentation**: Auto-generated API docs and guides
+        - **Security Monitoring**: Continuous vulnerability scanning
+
+        ### 📋 Issue Automation
+        - Issues are automatically labeled and prioritized
+        - Security issues are flagged and assigned immediately  
+        - Automated responses guide contributors
+        - Stale issues are cleaned up automatically
+        - Progress is tracked and reported
+
+        ### 🔧 Auto-Fix Capabilities
+        - Code formatting (Black, isort)
+        - Import optimization
+        - Common linting issues
+        - Security vulnerability patches
+        - Dependency updates
+
+        ## 🔐 Security
+
+        ### Security Features
+        - Automated security scanning with Bandit and Safety
+        - Dependency vulnerability monitoring
+        - Secrets detection and prevention
+        - Regular security audits
+        - Compliance with government security standards
+
+        ### Reporting Security Issues
+        Please report security vulnerabilities via GitHub Issues with the `security` label. Issues will be triaged and addressed immediately.
+
+        ## 🚀 Deployment
+
+        ### Production Deployment
+
+        ```bash
+        # Using Gunicorn (recommended)
+        gunicorn --bind 0.0.0.0:8000 main:app
+
+        # Using Docker (if Dockerfile exists)
+        docker build -t gofap .
+        docker run -p 8000:8000 gofap
+        ```
+
+        ### Environment Variables
+
+        ```bash
+        # Required for full functionality
+        export FLASK_DEBUG=False
+        export SECRET_KEY=your-secret-key
+        export STRIPE_SECRET_KEY=sk_live_...
+        export STRIPE_PUBLISHABLE_KEY=pk_live_...
+        export MODERN_TREASURY_API_KEY=your-api-key
+        export MODERN_TREASURY_ORG_ID=your-org-id
+        export DATABASE_URL=postgresql://user:pass@localhost/gofap
+        ```
+
+        ## 🤝 Contributing
+
+        We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+        ### Quick Contributing Steps
+        1. Fork the repository
+        2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+        3. Make your changes and add tests
+        4. Ensure all tests pass (`pytest`)
+        5. Format your code (`black .`)
+        6. Commit your changes (`git commit -m 'Add amazing feature'`)
+        7. Push to the branch (`git push origin feature/amazing-feature`)
+        8. Open a Pull Request
+
+        ## 📄 License
+
+        This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+        ## 🆘 Support
+
+        - 📚 **Documentation**: [GitHub Pages](https://universalstandards.github.io/New-Government-agency-banking-Program/)
+        - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+        - 💬 **Discussions**: [GitHub Discussions](https://github.com/${{ github.repository }}/discussions)
+        - 📧 **Email**: For sensitive matters, contact the maintainers directly
+
+        ## 🙏 Acknowledgments
+
+        - Built with [Flask](https://flask.palletsprojects.com/) web framework
+        - Payment processing by [Stripe](https://stripe.com/)
+        - Treasury management via [Modern Treasury](https://www.moderntreasury.com/)
+        - Automated workflows powered by GitHub Actions
+        - Security scanning by Bandit and Safety
+
+        ---
+
+        **🏛️ Built for Government Financial Operations | 🤖 Fully Automated | 🔐 Security First**
+
+        *This documentation is automatically generated and updated. Last update: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}*
+        '''
+        
+        with open('README.md', 'w') as f:
+            f.write(readme_content)
+        print('Generated comprehensive README.md')
+        "
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: docs/
+
+    - name: Commit documentation changes
+      if: github.event_name == 'push' || github.event_name == 'schedule'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add docs/ README.md
+        
+        if git diff --staged --quiet; then
+          echo "No documentation changes to commit"
+        else
+          git commit -m "📚 Update documentation
+
+          - Auto-generated API documentation
+          - Updated README with current statistics
+          - Added comprehensive guides and examples
+          
+          Generated by documentation automation workflow"
+          
+          git push
+        fi
+
+  # Create Contributing Guidelines
+  contributing-guide:
+    name: 📝 Generate Contributing Guidelines
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' || 
+      github.event.inputs.doc_type == 'all' || 
+      github.event.inputs.doc_type == 'contributing'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create CONTRIBUTING.md
+      run: |
+        cat > CONTRIBUTING.md << 'EOF'
+        # 🤝 Contributing to GOFAP
+
+        Thank you for your interest in contributing to the Government Operations and Financial Accounting Platform (GOFAP)! This guide will help you get started.
+
+        ## 🚀 Quick Start for Contributors
+
+        ### 1. Fork and Clone
+        ```bash
+        # Fork the repository on GitHub, then clone your fork
+        git clone https://github.com/your-username/New-Government-agency-banking-Program.git
+        cd New-Government-agency-banking-Program
+        ```
+
+        ### 2. Set Up Development Environment
+        ```bash
+        # Create virtual environment
+        python -m venv venv
+        source venv/bin/activate  # Windows: venv\Scripts\activate
+
+        # Install dependencies
+        pip install -r requirements.txt
+
+        # Install development tools
+        pip install black flake8 mypy pytest-cov pre-commit
+        ```
+
+        ### 3. Make Your Changes
+        ```bash
+        # Create a feature branch
+        git checkout -b feature/your-feature-name
+
+        # Make your changes
+        # ... edit files ...
+
+        # Test your changes
+        pytest
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        black --check .
+        ```
+
+        ### 4. Submit Your Contribution
+        ```bash
+        # Commit your changes
+        git add .
+        git commit -m "feat: add your feature description"
+
+        # Push to your fork
+        git push origin feature/your-feature-name
+
+        # Create a Pull Request on GitHub
+        ```
+
+        ## 📋 Contribution Guidelines
+
+        ### Code Style
+        - **Python**: Follow PEP 8 with Black formatting
+        - **Line Length**: Maximum 127 characters
+        - **Imports**: Use isort for import organization
+        - **Type Hints**: Use type hints for all functions
+        - **Docstrings**: Use Google-style docstrings
+
+        ### Commit Convention
+        We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+        - `feat:` New features
+        - `fix:` Bug fixes
+        - `docs:` Documentation changes
+        - `style:` Code style changes
+        - `refactor:` Code refactoring
+        - `test:` Test additions/changes
+        - `chore:` Maintenance tasks
+
+        ### Testing Requirements
+        - All new features must include tests
+        - Maintain or improve test coverage
+        - All tests must pass before submission
+        - Include integration tests for API changes
+
+        ### Security Considerations
+        - Never commit secrets or API keys
+        - Follow secure coding practices
+        - Report security issues privately first
+        - Include security tests for sensitive changes
+
+        ## 🏗️ Development Workflow
+
+        ### Setting Up Pre-commit Hooks
+        ```bash
+        # Install pre-commit
+        pip install pre-commit
+
+        # Set up hooks
+        pre-commit install
+
+        # Run hooks manually (optional)
+        pre-commit run --all-files
+        ```
+
+        ### Running Tests
+        ```bash
+        # Run all tests
+        pytest
+
+        # Run with coverage
+        pytest --cov=. --cov-report=html
+
+        # Run specific tests
+        pytest test_main.py::test_home_page -v
+        ```
+
+        ### Code Quality Checks
+        ```bash
+        # Format code
+        black .
+
+        # Sort imports
+        isort .
+
+        # Lint code
+        flake8 .
+
+        # Type checking
+        mypy . --ignore-missing-imports
+        ```
+
+        ## 🐛 Reporting Issues
+
+        ### Bug Reports
+        Use the bug report template and include:
+        - Clear description of the issue
+        - Steps to reproduce
+        - Expected vs actual behavior
+        - Environment details
+        - Error messages or logs
+
+        ### Feature Requests
+        Use the feature request template and include:
+        - Clear description of the feature
+        - Use case and benefits
+        - Possible implementation approach
+        - Examples or mockups
+
+        ### Security Issues
+        For security vulnerabilities:
+        1. Do not open a public issue
+        2. Create an issue with the `security` label
+        3. Include detailed reproduction steps
+        4. Our automated system will prioritize it
+
+        ## 🤖 Automated Systems
+
+        Our repository includes several automated systems:
+
+        ### Issue Management
+        - Issues are automatically labeled and assigned
+        - Priority is determined by keywords
+        - Automated responses guide contributors
+        - Stale issues are automatically cleaned up
+
+        ### Code Quality
+        - Automated formatting fixes
+        - Linting issue detection and resolution
+        - Security vulnerability scanning
+        - Dependency updates via Dependabot
+
+        ### Documentation
+        - API documentation auto-generation
+        - README updates with project statistics
+        - Contributing guide maintenance
+
+        ## 📚 Documentation Contributions
+
+        ### Types of Documentation
+        - **API Documentation**: Auto-generated from code
+        - **User Guides**: Step-by-step instructions
+        - **Developer Guides**: Technical implementation details
+        - **Examples**: Code examples and tutorials
+
+        ### Documentation Standards
+        - Use clear, concise language
+        - Include code examples
+        - Add screenshots for UI changes
+        - Keep examples up to date
+        - Follow markdown best practices
+
+        ## 🔍 Review Process
+
+        ### What to Expect
+        1. **Automated Checks**: CI/CD pipeline runs automatically
+        2. **Code Review**: Maintainers review your changes
+        3. **Feedback**: You may receive suggestions for improvements
+        4. **Approval**: Once approved, your PR will be merged
+
+        ### Review Criteria
+        - Code quality and style compliance
+        - Test coverage and passing tests
+        - Documentation completeness
+        - Security considerations
+        - Performance impact
+        - Backwards compatibility
+
+        ## 🎯 Priority Areas
+
+        We especially welcome contributions in these areas:
+
+        ### High Priority
+        - Security enhancements
+        - Bug fixes
+        - Performance improvements
+        - Test coverage improvements
+
+        ### Medium Priority
+        - Feature enhancements
+        - Documentation improvements
+        - UI/UX improvements
+        - Integration improvements
+
+        ### Nice to Have
+        - Code refactoring
+        - Additional integrations
+        - Automation improvements
+        - Developer tooling
+
+        ## 🆘 Getting Help
+
+        ### Resources
+        - **Documentation**: Check the `docs/` directory
+        - **Examples**: Look at existing code and tests
+        - **Issues**: Search existing issues for similar problems
+        - **Discussions**: Use GitHub Discussions for questions
+
+        ### Communication
+        - Be respectful and inclusive
+        - Provide context and details
+        - Be patient with reviews
+        - Ask questions if unclear
+
+        ## 🏆 Recognition
+
+        Contributors are recognized in several ways:
+        - Listed in project contributors
+        - Mentioned in release notes
+        - Given credit in documentation
+        - Invited to be maintainers (for significant contributions)
+
+        ## 📄 License
+
+        By contributing, you agree that your contributions will be licensed under the same license as the project (MIT License).
+
+        ---
+
+        **Thank you for contributing to GOFAP! Every contribution helps make government financial operations more efficient and secure.**
+
+        *This contributing guide is automatically maintained and updated.*
+        EOF
+
+    - name: Commit contributing guide
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add CONTRIBUTING.md
+        
+        if git diff --staged --quiet; then
+          echo "No changes to CONTRIBUTING.md"
+        else
+          git commit -m "📝 Update contributing guidelines
+          
+          - Comprehensive contribution guide
+          - Development workflow instructions
+          - Code quality requirements
+          - Security guidelines
+          
+          Generated by documentation automation"
+          
+          git push
+        fi
