@@ -1,6 +1,6 @@
 # <span style="color: #1E90FF;">Government Operations, Financial, Aqusistions, and Personnel System</span> | <span style="color: #FF4500;">GOFAPS</span>
 
-The <span style="color: #FFA500;">**Government Operations and Financial Accounting Platform (GOFAP)**</span> is an all-in-one finance management platform built specifically for government entities to manage accounting, payments, treasury and more. By integrating with various modern APIs, GOFAP provides robust capabilities tailored for the unique needs of public sector organizations.
+The <span style="color: #FFA500;">**Government Operations, Financial, Aqusistions, and Personnel System (GOFAPS)**</span> is an all-in-one Platform for Organizational Management (POM) built specifically for government entities to manage accounting, payments, treasury, contracts, supply ordering, inventory tracking, procurments, Human Resourc, benefits, marketing, public affairs, community engagements, payment gateway, project planning and executition, vendor/contractor intergrations, and more. By integrating with various modern APIs, GOFAPS provides robust capabilities tailored for the unique needs of public sector organizations.
 
 ## 💡 Overview
 
@@ -16,7 +16,7 @@ The <span style="color: #FFA500;">**Government Operations and Financial Accounti
   Accept payments, process payroll, collect taxes and remit payments leveraging [PayPal](http://paypal.com), [Stripe](http://stripe.com) and other payment APIs  
 
 - 📈 **Treasury Tools**    
-  Forecast cash flows, optimize investments, execute interfund transfers and more using [Modern Treasury](http://moderntreasury.com) API    
+  Forecast cash flows, optimize investments, execute interfund transfers and more using [Modern Treasury](http://moderntreasury.com) and [Stripe](http://stripe.com) APIs    
 
 - 👥 **HR Management**    
   Manage hiring, onboarding, training, evaluations, records and more  
