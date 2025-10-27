@@ -40,20 +40,6 @@ app.config['SECRET_KEY'] = SECRET_KEY
 # Initialize the database connection
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress warning
-db = SQLAlchemy(app)
-    pass
-except ImportError:
-    # Fallback if configs module is not available
-    DEBUG = True
-    SECRET_KEY = "dev-key-change-in-production"
-    DATABASE_URI = "sqlite:///gofap.db"
-
-# Initialize Flask application
-app = Flask(__name__)
-app.config["SECRET_KEY"] = SECRET_KEY
-app.config["DEBUG"] = DEBUG
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize extensions
 db.init_app(app)
@@ -125,10 +111,6 @@ def add_header(response):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
-
-# Register blueprints
-try:
-    from routes import data_import_bp
 
 # Set up basic logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -392,6 +374,10 @@ def not_found(error):
 def internal_error(error):
     """500 error handler."""
     return jsonify({'error': 'Internal server error'}), 500
+
+# Register data import routes
+try:
+    from routes import data_import_bp
     app.register_blueprint(data_import_bp)
     logging.info("Data import routes registered")
 except ImportError as e:
@@ -573,13 +559,6 @@ def get_budgets():
         budgets = Budget.query.filter_by(
             department=current_user.department, is_active=True
         ).all()
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='127.0.0.1', port=port, debug=DEBUG)
     return jsonify([budget.to_dict() for budget in budgets])
 
 if __name__ == "__main__":
