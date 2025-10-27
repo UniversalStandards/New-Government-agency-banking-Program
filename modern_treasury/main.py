@@ -1,9 +1,9 @@
 import requests
 from modern_treasury_helpers import (
     create_modern_treasury_account,
+    delete_modern_treasury_account,
     get_modern_treasury_account,
     update_modern_treasury_account,
-    delete_modern_treasury_account,
 )
 
 # Define API key for Modern Treasury
@@ -29,9 +29,7 @@ try:
     print("Response:", response.json())
 
     # Get the created account details
-    account_response = get_modern_treasury_account(
-        modern_treasury_api_key, account_id
-    )
+    account_response = get_modern_treasury_account(modern_treasury_api_key, account_id)
     print("\nAccount Details:")
     print(account_response.json())
 

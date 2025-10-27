@@ -75,3 +75,59 @@ integrations:
 security:
   - 'auth.py'
   - 'SECURITY.md'
+# Automatically apply labels to pull requests based on changed files.
+# See: https://github.com/actions/labeler
+
+# Frontend code
+frontend:
+  - "frontend/**"
+  - "src/frontend/**"
+  - "**/*.jsx"
+  - "**/*.tsx"
+
+# Backend code
+backend:
+  - "backend/**"
+  - "src/backend/**"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.rs"
+  - "**/*.java"
+
+# Configuration & infrastructure
+ci:
+  - ".github/workflows/**"
+  - "docker/**"
+  - "infra/**"
+  - "**/Dockerfile"
+  - "**/docker-compose.*"
+
+# Documentation
+documentation:
+  - "docs/**"
+  - "**/*.md"
+  - "README.*"
+  - "CONTRIBUTING.*"
+
+# Scripts & utilities
+scripts:
+  - "scripts/**"
+  - "tools/**"
+  - "**/*.sh"
+  - "**/*.ps1"
+  - "**/*.bat"
+
+# Tests
+tests:
+  - "test/**"
+  - "tests/**"
+  - "**/*.spec.*"
+  - "**/*.test.*"
+
+# Data files
+data:
+  - "data/**"
+  - "**/*.csv"
+  - "**/*.json"
+  - "**/*.yaml"
+  - "**/*.yml"

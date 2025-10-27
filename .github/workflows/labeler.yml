@@ -1,0 +1,174 @@
+# Automated Labeling Workflow for Pull Requests
+# This workflow automatically applies labels to PRs based on file changes and other criteria
+
+name: 🏷️ Auto-Labeling
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label-pr:
+    name: 🏷️ Apply Auto Labels
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Apply file-based labels
+      uses: actions/labeler@v5
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: '.github/labeler.yml'
+
+    - name: Apply size-based labels
+      uses: pascalgn/size-label-action@v0.4.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        sizes: >
+          {
+            "0": "XS",
+            "20": "S", 
+            "50": "M",
+            "200": "L",
+            "800": "XL",
+            "2000": "XXL"
+          }
+
+    - name: Apply additional intelligent labels
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          
+          const title = pr.title.toLowerCase();
+          const body = pr.body ? pr.body.toLowerCase() : '';
+          const branch = pr.head.ref.toLowerCase();
+          
+          const labelsToAdd = [];
+          
+          // Priority-based labeling
+          if (title.includes('urgent') || title.includes('critical') || title.includes('hotfix')) {
+            labelsToAdd.push('urgent');
+          }
+          
+          if (title.includes('breaking') || body.includes('breaking change')) {
+            labelsToAdd.push('breaking-change');
+          }
+          
+          // Type-based labeling from conventional commits
+          const conventionalCommitTypes = {
+            'feat': 'feature',
+            'fix': 'bug-fix',
+            'docs': 'documentation',
+            'style': 'style',
+            'refactor': 'refactor',
+            'perf': 'performance',
+            'test': 'testing',
+            'chore': 'chore'
+          };
+          
+          for (const [prefix, label] of Object.entries(conventionalCommitTypes)) {
+            if (title.startsWith(`${prefix}:`) || title.startsWith(`${prefix}(`)) {
+              labelsToAdd.push(label);
+              break;
+            }
+          }
+          
+          // Work-in-progress detection
+          if (title.includes('wip') || title.includes('work in progress') || pr.draft) {
+            labelsToAdd.push('work-in-progress');
+          }
+          
+          // Auto-generated PR detection
+          if (title.includes('dependabot') || title.includes('automated') || pr.user.login === 'dependabot[bot]') {
+            labelsToAdd.push('automated', 'dependencies');
+          }
+          
+          // Security-related detection
+          if (title.includes('security') || title.includes('vulnerability') || title.includes('cve')) {
+            labelsToAdd.push('security');
+          }
+          
+          // Performance-related detection
+          if (title.includes('performance') || title.includes('optimize') || title.includes('speed')) {
+            labelsToAdd.push('performance');
+          }
+          
+          // Apply labels if any were determined
+          if (labelsToAdd.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labelsToAdd
+            });
+            console.log(`Applied labels: ${labelsToAdd.join(', ')}`);
+          }
+
+    - name: Add welcome comment for first-time contributors
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          // Check if this is the contributor's first PR
+          const { data: prs } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            creator: context.payload.pull_request.user.login,
+            state: 'all',
+            per_page: 100
+          });
+          
+          // If this is their first PR, add a welcome comment
+          if (prs.length === 1) {
+            const welcomeMessage = `🎉 **Welcome to GOFAP!** 
+            
+            Thank you for your first contribution to the Government Operations and Financial Accounting Platform! 
+            
+            Your pull request has been automatically labeled and is being processed by our CI/CD pipeline. Here's what happens next:
+            
+            ### 🤖 Automated Checks
+            - ✅ Code quality and security scans
+            - ✅ Automated testing across multiple Python versions  
+            - ✅ Documentation generation
+            - ✅ Comprehensive validation
+            
+            ### 👥 Review Process
+            - A maintainer will review your changes
+            - You may receive feedback for improvements
+            - Once approved, your PR will be merged automatically
+            
+            ### 📚 Resources
+            - [Contributing Guide](CONTRIBUTING.md)
+            - [Code of Conduct](CODE_OF_CONDUCT.md)
+            - [Documentation](docs/)
+            
+            Thank you for helping make government financial operations more efficient and secure! 🏛️✨
+            
+            ---
+            *This is an automated welcome message. A human maintainer will review your contribution soon.*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: welcomeMessage
+            });
+            
+            // Add first-time-contributor label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['first-time-contributor', 'welcome']
+            });
+          }

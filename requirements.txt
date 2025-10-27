@@ -3,13 +3,16 @@ flask
 Flask>=2.3.3
 Flask-SQLAlchemy>=3.0.5
 Flask-Migrate>=4.0.5
+Flask-Login>=0.6.3
+Flask-WTF>=1.1.1
+WTForms>=3.0.1
 
 # API integrations
 stripe>=6.0.0
 requests>=2.32.4
 aiohttp>=3.12.14
 
-# Modern Treasury integration (example - adjust based on actual SDK)
+# Modern Treasury integration
 # modern-treasury>=1.0.0
 
 # Security and utilities
@@ -20,12 +23,17 @@ werkzeug>=3.0.6
 # Database support
 pymysql>=1.1.1
 
+# Automation and scheduling
+schedule>=1.2.0
+
 # Development dependencies
 pytest>=7.4.2
 pytest-flask>=1.2.0
+pytest-cov>=4.1.0
 black>=24.3.0
 flake8>=6.0.0
 mypy>=1.5.1
+isort>=5.12.0
 
 # Production server
 gunicorn>=22.0.0
