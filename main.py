@@ -49,6 +49,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "info"
 
 # Configure logging
 logging.basicConfig(
@@ -57,13 +58,6 @@ logging.basicConfig(
     handlers=[logging.FileHandler("gofap.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "auth.login"
-login_manager.login_message = "Please log in to access this page."
-login_manager.login_message_category = "info"
 
 from api import api_bp
 
@@ -85,24 +79,10 @@ from models import (
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
-# Import models after db initialization
-try:
-    from models import User, Account, Transaction, PayrollRecord, Budget, UtilityPayment
-    from models import UserRole, TransactionType, TransactionStatus
-    from models import Account, Budget, Department, Transaction, User  # noqa: F401
-except ImportError:
-    # Models module not yet created - this is expected during initial setup
-    try:
-        pass
-    except ImportError:
-        pass
-
 
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
-
     return User.query.get(user_id)
 
 
@@ -198,76 +178,7 @@ def internal_error(error):
     return render_template("errors/500.html"), 500
 
 
-# Main routes
-
-
-@login_required
-def dashboard():
-    """Dashboard page showing system overview."""
-    try:
-        from models import Account, Budget, Transaction
-
-        # Get user's accounts
-        user_accounts = Account.query.filter_by(user_id=current_user.id).all()
-        total_balance = sum(acc.balance for acc in user_accounts)
-
-        # Get recent transactions
-        recent_transactions = (
-            Transaction.query.join(Account)
-            .filter(Account.user_id == current_user.id)
-            .order_by(Transaction.created_at.desc())
-            .limit(10)
-            .all()
-        )
-
-        # Get budget information
-        user_budgets = (
-            Budget.query.join(Department)
-            .join(Account)
-            .filter(Account.user_id == current_user.id)
-            .all()
-        )
-
-        return render_template(
-            "dashboard.html",
-            accounts=user_accounts,
-            total_balance=total_balance,
-            recent_transactions=recent_transactions,
-            budgets=user_budgets,
-        )
-    except Exception as e:
-        logging.error(f"Dashboard error: {e}")
-        flash("Error loading dashboard data", "error")
-        return render_template("dashboard.html")
-
-
-@login_required
-def get_accounts():
-    """API endpoint to get user's accounts."""
-    accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
-    return jsonify([account.to_dict() for account in accounts])
-
-
-@login_required
-def payments():
-    """Payment processing page."""
-    try:
-        return render_template("payments.html")
-    except:
-        return jsonify({"message": "GOFAP Payment Processing"})
-
-
-@login_required
-def get_budgets():
-    """API endpoint to get budgets."""
-    if current_user.role in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
-        budgets = Budget.query.filter_by(is_active=True).all()
-    else:
-        budgets = Budget.query.filter_by(
-            department=current_user.department, is_active=True
-        ).all()
-    return jsonify([budget.to_dict() for budget in budgets])
-
+# Main routes - minimal routes, most are in blueprints
 
 if __name__ == "__main__":
     # Create tables and initialize database
