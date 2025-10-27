@@ -1,3 +1,80 @@
+# Configuration for automatic PR labeling
+# See https://github.com/actions/labeler for documentation
+
+# Python related changes
+python:
+  - '**/*.py'
+  - 'requirements.txt'
+  - 'setup.py'
+  - 'pyproject.toml'
+
+# JavaScript/TypeScript related changes
+javascript:
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.ts'
+  - '**/*.tsx'
+  - 'package.json'
+  - 'package-lock.json'
+  - 'tsconfig.json'
+
+# Frontend related changes
+frontend:
+  - 'static/**/*'
+  - 'templates/**/*'
+  - '**/*.html'
+  - '**/*.css'
+  - '**/*.scss'
+
+# Configuration changes
+config:
+  - 'configs/**/*'
+  - '.env.example'
+  - '*.json'
+  - '*.yml'
+  - '*.yaml'
+  - '.github/**/*'
+
+# Documentation changes
+documentation:
+  - '**/*.md'
+  - 'docs/**/*'
+  - 'README*'
+  - 'LICENSE'
+  - 'CODE_OF_CONDUCT.md'
+  - 'SECURITY.md'
+
+# Test related changes
+tests:
+  - 'tests/**/*'
+  - 'test_*.py'
+  - '*_test.py'
+  - '**/*.test.js'
+  - '**/*.spec.js'
+
+# CI/CD related changes
+ci-cd:
+  - '.github/workflows/**/*'
+  - 'Dockerfile'
+  - 'Procfile'
+  - 'deploy.sh'
+
+# Database related changes
+database:
+  - 'models.py'
+  - 'data_import/**/*'
+  - 'data_import_models/**/*'
+  - '**/migrations/**/*'
+
+# API integrations
+integrations:
+  - 'stripe/**/*'
+  - 'modern_treasury/**/*'
+
+# Security related
+security:
+  - 'auth.py'
+  - 'SECURITY.md'
 # Automatically apply labels to pull requests based on changed files.
 # See: https://github.com/actions/labeler
 
