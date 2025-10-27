@@ -15,20 +15,20 @@ def test_app_integration_with_database(client):
             integration_success = True
         except Exception:
             integration_success = False
-    
+
     assert integration_success
 
 
 def test_full_application_startup(client):
     """Test that the full application starts up correctly."""
     # Test basic functionality end-to-end
-    response = client.get('/')
+    response = client.get("/")
     assert response.status_code == 200
-    assert 'GOFAP' in response.get_data(as_text=True)
+    assert "GOFAP" in response.get_data(as_text=True)
 
 
 def test_error_handling(client):
     """Test that the application handles errors gracefully."""
     # Test a non-existent route
-    response = client.get('/nonexistent-route')
+    response = client.get("/nonexistent-route")
     assert response.status_code == 404
