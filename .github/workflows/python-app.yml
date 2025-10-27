@@ -24,6 +24,7 @@ on:
         - tests-only
 
 permissions:
+  contents: read
   contents: write
   security-events: write
   issues: write
@@ -74,6 +75,12 @@ jobs:
     - name: Run comprehensive linting
       run: |
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Initialize database
+      run: |
+        python -c "from main import app, db; app.app_context().push(); db.create_all(); print('Database initialized')" || echo "Database initialization skipped"
+    - name: Test with pytest
+      run: |
+        pytest --maxfail=1 --disable-warnings -q || code=$?; if [ "$code" -ne 0 ] && [ "$code" -ne 5 ]; then exit "$code"; elif [ "$code" -eq 5 ]; then echo "No tests collected (exit 5)"; fi
 
     - name: Code formatting check with Black
       run: |
