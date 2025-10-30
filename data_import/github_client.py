@@ -10,7 +10,6 @@ import requests
 
 from .exceptions import AuthenticationError, ImportError, RateLimitError
 
-
 class GitHubClient:
     """Client for interacting with the GitHub API."""
 

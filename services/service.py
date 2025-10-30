@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class Service(ABC):
     """Base service class for all payment integrations."""
 

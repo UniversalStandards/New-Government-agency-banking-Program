@@ -24,27 +24,22 @@ logger = logging.getLogger(__name__)
 # Create API blueprint
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
-
 # Error handlers
 @api_bp.errorhandler(400)
 def bad_request(error):
     return jsonify({"error": "Bad request", "message": str(error)}), 400
 
-
 @api_bp.errorhandler(401)
 def unauthorized(error):
     return jsonify({"error": "Unauthorized", "message": "Authentication required"}), 401
-
 
 @api_bp.errorhandler(403)
 def forbidden(error):
     return jsonify({"error": "Forbidden", "message": "Insufficient permissions"}), 403
 
-
 @api_bp.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Not found", "message": "Resource not found"}), 404
-
 
 @api_bp.errorhandler(500)
 def internal_error(error):
@@ -58,7 +53,6 @@ def internal_error(error):
         ),
         500,
     )
-
 
 # Account endpoints
 @api_bp.route("/accounts", methods=["GET"])
@@ -79,7 +73,6 @@ def get_accounts():
     except Exception as e:
         logger.error(f"Error fetching accounts: {e}")
         return jsonify({"error": "Failed to fetch accounts"}), 500
-
 
 @api_bp.route("/accounts", methods=["POST"])
 @login_required
@@ -124,7 +117,6 @@ def create_account():
         logger.error(f"Error creating account: {e}")
         return jsonify({"error": "Failed to create account"}), 500
 
-
 @api_bp.route("/accounts/<account_id>", methods=["GET"])
 @login_required
 def get_account(account_id):
@@ -140,7 +132,6 @@ def get_account(account_id):
     except Exception as e:
         logger.error(f"Error fetching account {account_id}: {e}")
         return jsonify({"error": "Failed to fetch account"}), 500
-
 
 # Transaction endpoints
 @api_bp.route("/transactions", methods=["GET"])
@@ -181,7 +172,6 @@ def get_transactions():
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
         return jsonify({"error": "Failed to fetch transactions"}), 500
-
 
 @api_bp.route("/transactions", methods=["POST"])
 @login_required
@@ -244,7 +234,6 @@ def create_transaction():
         logger.error(f"Error creating transaction: {e}")
         return jsonify({"error": "Failed to create transaction"}), 500
 
-
 # Budget endpoints
 @api_bp.route("/budgets", methods=["GET"])
 @login_required
@@ -272,7 +261,6 @@ def get_budgets():
     except Exception as e:
         logger.error(f"Error fetching budgets: {e}")
         return jsonify({"error": "Failed to fetch budgets"}), 500
-
 
 @api_bp.route("/budgets", methods=["POST"])
 @login_required
@@ -325,7 +313,6 @@ def create_budget():
         logger.error(f"Error creating budget: {e}")
         return jsonify({"error": "Failed to create budget"}), 500
 
-
 # Dashboard statistics
 @api_bp.route("/dashboard/stats", methods=["GET"])
 @login_required
@@ -376,7 +363,6 @@ def get_dashboard_stats():
     except Exception as e:
         logger.error(f"Error fetching dashboard stats: {e}")
         return jsonify({"error": "Failed to fetch dashboard statistics"}), 500
-
 
 # Health check
 @api_bp.route("/health", methods=["GET"])

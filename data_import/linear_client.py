@@ -10,7 +10,6 @@ import requests
 
 from .exceptions import AuthenticationError, ImportError, RateLimitError
 
-
 class LinearClient:
     """Client for interacting with the Linear API."""
 
