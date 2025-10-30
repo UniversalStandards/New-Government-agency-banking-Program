@@ -1,12 +1,13 @@
 """Modern Treasury integration helpers for GOFAP."""
 
-import requests
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+import requests
+
 from configs.settings import MODERN_TREASURY_API_KEY, MODERN_TREASURY_ORG_ID
 
 logger = logging.getLogger(__name__)
-
 
 class ModernTreasuryClient:
     """Client for Modern Treasury API integration."""
@@ -68,7 +69,6 @@ class ModernTreasuryClient:
         """Get ledger accounts."""
         return self._make_request("GET", "/ledger_accounts")
 
-
 def process_government_payment(
     amount: float, recipient_account: str, description: str, payment_type: str = "ach"
 ) -> Dict[str, Any]:
@@ -105,7 +105,6 @@ def process_government_payment(
         logger.error(f"Failed to process government payment: {e}")
         raise
 
-
 def setup_payroll_account(employee_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Set up a payroll account for an employee.
@@ -140,7 +139,6 @@ def setup_payroll_account(employee_data: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to setup payroll account: {e}")
         raise
-
 
 def bulk_payroll_processing(payroll_records: list) -> Dict[str, Any]:
     """
@@ -182,7 +180,6 @@ def bulk_payroll_processing(payroll_records: list) -> Dict[str, Any]:
         logger.error(f"Failed to process bulk payroll: {e}")
         raise
 
-
 """
 Modern Treasury API helper functions for GOFAP.
 Provides comprehensive integration with Modern Treasury for government financial operations.
@@ -195,10 +192,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-
 class ModernTreasuryError(Exception):
     """Custom exception for Modern Treasury API errors."""
-
 
 class ModernTreasuryClient:
     """Client for interacting with Modern Treasury API."""
@@ -287,7 +282,6 @@ class ModernTreasuryClient:
         )
         return self._make_request("GET", endpoint)
 
-
 # Legacy function wrappers for backward compatibility
 def create_modern_treasury_account(
     api_key: str, account_params: Dict[str, Any]
@@ -310,7 +304,6 @@ def create_modern_treasury_account(
         logger.error(f"Failed to create account: {e}")
         raise
 
-
 def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Legacy function to get Modern Treasury account."""
     client = ModernTreasuryClient(api_key, "")
@@ -328,7 +321,6 @@ def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Respo
     except ModernTreasuryError as e:
         logger.error(f"Failed to get account: {e}")
         raise
-
 
 def update_modern_treasury_account(
     api_key: str, account_id: str, update_params: Dict[str, Any]
@@ -350,7 +342,6 @@ def update_modern_treasury_account(
         logger.error(f"Failed to update account: {e}")
         raise
 
-
 def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Legacy function to delete Modern Treasury account."""
     client = ModernTreasuryClient(api_key, "")
@@ -368,7 +359,6 @@ def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Re
     except ModernTreasuryError as e:
         logger.error(f"Failed to delete account: {e}")
         raise
-
 
 # Async versions for modern usage
 async def create_modern_treasury_account_async(
@@ -402,7 +392,6 @@ async def create_modern_treasury_account_async(
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-
 import logging
 from typing import Any, Dict, Optional
 
@@ -412,7 +401,6 @@ logger = logging.getLogger(__name__)
 
 # Modern Treasury API base URL
 MT_BASE_URL = "https://app.moderntreasury.com/api"
-
 
 def create_modern_treasury_account(
     api_key: str, account_params: Dict[str, Any]
@@ -427,7 +415,6 @@ def create_modern_treasury_account(
     response = requests.post(url, json=account_params, headers=headers, timeout=10)
     return response
 
-
 def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Get a Modern Treasury account by ID."""
     headers = {
@@ -438,7 +425,6 @@ def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Respo
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
     response = requests.get(url, headers=headers)
     return response
-
 
 def update_modern_treasury_account(
     api_key: str, account_id: str, update_params: Dict[str, Any]
@@ -453,7 +439,6 @@ def update_modern_treasury_account(
     response = requests.patch(url, json=update_params, headers=headers)
     return response
 
-
 def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
     """Delete a Modern Treasury account."""
     headers = {
@@ -464,7 +449,6 @@ def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Re
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
     response = requests.delete(url, headers=headers)
     return response
-
 
 async def create_modern_treasury_account_async(
     api_key: str, params: Dict[str, Any]

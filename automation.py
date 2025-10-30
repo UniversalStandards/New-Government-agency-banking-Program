@@ -1,25 +1,23 @@
 """Automation and background task system for GOFAP."""
 
-import schedule
-import time
 import logging
 import threading
+import time
 from datetime import datetime, timedelta
-from typing import Dict, Any
+
+import schedule
+
 from main import app, db
 from models import (
-    User,
-    Account,
-    Transaction,
-    PayrollRecord,
     Budget,
-    UtilityPayment,
+    PayrollRecord,
+    Transaction,
     TransactionStatus,
     TransactionType,
+    UtilityPayment,
 )
 
 logger = logging.getLogger(__name__)
-
 
 class AutomationEngine:
     """Core automation engine for GOFAP."""
@@ -53,7 +51,6 @@ class AutomationEngine:
         while self.running:
             schedule.run_pending()
             time.sleep(60)  # Check every minute
-
 
 class PayrollAutomation:
     """Automated payroll processing system."""
@@ -135,7 +132,6 @@ class PayrollAutomation:
             except Exception as e:
                 logger.error(f"Failed to generate payroll report: {e}")
 
-
 class BudgetMonitoring:
     """Automated budget monitoring and alerts."""
 
@@ -214,7 +210,6 @@ class BudgetMonitoring:
                 logger.error(f"Failed to update budget spending: {e}")
                 db.session.rollback()
 
-
 class UtilityPaymentAutomation:
     """Automated utility payment processing."""
 
@@ -291,7 +286,6 @@ class UtilityPaymentAutomation:
                 logger.error(f"Auto-pay processing failed: {e}")
                 db.session.rollback()
 
-
 class ReportingAutomation:
     """Automated reporting system."""
 
@@ -336,7 +330,6 @@ class ReportingAutomation:
                 logger.error(f"Failed to generate daily financial report: {e}")
                 return None
 
-
 # Schedule automation tasks
 def setup_automation_schedules():
     """Set up all automation schedules."""
@@ -363,16 +356,13 @@ def setup_automation_schedules():
 
     logger.info("Automation schedules configured")
 
-
 # Global automation engine instance
 automation_engine = AutomationEngine()
-
 
 def start_automation():
     """Start all automation systems."""
     setup_automation_schedules()
     automation_engine.start()
-
 
 def stop_automation():
     """Stop all automation systems."""

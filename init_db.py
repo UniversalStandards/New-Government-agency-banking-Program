@@ -3,7 +3,6 @@
 from main import app, db
 from models import Account, Budget, Department, User
 
-
 def init_database():
     """Initialize the database with sample data."""
     with app.app_context():
@@ -138,7 +137,6 @@ def init_database():
         print("     Username: demo")
         print("     Password: demo123!")
         print("\n🔒 Please change these passwords immediately in production!")
-
 
 if __name__ == "__main__":
     init_database()

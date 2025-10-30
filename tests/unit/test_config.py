@@ -1,20 +1,17 @@
 """Unit tests for configuration settings."""
 
-import pytest
 import os
-from configs.settings import DEBUG, get_config, APP_NAME, VERSION
 
+from configs.settings import APP_NAME, DEBUG, VERSION, get_config
 
 def test_debug_configuration():
     """Test DEBUG configuration is properly loaded."""
     assert isinstance(DEBUG, bool)
 
-
 def test_app_constants():
     """Test application constants are properly set."""
     assert APP_NAME == "Government Operations and Financial Accounting Platform (GOFAP)"
     assert VERSION == "1.0.0"
-
 
 def test_get_config_function():
     """Test the get_config utility function."""
@@ -29,7 +26,6 @@ def test_get_config_function():
     # Test with None default
     test_none = get_config("NON_EXISTENT_VAR")
     assert test_none is None
-
 
 def test_environment_variable_loading():
     """Test that environment variables are properly loaded."""

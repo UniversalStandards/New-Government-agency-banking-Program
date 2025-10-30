@@ -19,7 +19,6 @@ from models import (
     db,
 )
 
-
 @pytest.fixture
 def app():
     """Create test Flask application."""
@@ -36,12 +35,10 @@ def app():
         yield app
         db.drop_all()
 
-
 @pytest.fixture
 def client(app):
     """Create test client."""
     return app.test_client()
-
 
 @pytest.fixture
 def sample_user(app):
@@ -60,7 +57,6 @@ def sample_user(app):
         db.session.commit()
         return user
 
-
 def test_user_creation(sample_user):
     """Test user creation and password hashing."""
     assert sample_user.username == "testuser"
@@ -69,7 +65,6 @@ def test_user_creation(sample_user):
     assert not sample_user.check_password("wrongpassword")
     assert sample_user.is_active == True
 
-
 def test_user_to_dict(sample_user):
     """Test user serialization."""
     user_dict = sample_user.to_dict()
@@ -77,7 +72,6 @@ def test_user_to_dict(sample_user):
     assert user_dict["email"] == "test@example.com"
     assert user_dict["role"] == "employee"
     assert "password_hash" not in user_dict
-
 
 def test_account_creation(app, sample_user):
     """Test account creation."""
@@ -96,7 +90,6 @@ def test_account_creation(app, sample_user):
         assert account.account_type == AccountType.CHECKING
         assert float(account.balance) == 1000.00
         assert account.user_id == sample_user.id
-
 
 def test_transaction_creation(app, sample_user):
     """Test transaction creation."""
@@ -126,7 +119,6 @@ def test_transaction_creation(app, sample_user):
         assert transaction.transaction_type == TransactionType.DEPOSIT
         assert transaction.status == TransactionStatus.PENDING
 
-
 def test_budget_creation(app, sample_user):
     """Test budget creation."""
     with app.app_context():
@@ -145,7 +137,6 @@ def test_budget_creation(app, sample_user):
         assert budget.fiscal_year == 2024
         assert float(budget.total_budget) == 100000.00
         assert budget.created_by == sample_user.id
-
 
 def test_budget_item_creation(app, sample_user):
     """Test budget item creation."""
@@ -176,13 +167,11 @@ def test_budget_item_creation(app, sample_user):
         assert float(budget_item.allocated_amount) == 50000.00
         assert budget_item.budget_id == budget.id
 
-
 def test_user_roles():
     """Test user role enumeration."""
     assert UserRole.ADMIN.value == "admin"
     assert UserRole.EMPLOYEE.value == "employee"
     assert UserRole.TREASURER.value == "treasurer"
-
 
 def test_account_types():
     """Test account type enumeration."""
@@ -190,13 +179,11 @@ def test_account_types():
     assert AccountType.SAVINGS.value == "savings"
     assert AccountType.CREDIT.value == "credit"
 
-
 def test_transaction_types():
     """Test transaction type enumeration."""
     assert TransactionType.DEPOSIT.value == "deposit"
     assert TransactionType.WITHDRAWAL.value == "withdrawal"
     assert TransactionType.TRANSFER.value == "transfer"
-
 
 def test_transaction_statuses():
     """Test transaction status enumeration."""

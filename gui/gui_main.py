@@ -1,14 +1,11 @@
 """Enhanced GUI interface for GOFAP using tkinter."""
 
-import tkinter as tk
-from tkinter import ttk
-import json
-import requests  # This line can be removed if not used
-from typing import Dict, Any
 import logging
 import os
 import tkinter as tk
 from tkinter import ttk
+
+import requests  # This line can be removed if not used
 
 # Try to import the newer async helpers first, fall back to compatibility mode
 try:
@@ -24,7 +21,6 @@ except ImportError:
         logging.info(f"Creating {service} account (compatibility mode)")
         return f"mock_{service}_account"
 
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +31,6 @@ modern_treasury_api_key = os.environ.get("MODERN_TREASURY_API_KEY", "")
 from gui_helpers import create_accounts
 
 from configs.settings import MODERN_TREASURY_API_KEY, STRIPE_SECRET_KEY
-
 
 class AccountCreationGUI:
     def __init__(self, root):
@@ -53,7 +48,6 @@ class AccountCreationGUI:
         self.tab_control.add(self.stripe_tab, text="Stripe")
 
         self.tab_control.pack(expand=1, fill="both")
-
 
 class GOFAPDashboard:
     """Main dashboard for GOFAP GUI interface."""
@@ -275,12 +269,10 @@ class GOFAPDashboard:
         """Start the GUI application."""
         self.root.mainloop()
 
-
 def main():
     """Main entry point for GUI application."""
     app = GOFAPDashboard()
     app.run()
-
 
 if __name__ == "__main__":
     main()
@@ -352,7 +344,6 @@ if __name__ == "__main__":
     def create_stripe_customer(self):
         # Call the function to create a Stripe customer
         create_accounts("stripe", api_key=STRIPE_SECRET_KEY, params={})
-
 
 if __name__ == "__main__":
     root = tk.Tk()

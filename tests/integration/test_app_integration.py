@@ -1,8 +1,6 @@
 """Integration tests for the full application."""
 
-import pytest
 from main import app, db
-
 
 def test_app_integration_with_database(client):
     """Test that the app integrates properly with the database."""
@@ -18,14 +16,12 @@ def test_app_integration_with_database(client):
 
     assert integration_success
 
-
 def test_full_application_startup(client):
     """Test that the full application starts up correctly."""
     # Test basic functionality end-to-end
     response = client.get("/")
     assert response.status_code == 200
     assert "GOFAP" in response.get_data(as_text=True)
-
 
 def test_error_handling(client):
     """Test that the application handles errors gracefully."""

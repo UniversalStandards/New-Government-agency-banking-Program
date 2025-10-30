@@ -5,18 +5,10 @@ Main application entry point with comprehensive Flask setup.
 
 import logging
 import os
-import uuid
 from datetime import datetime
 
-from flask import (
-    Flask,
-    flash,
-    jsonify,
-    render_template,
-    render_template_string,
-    request,
-)
-from flask_login import LoginManager, current_user, login_required
+from flask import Flask, jsonify, render_template, request
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 
 from models import db
@@ -28,7 +20,7 @@ logging.basicConfig(
 
 # Import configuration settings
 try:
-    from configs.settings import DEBUG, SECRET_KEY, DATABASE_URI
+    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
@@ -65,32 +57,21 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import (
-    Account,
-    Budget,
-    Department,
-    Transaction,
-    TransactionType,
-    User,
-    UserRole,
-)
+from models import User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
-
 
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
-
 # Template context processor
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
-
 
 # Add cache control headers for static files in development
 @app.after_request
@@ -104,7 +85,6 @@ def add_header(response):
         response.headers["Expires"] = "0"
     return response
 
-
 # Register blueprints
 try:
     from routes import data_import_bp
@@ -116,18 +96,15 @@ except ImportError:
 # Set up basic logging configuration
 logging.basicConfig(level=logging.INFO)
 
-
 @app.errorhandler(404)
 def not_found(error):
     """404 error handler."""
     return jsonify({"error": "Not found"}), 404
 
-
 @app.errorhandler(500)
 def internal_error(error):
     """500 error handler."""
     return jsonify({"error": "Internal server error"}), 500
-
 
 # Register payment routes
 try:
@@ -147,7 +124,6 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
-
 # Main application routes
 @app.route("/")
 def home():
@@ -159,24 +135,20 @@ def home():
             return render_template("index.html")
     return render_template("index.html")
 
-
 @app.route("/health")
 def health():
     """Health check endpoint (non-API)."""
     return jsonify({"status": "healthy", "service": "GOFAP"})
-
 
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template("errors/404.html"), 404
 
-
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
     return render_template("errors/500.html"), 500
-
 
 # Main routes - minimal routes, most are in blueprints
 
