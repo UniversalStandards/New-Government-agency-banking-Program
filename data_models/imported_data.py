@@ -10,6 +10,7 @@ from sqlalchemy.sql import func
 
 Base = declarative_base()
 
+
 class ImportedData(Base):
     """Model for storing imported data from various external services."""
 
@@ -87,6 +88,7 @@ class ImportedData(Base):
             "sync_version": self.sync_version,
             "processed_data": self.processed_data,
         }
+
 
 class SyncStatus(Base):
     """Model for tracking synchronization status for each service."""
