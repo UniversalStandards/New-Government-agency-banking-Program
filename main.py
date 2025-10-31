@@ -32,6 +32,17 @@ try:
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
+    DATABASE_URI = 'sqlite:///gofap.db'
+
+# Initialize Flask application
+app = Flask(__name__)
+app.config['DEBUG'] = DEBUG
+app.config['SECRET_KEY'] = SECRET_KEY
+
+# Initialize the database connection
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress warning
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
     DATABASE_URI = "sqlite:///gofap.db"
 
@@ -126,6 +137,15 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     """500 error handler."""
+    return jsonify({'error': 'Internal server error'}), 500
+
+# Register data import routes
+try:
+    from routes import data_import_bp
+    app.register_blueprint(data_import_bp)
+    logging.info("Data import routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register data import routes: {e}")
     return jsonify({"error": "Internal server error"}), 500
 
 
@@ -172,6 +192,57 @@ def not_found_error(error):
     return render_template("errors/404.html"), 404
 
 
+@app.route("/transactions")
+def transactions():
+    """Transactions page."""
+    try:
+        return render_template("transactions.html")
+    except:
+        return jsonify({"message": "GOFAP Transaction Management"})
+
+@app.route("/budgets")
+def budgets():
+    """Budgets page."""
+    try:
+        return render_template("budgets.html")
+    except:
+        return jsonify({"message": "GOFAP Budget Management"})
+
+@app.route("/reports")
+def reports():
+    """Reports and analytics page."""
+    try:
+        return render_template("reports.html")
+    except:
+        return jsonify({"message": "GOFAP Reports and Analytics"})
+
+@app.route("/api/accounts", methods=["GET"])
+@login_required
+def get_accounts():
+    """API endpoint to get user's accounts."""
+    accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
+    return jsonify([account.to_dict() for account in accounts])
+
+@app.route("/payments")
+@login_required
+def payments():
+    """Payment processing page."""
+    try:
+        return render_template("payments.html")
+    except:
+        return jsonify({"message": "GOFAP Payment Processing"})
+
+@app.route("/api/budgets", methods=["GET"])
+@login_required
+def get_budgets():
+    """API endpoint to get budgets."""
+    if current_user.role in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
+        budgets = Budget.query.filter_by(is_active=True).all()
+    else:
+        budgets = Budget.query.filter_by(
+            department=current_user.department, is_active=True
+        ).all()
+    return jsonify([budget.to_dict() for budget in budgets])
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
