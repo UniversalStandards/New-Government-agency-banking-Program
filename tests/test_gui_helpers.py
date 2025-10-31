@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from gui.gui_helpers import create_accounts, create_accounts_async
 
+
 class TestCreateAccountsFunctions:
     """Test that create_accounts functions are properly separated."""
 

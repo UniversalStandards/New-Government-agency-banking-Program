@@ -5,6 +5,7 @@ import stripe
 
 from ..service import Service
 
+
 class StripeService(Service):
     """Complete Stripe payment service implementation."""
 

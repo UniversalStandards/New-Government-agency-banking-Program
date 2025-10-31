@@ -13,6 +13,7 @@ from models import AccountType  # noqa: F401; Transaction,
 from models import Account, TransactionType, User, UserRole, db
 from models import Account, User, UserRole, db
 
+
 @pytest.fixture
 def app():
     """Create test Flask application."""
@@ -62,10 +63,12 @@ def app():
 
     return app
 
+
 @pytest.fixture
 def client(app):
     """Create test client."""
     return app.test_client()
+
 
 @pytest.fixture
 def admin_auth_headers():
@@ -75,10 +78,12 @@ def admin_auth_headers():
         "Content-Type": "application/json",
     }
 
+
 @pytest.fixture
 def user_auth_headers():
     """Get authentication headers for regular user."""
     return {"Authorization": "Bearer user-token", "Content-Type": "application/json"}
+
 
 class TestUserEndpoints:
     """Test user-related API endpoints."""
@@ -110,6 +115,7 @@ class TestUserEndpoints:
         assert response.status_code == 201
         data = json.loads(response.data)
         assert data["username"] == "newuser"
+
 
 class TestAccountEndpoints:
     """Test account-related API endpoints."""
@@ -144,6 +150,7 @@ class TestAccountEndpoints:
         assert "balance" in data
         assert data["balance"] == 1000.00
 
+
 class TestTransactionEndpoints:
     """Test transaction-related API endpoints."""
 
@@ -171,6 +178,7 @@ class TestTransactionEndpoints:
         assert response.status_code == 200
         data = json.loads(response.data)
         assert "transactions" in data
+
 
 class TestAuthenticationEndpoints:
     """Test authentication endpoints."""
@@ -201,6 +209,7 @@ class TestAuthenticationEndpoints:
         """Test logout functionality."""
         response = client.post("/api/auth/logout", headers=user_auth_headers)
         assert response.status_code == 200
+
 
 class TestSecurityValidation:
     """Test security-related validations."""

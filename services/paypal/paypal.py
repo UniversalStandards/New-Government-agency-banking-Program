@@ -6,6 +6,7 @@ import requests
 
 from ..service import Service
 
+
 class PaypalService(Service):
     """Complete PayPal payment service implementation."""
 

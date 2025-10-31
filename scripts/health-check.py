@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+
 def run_command(cmd: List[str]) -> Dict[str, Any]:
     """Run a command and return the result."""
     try:
@@ -31,6 +32,7 @@ def run_command(cmd: List[str]) -> Dict[str, Any]:
         }
     except Exception as e:
         return {"success": False, "stdout": "", "stderr": str(e), "returncode": -1}
+
 
 def check_python_environment() -> Dict[str, Any]:
     """Check Python environment and dependencies."""
@@ -60,6 +62,7 @@ def check_python_environment() -> Dict[str, Any]:
 
     return checks
 
+
 def check_database_connectivity() -> Dict[str, Any]:
     """Check database connectivity."""
     print("🗃️ Checking database connectivity...")
@@ -81,6 +84,7 @@ def check_database_connectivity() -> Dict[str, Any]:
             return {"connected": True, "tables_count": len(tables), "tables": tables}
     except Exception as e:
         return {"connected": False, "error": str(e)}
+
 
 def check_application_startup() -> Dict[str, Any]:
     """Check if the Flask application starts properly."""
@@ -117,6 +121,7 @@ def check_application_startup() -> Dict[str, Any]:
     except Exception as e:
         return {"startup_success": False, "error": str(e)}
 
+
 def check_code_quality() -> Dict[str, Any]:
     """Check code quality with linting tools."""
     print("🔍 Checking code quality...")
@@ -150,6 +155,7 @@ def check_code_quality() -> Dict[str, Any]:
     }
 
     return checks
+
 
 def check_security() -> Dict[str, Any]:
     """Basic security checks."""
@@ -203,6 +209,7 @@ def check_security() -> Dict[str, Any]:
 
     return checks
 
+
 def check_performance() -> Dict[str, Any]:
     """Basic performance checks."""
     print("⚡ Checking performance...")
@@ -235,6 +242,7 @@ def check_performance() -> Dict[str, Any]:
         checks["import_performance"] = {"error": str(e), "acceptable": False}
 
     return checks
+
 
 def generate_health_report(results: Dict[str, Any]) -> str:
     """Generate a comprehensive health report."""
@@ -327,6 +335,7 @@ def generate_health_report(results: Dict[str, Any]) -> str:
 
     return "\n".join(report_lines)
 
+
 def main():
     """Run comprehensive health checks."""
     print("🏥 Starting GOFAP Health Check...\n")
@@ -385,6 +394,7 @@ def main():
     except Exception as e:
         print(f"❌ Health check failed with error: {e}")
         sys.exit(3)
+
 
 if __name__ == "__main__":
     main()

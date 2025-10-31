@@ -14,6 +14,7 @@ except ImportError:
     async def create_modern_treasury_account_async(api_key, params):
         return {"success": False, "error": "Modern Treasury integration not available"}
 
+
 try:
     from stripe.stripe_helpers import create_stripe_customer_async
 except ImportError:
@@ -21,12 +22,14 @@ except ImportError:
     async def create_stripe_customer_async(api_key, params):
         return {"success": False, "error": "Stripe integration not available"}
 
+
 from modern_treasury.modern_treasury_helpers import create_modern_treasury_account_async
 from stripe.stripe_helpers import create_stripe_customer_async
 
 # Set logger to display messages based on the LOG_LEVEL environment variable
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
+
 
 # Define a simple exponential backoff function
 def backoff(start_sleep_time=0.1, factor=2, max_sleep_time=3):
@@ -46,6 +49,7 @@ def backoff(start_sleep_time=0.1, factor=2, max_sleep_time=3):
 
     return decorator
 
+
 # Process responses for consistency and to centralize error handling
 async def process_response(response: Dict[str, Any], service: str) -> Optional[str]:
     if response.get("success"):
@@ -56,17 +60,20 @@ async def process_response(response: Dict[str, Any], service: str) -> Optional[s
         )
         return None
 
+
 # Asynchronous account creation for Modern Treasury with validation and exponential backoff
 @backoff()
 async def create_modern_account(api_key: str, params: Dict[str, Any]) -> Optional[str]:
     response = await create_modern_treasury_account_async(api_key, params)
     return await process_response(response, "account_id")
 
+
 # Asynchronous customer creation for Stripe with validation and exponential backoff
 @backoff()
 async def create_stripe_account(api_key: str, params: Dict[str, Any]) -> Optional[str]:
     customer = await create_stripe_customer_async(api_key, params)
     return await process_response(customer, "id")
+
 
 # Controller function to route to the correct asynchronous account creation function
 async def create_accounts_async(
@@ -85,6 +92,7 @@ async def create_accounts_async(
 
     creation_func = service_creation_map[service]
     return await creation_func(api_key, params)
+
 
 # Synchronous wrapper for GUI compatibility
 def create_accounts(service: str, api_key: str = None, params: Dict[str, Any] = None):
@@ -110,6 +118,7 @@ def create_accounts(service: str, api_key: str = None, params: Dict[str, Any] = 
     except Exception as e:
         logger.error(f"Error in synchronous create_accounts: {e}")
         return None
+
 
 # Update if additional features or enhancements are needed
 # ...

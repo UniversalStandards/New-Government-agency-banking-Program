@@ -9,6 +9,7 @@ from typing import Callable, Optional
 from .config import ImportConfig
 from .sync_engine import SyncEngine
 
+
 class SyncScheduler:
     """Scheduler for automated data synchronization."""
 
@@ -186,6 +187,7 @@ class SyncScheduler:
         self.on_sync_complete = on_complete
         self.on_sync_error = on_error
         self.logger.info("Sync callbacks configured")
+
 
 def create_scheduler(config: Optional[ImportConfig] = None) -> SyncScheduler:
     """Create and configure a sync scheduler.

@@ -5,6 +5,7 @@ import requests
 
 from ..service import Service
 
+
 class ModernTreasuryService(Service):
     """Modern Treasury service for cash management."""
 
