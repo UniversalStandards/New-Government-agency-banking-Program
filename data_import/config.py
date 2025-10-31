@@ -8,7 +8,6 @@ from typing import Any, Dict, Optional
 
 from .exceptions import ConfigurationError
 
-
 @dataclass
 class ImportConfig:
     """Configuration class for data import operations."""
@@ -100,7 +99,6 @@ class ImportConfig:
             return bool(self.github_token and self.github_org)
         else:
             return False
-
 
 def load_config() -> ImportConfig:
     """Load and validate configuration."""

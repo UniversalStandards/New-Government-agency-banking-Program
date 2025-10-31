@@ -11,7 +11,6 @@ from data_import.config import load_config
 from data_import.scheduler import create_scheduler
 from data_import.sync_engine import SyncEngine
 
-
 def register_data_import_commands(app):
     """Register data import CLI commands with the Flask app."""
 

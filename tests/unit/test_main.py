@@ -1,8 +1,6 @@
 """Unit tests for the main application module."""
 
-import pytest
 from main import app
-
 
 def test_app_creation():
     """Test that the Flask app is created properly."""
@@ -10,7 +8,6 @@ def test_app_creation():
     # In test mode, the database URI will be different (temporary file)
     # So we just check that it's set to some SQLite database
     assert "sqlite:///" in app.config["SQLALCHEMY_DATABASE_URI"]
-
 
 def test_home_route(client):
     """Test the home route returns expected response."""
@@ -20,7 +17,6 @@ def test_home_route(client):
     response_text = response.get_data(as_text=True)
     assert "GOFAP" in response_text
     assert "Government Operations and Financial Accounting Platform" in response_text
-
 
 def test_app_debug_setting(app_context):
     """Test that debug setting is properly configured."""

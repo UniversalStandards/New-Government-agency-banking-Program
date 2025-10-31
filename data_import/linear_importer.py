@@ -10,7 +10,6 @@ from .config import ImportConfig
 from .exceptions import ImportError
 from .linear_client import LinearClient
 
-
 class LinearImporter(BaseImporter):
     """Importer for Linear workspace data."""
 

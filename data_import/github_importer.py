@@ -10,7 +10,6 @@ from .config import ImportConfig
 from .exceptions import ImportError
 from .github_client import GitHubClient
 
-
 class GitHubImporter(BaseImporter):
     """Importer for GitHub repository data."""
 

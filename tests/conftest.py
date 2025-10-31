@@ -1,10 +1,11 @@
 """Shared test configuration and fixtures for GOFAP tests."""
 
-import pytest
-import tempfile
 import os
-from main import app, db
+import tempfile
 
+import pytest
+
+from main import app, db
 
 @pytest.fixture
 def client():
@@ -23,7 +24,6 @@ def client():
     # Clean up the temporary database file
     os.close(db_fd)
     os.unlink(db_path)
-
 
 @pytest.fixture
 def app_context():

@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional
 from .config import ImportConfig
 from .exceptions import ImportError, RateLimitError
 
-
 class BaseImporter(ABC):
     """Abstract base class for all data importers."""
 
