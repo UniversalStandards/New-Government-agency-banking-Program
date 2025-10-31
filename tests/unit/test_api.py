@@ -1,17 +1,6 @@
 """Unit tests for API endpoints."""
 
-import pytest
 import json
-from main import app, db
-from models import (
-    User,
-    Account,
-    Transaction,
-    UserRole,
-    TransactionType,
-    TransactionStatus,
-)
-
 
 def test_health_endpoint(client):
     """Test the health check endpoint."""
@@ -23,7 +12,6 @@ def test_health_endpoint(client):
     assert "timestamp" in data
     assert data["version"] == "1.0.0"
 
-
 def test_users_get_endpoint(client):
     """Test the users GET endpoint."""
     response = client.get("/api/users")
@@ -31,7 +19,6 @@ def test_users_get_endpoint(client):
 
     data = json.loads(response.data)
     assert isinstance(data, list)
-
 
 def test_users_post_endpoint(client):
     """Test creating a user via POST."""
@@ -52,7 +39,6 @@ def test_users_post_endpoint(client):
     assert data["message"] == "User created successfully"
     assert "user_id" in data
 
-
 def test_accounts_get_endpoint(client):
     """Test the accounts GET endpoint."""
     response = client.get("/api/accounts")
@@ -60,7 +46,6 @@ def test_accounts_get_endpoint(client):
 
     data = json.loads(response.data)
     assert isinstance(data, list)
-
 
 def test_transactions_get_endpoint(client):
     """Test the transactions GET endpoint."""
@@ -70,7 +55,6 @@ def test_transactions_get_endpoint(client):
     data = json.loads(response.data)
     assert isinstance(data, list)
 
-
 def test_budget_endpoint(client):
     """Test the budget information endpoint."""
     response = client.get("/api/budget")
@@ -78,7 +62,6 @@ def test_budget_endpoint(client):
 
     data = json.loads(response.data)
     assert isinstance(data, list)
-
 
 def test_payroll_get_endpoint(client):
     """Test the payroll GET endpoint."""
@@ -88,7 +71,6 @@ def test_payroll_get_endpoint(client):
     data = json.loads(response.data)
     assert isinstance(data, list)
 
-
 def test_utilities_get_endpoint(client):
     """Test the utilities GET endpoint."""
     response = client.get("/api/utilities")
@@ -96,7 +78,6 @@ def test_utilities_get_endpoint(client):
 
     data = json.loads(response.data)
     assert isinstance(data, list)
-
 
 def test_404_error_handling(client):
     """Test that 404 errors are handled properly."""

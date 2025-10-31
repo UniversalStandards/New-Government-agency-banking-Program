@@ -9,7 +9,6 @@ from models import Department, User, db
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-
 def validate_password(password):
     """Validate password strength."""
     if len(password) < 8:
@@ -25,7 +24,6 @@ def validate_password(password):
         return False, "Password must contain at least one number"
 
     return True, "Password is valid"
-
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -57,7 +55,6 @@ def login():
             flash("Invalid username or password", "error")
 
     return render_template("auth/login.html")
-
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -124,7 +121,6 @@ def register():
 
     return render_template("auth/register.html", departments=departments)
 
-
 @auth_bp.route("/logout")
 @login_required
 def logout():
@@ -133,13 +129,11 @@ def logout():
     flash("You have been logged out successfully", "info")
     return redirect(url_for("home"))
 
-
 @auth_bp.route("/profile")
 @login_required
 def profile():
     """User profile."""
     return render_template("auth/profile.html", user=current_user)
-
 
 @auth_bp.route("/change-password", methods=["GET", "POST"])
 @login_required

@@ -158,26 +158,21 @@ TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", "30"))
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 LOG_FILE = os.environ.get("LOG_FILE")
 
-
 def get_config(key: str, default: Any = None) -> Any:
     """Get configuration value with fallback to default."""
     return os.environ.get(key, default)
-
 
 def is_production() -> bool:
     """Check if running in production environment."""
     return ENVIRONMENT == "production"
 
-
 def is_development() -> bool:
     """Check if running in development environment."""
     return ENVIRONMENT == "development"
 
-
 def is_testing() -> bool:
     """Check if running in testing environment."""
     return ENVIRONMENT == "testing"
-
 
 # Configuration validation
 def validate_config():
