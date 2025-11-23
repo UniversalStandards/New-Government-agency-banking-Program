@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}HR Management - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-users me-2"></i>HR Management Dashboard</h1>
+            <p class="text-muted">Manage employees, leave requests, performance reviews, and payroll</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Employee Management Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Employee Management</h5>
+                    <p class="card-text">Manage employee records, assignments, and information</p>
+                    <a href="{{ url_for('hr.employees') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-1"></i>View Employees
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Requests Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Leave Requests</h5>
+                    <p class="card-text">Review and approve employee leave requests</p>
+                    <a href="{{ url_for('hr.leave_requests') }}" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-1"></i>Manage Leaves
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Reviews Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Performance Reviews</h5>
+                    <p class="card-text">Conduct and track employee performance evaluations</p>
+                    <a href="{{ url_for('hr.performance') }}" class="btn btn-warning">
+                        <i class="fas fa-arrow-right me-1"></i>View Reviews
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payroll Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-check-alt fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Payroll Management</h5>
+                    <p class="card-text">Process payroll and manage employee payments</p>
+                    <a href="{{ url_for('hr.payroll') }}" class="btn btn-info">
+                        <i class="fas fa-arrow-right me-1"></i>Manage Payroll
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Quick Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 id="total-employees" class="text-primary">-</h3>
+                            <p class="text-muted mb-0">Total Employees</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="pending-leaves" class="text-warning">-</h3>
+                            <p class="text-muted mb-0">Pending Leave Requests</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="active-employees" class="text-success">-</h3>
+                            <p class="text-muted mb-0">Active Employees</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="payroll-pending" class="text-info">-</h3>
+                            <p class="text-muted mb-0">Upcoming Payroll</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load HR statistics
+document.addEventListener('DOMContentLoaded', function() {
+    // Placeholder for AJAX calls to load statistics
+    document.getElementById('total-employees').textContent = '0';
+    document.getElementById('pending-leaves').textContent = '0';
+    document.getElementById('active-employees').textContent = '0';
+    document.getElementById('payroll-pending').textContent = '0';
+});
+</script>
+{% endblock %}

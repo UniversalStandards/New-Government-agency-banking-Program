@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Management - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-money-check-alt me-2"></i>Payroll Management</h1>
+            <p class="text-muted">Manage employee payroll and payment records</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Pay Period</th>
+                            <th>Employee</th>
+                            <th>Gross Pay</th>
+                            <th>Deductions</th>
+                            <th>Net Pay</th>
+                            <th>Payment Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payroll-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading payroll records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPayroll();
+});
+
+function loadPayroll() {
+    fetch('/hr/api/payroll')
+        .then(response => response.json())
+        .then(records => {
+            const tbody = document.getElementById('payroll-list');
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No payroll records found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = records.map(rec => `
+                <tr>
+                    <td>${rec.pay_period_start} - ${rec.pay_period_end}</td>
+                    <td>${rec.employee_id}</td>
+                    <td>$${parseFloat(rec.gross_pay).toFixed(2)}</td>
+                    <td>$${parseFloat(rec.deductions).toFixed(2)}</td>
+                    <td class="fw-bold">$${parseFloat(rec.net_pay).toFixed(2)}</td>
+                    <td>${rec.payment_date || 'Pending'}</td>
+                    <td>
+                        <span class="badge bg-${rec.payment_date ? 'success' : 'warning'}">
+                            ${rec.payment_date ? 'Paid' : 'Pending'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading payroll:', error);
+            document.getElementById('payroll-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading payroll records</td></tr>';
+        });
+}
+</script>
+{% endblock %}

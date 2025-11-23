@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Management - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-users me-2"></i>Employee Management</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                <i class="fas fa-plus me-1"></i>Add Employee
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee #</th>
+                            <th>Name</th>
+                            <th>Job Title</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Hire Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading employees...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadEmployees();
+});
+
+function loadEmployees() {
+    fetch('/hr/api/employees')
+        .then(response => response.json())
+        .then(employees => {
+            const tbody = document.getElementById('employee-list');
+            if (employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No employees found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td>${emp.employee_number}</td>
+                    <td>${emp.employee_number}</td>
+                    <td>${emp.job_title}</td>
+                    <td>${emp.department_id || 'N/A'}</td>
+                    <td>
+                        <span class="badge bg-${emp.employment_status === 'active' ? 'success' : 'secondary'}">
+                            ${emp.employment_status}
+                        </span>
+                    </td>
+                    <td>${emp.hire_date || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewEmployee('${emp.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading employees:', error);
+            document.getElementById('employee-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading employees</td></tr>';
+        });
+}
+
+function viewEmployee(id) {
+    // Placeholder for view employee details
+    alert('View employee: ' + id);
+}
+</script>
+{% endblock %}
