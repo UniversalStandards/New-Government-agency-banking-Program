@@ -8,6 +8,7 @@ from services import get_service
 payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
 logger = logging.getLogger(__name__)
 
+
 @payments_bp.route("/process", methods=["POST"])
 @login_required
 def process_payment():
@@ -49,6 +50,7 @@ def process_payment():
         logger.error(f"Payment processing error: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 @payments_bp.route("/create-customer", methods=["POST"])
 @login_required
 def create_customer():
@@ -76,6 +78,7 @@ def create_customer():
         logger.error(f"Customer creation error: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 @payments_bp.route("/balance/<service_name>")
 @login_required
 def get_balance(service_name):
@@ -94,6 +97,7 @@ def get_balance(service_name):
     except Exception as e:
         logger.error(f"Balance retrieval error: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 @payments_bp.route("/webhook/<service_name>", methods=["POST"])
 def webhook_handler(service_name):
