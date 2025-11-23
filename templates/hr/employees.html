@@ -61,7 +61,7 @@ function loadEmployees() {
             tbody.innerHTML = employees.map(emp => `
                 <tr>
                     <td>${emp.employee_number}</td>
-                    <td>${emp.employee_number}</td>
+                    <td>${emp.user_id}</td>
                     <td>${emp.job_title}</td>
                     <td>${emp.department_id || 'N/A'}</td>
                     <td>
