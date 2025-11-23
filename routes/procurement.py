@@ -3,25 +3,23 @@ Procurement and Purchasing routes for GOFAP.
 """
 
 from datetime import datetime
+
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from models import (
-    db,
-    Vendor,
+    Department,
     PurchaseOrder,
     PurchaseOrderItem,
-    Requisition,
-    Budget,
-    Department,
-    User,
-    UserRole,
-    VendorStatus,
     PurchaseOrderStatus,
+    Requisition,
+    UserRole,
+    Vendor,
+    VendorStatus,
+    db,
 )
 
 procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
-
 
 @procurement_bp.route("/")
 @login_required
@@ -31,7 +29,6 @@ def index():
         return render_template("procurement/dashboard.html")
     except:
         return jsonify({"message": "Procurement Management Dashboard"})
-
 
 @procurement_bp.route("/vendors")
 @login_required
@@ -49,7 +46,6 @@ def vendors():
     except:
         return jsonify({"message": "Vendor Management"})
 
-
 @procurement_bp.route("/api/vendors", methods=["GET"])
 @login_required
 def get_vendors():
@@ -64,7 +60,6 @@ def get_vendors():
 
     vendors = Vendor.query.filter_by(is_active=True).all()
     return jsonify([v.to_dict() for v in vendors])
-
 
 @procurement_bp.route("/api/vendors", methods=["POST"])
 @login_required
@@ -95,7 +90,6 @@ def create_vendor():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
-
 
 @procurement_bp.route("/api/vendors/<vendor_id>", methods=["PUT"])
 @login_required
@@ -137,7 +131,6 @@ def update_vendor(vendor_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @procurement_bp.route("/requisitions")
 @login_required
 def requisitions():
@@ -146,7 +139,6 @@ def requisitions():
         return render_template("procurement/requisitions.html")
     except:
         return jsonify({"message": "Purchase Requisitions"})
-
 
 @procurement_bp.route("/api/requisitions", methods=["GET"])
 @login_required
@@ -164,7 +156,6 @@ def get_requisitions():
         )
 
     return jsonify([r.to_dict() for r in requisitions])
-
 
 @procurement_bp.route("/api/requisitions", methods=["POST"])
 @login_required
@@ -196,7 +187,6 @@ def create_requisition():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @procurement_bp.route("/api/requisitions/<req_id>/approve", methods=["POST"])
 @login_required
 def approve_requisition(req_id):
@@ -224,7 +214,6 @@ def approve_requisition(req_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @procurement_bp.route("/purchase-orders")
 @login_required
 def purchase_orders():
@@ -240,7 +229,6 @@ def purchase_orders():
         return render_template("procurement/purchase_orders.html")
     except:
         return jsonify({"message": "Purchase Orders"})
-
 
 @procurement_bp.route("/api/purchase-orders", methods=["GET"])
 @login_required
@@ -264,7 +252,6 @@ def get_purchase_orders():
             purchase_orders = []
 
     return jsonify([po.to_dict() for po in purchase_orders])
-
 
 @procurement_bp.route("/api/purchase-orders", methods=["POST"])
 @login_required
@@ -333,7 +320,6 @@ def create_purchase_order():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @procurement_bp.route("/api/purchase-orders/<po_id>", methods=["GET"])
 @login_required
 def get_purchase_order(po_id):
@@ -354,7 +340,6 @@ def get_purchase_order(po_id):
     po_dict["items"] = [item.to_dict() for item in po.items]
 
     return jsonify(po_dict)
-
 
 @procurement_bp.route("/api/purchase-orders/<po_id>/status", methods=["PUT"])
 @login_required
@@ -389,7 +374,6 @@ def update_po_status(po_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
-
 
 @procurement_bp.route("/api/purchase-orders/<po_id>/receive", methods=["POST"])
 @login_required
