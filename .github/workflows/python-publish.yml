@@ -13,7 +13,8 @@ on:
     types: [published]
 
 permissions:
-  contents: write-all
+  contents: read
+  id-token: write
 
 jobs:
   deploy:
@@ -23,7 +24,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
     - name: Install dependencies

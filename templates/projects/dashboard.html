@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Project Management - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-project-diagram me-2"></i>Project Management Dashboard</h1>
+            <p class="text-muted">Manage projects, tasks, milestones, and time tracking</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-3x mb-3"></i>
+                    <h3 id="active-projects">-</h3>
+                    <p class="mb-0">Active Projects</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                    <h3 id="completed-tasks">-</h3>
+                    <p class="mb-0">Completed Tasks</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3"></i>
+                    <h3 id="pending-tasks">-</h3>
+                    <p class="mb-0">Pending Tasks</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-flag-checkered fa-3x mb-3"></i>
+                    <h3 id="upcoming-milestones">-</h3>
+                    <p class="mb-0">Upcoming Milestones</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-list me-1"></i>View All Projects
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 mb-2" onclick="alert('Create Project feature coming soon')">
+                                <i class="fas fa-plus me-1"></i>Create New Project
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-info w-100 mb-2" onclick="alert('My Tasks feature coming soon')">
+                                <i class="fas fa-user-check me-1"></i>My Assigned Tasks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Placeholder statistics
+    document.getElementById('active-projects').textContent = '0';
+    document.getElementById('completed-tasks').textContent = '0';
+    document.getElementById('pending-tasks').textContent = '0';
+    document.getElementById('upcoming-milestones').textContent = '0';
+});
+</script>
+{% endblock %}

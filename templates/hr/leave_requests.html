@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Requests - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-calendar-check me-2"></i>Leave Requests</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#requestLeaveModal">
+                <i class="fas fa-plus me-1"></i>Request Leave
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leave-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading leave requests...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadLeaveRequests();
+});
+
+function loadLeaveRequests() {
+    fetch('/hr/api/leave-requests')
+        .then(response => response.json())
+        .then(requests => {
+            const tbody = document.getElementById('leave-list');
+            if (requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No leave requests found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = requests.map(req => {
+                const statusColors = {
+                    'pending': 'warning',
+                    'approved': 'success',
+                    'rejected': 'danger',
+                    'cancelled': 'secondary'
+                };
+                return `
+                    <tr>
+                        <td>${req.employee_id}</td>
+                        <td><span class="badge bg-info">${req.leave_type}</span></td>
+                        <td>${req.start_date}</td>
+                        <td>${req.end_date}</td>
+                        <td>${req.days_requested}</td>
+                        <td>
+                            <span class="badge bg-${statusColors[req.status] || 'secondary'}">
+                                ${req.status}
+                            </span>
+                        </td>
+                        <td>
+                            ${req.status === 'pending' ? `
+                                <button class="btn btn-sm btn-success" onclick="approveLeave('${req.id}')">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.error('Error loading leave requests:', error);
+            document.getElementById('leave-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading leave requests</td></tr>';
+        });
+}
+
+function approveLeave(id) {
+    if (!confirm('Approve this leave request?')) return;
+    
+    fetch(`/hr/api/leave-requests/${id}/approve`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Leave request approved');
+            loadLeaveRequests();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}
