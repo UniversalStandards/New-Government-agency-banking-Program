@@ -3,25 +3,21 @@ HR Management routes for GOFAP.
 """
 
 from datetime import datetime
+
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from models import (
-    db,
     Employee,
     LeaveRequest,
-    PerformanceReview,
-    PayrollRecord,
-    User,
-    Department,
-    UserRole,
-    EmploymentStatus,
     LeaveStatus,
     LeaveType,
+    PayrollRecord,
+    UserRole,
+    db,
 )
 
 hr_bp = Blueprint("hr", __name__, url_prefix="/hr")
-
 
 @hr_bp.route("/")
 @login_required
@@ -34,7 +30,6 @@ def index():
         return render_template("hr/dashboard.html")
     except:
         return jsonify({"message": "HR Management Dashboard"})
-
 
 @hr_bp.route("/employees")
 @login_required
@@ -52,7 +47,6 @@ def employees():
     except:
         return jsonify({"message": "Employee Management"})
 
-
 @hr_bp.route("/api/employees", methods=["GET"])
 @login_required
 def get_employees():
@@ -66,7 +60,6 @@ def get_employees():
 
     employees = Employee.query.filter_by(is_active=True).all()
     return jsonify([emp.to_dict() for emp in employees])
-
 
 @hr_bp.route("/api/employees", methods=["POST"])
 @login_required
@@ -96,7 +89,6 @@ def create_employee():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @hr_bp.route("/leave-requests")
 @login_required
 def leave_requests():
@@ -105,7 +97,6 @@ def leave_requests():
         return render_template("hr/leave_requests.html")
     except:
         return jsonify({"message": "Leave Request Management"})
-
 
 @hr_bp.route("/api/leave-requests", methods=["GET"])
 @login_required
@@ -122,7 +113,6 @@ def get_leave_requests():
         leave_requests = LeaveRequest.query.filter_by(employee_id=employee.id).all()
 
     return jsonify([lr.to_dict() for lr in leave_requests])
-
 
 @hr_bp.route("/api/leave-requests", methods=["POST"])
 @login_required
@@ -152,7 +142,6 @@ def create_leave_request():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
-
 
 @hr_bp.route("/api/leave-requests/<request_id>/approve", methods=["POST"])
 @login_required
@@ -184,7 +173,6 @@ def approve_leave_request(request_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @hr_bp.route("/performance")
 @login_required
 def performance():
@@ -201,7 +189,6 @@ def performance():
     except:
         return jsonify({"message": "Performance Review Management"})
 
-
 @hr_bp.route("/payroll")
 @login_required
 def payroll():
@@ -217,7 +204,6 @@ def payroll():
         return render_template("hr/payroll.html")
     except:
         return jsonify({"message": "Payroll Management"})
-
 
 @hr_bp.route("/api/payroll", methods=["GET"])
 @login_required

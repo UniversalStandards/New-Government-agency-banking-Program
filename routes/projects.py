@@ -3,25 +3,24 @@ Project Management routes for GOFAP.
 """
 
 from datetime import datetime
+
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from models import (
-    db,
-    Project,
-    Task,
-    Milestone,
-    TimeEntry,
-    User,
     Department,
-    UserRole,
+    Milestone,
+    Project,
     ProjectStatus,
-    TaskStatus,
+    Task,
     TaskPriority,
+    TaskStatus,
+    TimeEntry,
+    UserRole,
+    db,
 )
 
 projects_bp = Blueprint("projects", __name__, url_prefix="/projects")
-
 
 @projects_bp.route("/")
 @login_required
@@ -32,7 +31,6 @@ def index():
     except:
         return jsonify({"message": "Project Management Dashboard"})
 
-
 @projects_bp.route("/list")
 @login_required
 def list_projects():
@@ -41,7 +39,6 @@ def list_projects():
         return render_template("projects/list.html")
     except:
         return jsonify({"message": "Project List"})
-
 
 @projects_bp.route("/api/projects", methods=["GET"])
 @login_required
@@ -66,7 +63,6 @@ def get_projects():
         ).all()
 
     return jsonify([p.to_dict() for p in projects])
-
 
 @projects_bp.route("/api/projects", methods=["POST"])
 @login_required
@@ -105,7 +101,6 @@ def create_project():
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @projects_bp.route("/api/projects/<project_id>", methods=["GET"])
 @login_required
 def get_project(project_id):
@@ -115,7 +110,6 @@ def get_project(project_id):
         return jsonify({"error": "Project not found"}), 404
 
     return jsonify(project.to_dict())
-
 
 @projects_bp.route("/api/projects/<project_id>", methods=["PUT"])
 @login_required
@@ -160,7 +154,6 @@ def update_project(project_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @projects_bp.route("/<project_id>/tasks")
 @login_required
 def project_tasks(project_id):
@@ -174,14 +167,12 @@ def project_tasks(project_id):
     except:
         return jsonify({"message": f"Tasks for project {project.name}"})
 
-
 @projects_bp.route("/api/projects/<project_id>/tasks", methods=["GET"])
 @login_required
 def get_project_tasks(project_id):
     """Get tasks for a project."""
     tasks = Task.query.filter_by(project_id=project_id).all()
     return jsonify([t.to_dict() for t in tasks])
-
 
 @projects_bp.route("/api/tasks", methods=["POST"])
 @login_required
@@ -224,7 +215,6 @@ def create_task():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
-
 
 @projects_bp.route("/api/tasks/<task_id>", methods=["PUT"])
 @login_required
@@ -271,7 +261,6 @@ def update_task(task_id):
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
 
-
 @projects_bp.route("/api/tasks/<task_id>/time", methods=["POST"])
 @login_required
 def log_time(task_id):
@@ -301,7 +290,6 @@ def log_time(task_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 400
-
 
 @projects_bp.route("/api/milestones", methods=["POST"])
 @login_required
