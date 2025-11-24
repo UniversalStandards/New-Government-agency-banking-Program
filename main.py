@@ -9,6 +9,7 @@ from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
 from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
 from models import db
@@ -43,12 +44,6 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    handlers=[logging.FileHandler("gofap.log"), logging.StreamHandler()],
-)
 logger = logging.getLogger(__name__)
 
 from api import api_bp
@@ -58,6 +53,7 @@ from auth import auth_bp
 
 # Import models after db initialization
 from models import User, UserRole
+from models import Account, Budget, User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -93,8 +89,9 @@ try:
 except ImportError:
     pass  # Data import routes not available
 
-# Set up basic logging configuration
-logging.basicConfig(level=logging.INFO)
+# Register payment routes
+try:
+    from routes.payments import payments_bp
 
 @app.errorhandler(404)
 def not_found(error):
@@ -107,13 +104,37 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 # Register payment routes
-try:
-    from routes.payments import payments_bp
-
     app.register_blueprint(payments_bp)
     logging.info("Payment routes registered")
 except ImportError as e:
     logging.warning(f"Could not register payment routes: {e}")
+
+# Register HR routes
+try:
+    from routes.hr import hr_bp
+
+    app.register_blueprint(hr_bp)
+    logging.info("HR routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register HR routes: {e}")
+
+# Register project management routes
+try:
+    from routes.projects import projects_bp
+
+    app.register_blueprint(projects_bp)
+    logging.info("Project management routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register project management routes: {e}")
+
+# Register procurement routes
+try:
+    from routes.procurement import procurement_bp
+
+    app.register_blueprint(procurement_bp)
+    logging.info("Procurement routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register procurement routes: {e}")
 
 # Register CLI commands
 try:
@@ -131,9 +152,44 @@ def home():
     if current_user.is_authenticated:
         try:
             return render_template("dashboard.html", user=current_user)
-        except:
-            return render_template("index.html")
-    return render_template("index.html")
+        except Exception as e:
+            logging.warning(f"Could not render dashboard: {e}")
+            return jsonify(
+                {
+                    "message": "Welcome to GOFAP - Government Operations and Financial Accounting Platform",
+                    "features": {
+                        "financial": "/transactions, /budgets, /reports",
+                        "hr": "/hr/ (employees, leave requests, payroll)",
+                        "projects": "/projects/ (project management, tasks, milestones)",
+                        "procurement": "/procurement/ (vendors, purchase orders, requisitions)",
+                    },
+                }
+            )
+    try:
+        return render_template("index.html")
+    except:
+        return jsonify(
+            {
+                "message": "Welcome to GOFAP - Government Operations and Financial Accounting Platform",
+                "version": "1.0.0",
+                "status": "running",
+            }
+        )
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    """Main dashboard page."""
+    try:
+        return render_template("dashboard.html", user=current_user)
+    except:
+        return jsonify(
+            {
+                "message": "GOFAP Dashboard",
+                "user": current_user.username,
+                "role": current_user.role.value,
+            }
+        )
 
 @app.route("/health")
 def health():
@@ -144,6 +200,57 @@ def health():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template("errors/404.html"), 404
+@app.route("/transactions")
+def transactions():
+    """Transactions page."""
+    try:
+        return render_template("transactions.html")
+    except:
+        return jsonify({"message": "GOFAP Transaction Management"})
+
+@app.route("/budgets")
+def budgets():
+    """Budgets page."""
+    try:
+        return render_template("budgets.html")
+    except:
+        return jsonify({"message": "GOFAP Budget Management"})
+
+@app.route("/reports")
+def reports():
+    """Reports and analytics page."""
+    try:
+        return render_template("reports.html")
+    except:
+        return jsonify({"message": "GOFAP Reports and Analytics"})
+
+@app.route("/api/accounts", methods=["GET"])
+@login_required
+def get_accounts():
+    """API endpoint to get user's accounts."""
+    accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
+    return jsonify([account.to_dict() for account in accounts])
+
+@app.route("/payments")
+@login_required
+def payments():
+    """Payment processing page."""
+    try:
+        return render_template("payments.html")
+    except:
+        return jsonify({"message": "GOFAP Payment Processing"})
+
+@app.route("/api/budgets", methods=["GET"])
+@login_required
+def get_budgets():
+    """API endpoint to get budgets."""
+    if current_user.role in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
+        budgets = Budget.query.filter_by(is_active=True).all()
+    else:
+        budgets = Budget.query.filter_by(
+            department=current_user.department, is_active=True
+        ).all()
+    return jsonify([budget.to_dict() for budget in budgets])
 
 @app.errorhandler(500)
 def internal_error(error):
