@@ -219,6 +219,34 @@ EXPOSE 5000
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
 ```
 
+## 🔄 CI/CD & Workflows
+
+This repository uses **12 GitHub Actions workflows** for automated testing, security scanning, and deployment:
+
+### Main Workflows
+- **Comprehensive CI** (`ci.yml`) - Complete testing pipeline with security scanning
+- **Python Application** (`python-app.yml`) - Standard Python CI for single version
+- **Python Package** (`python-package.yml`) - Multi-version testing (Python 3.9, 3.10, 3.11)
+- **CodeQL Analysis** (`codeql.yml`) - Security vulnerability detection
+- **Dependency Review** (`dependency-review.yml`) - Checks for vulnerable dependencies in PRs
+- **Node.js with Gulp** (`npm-gulp.yml`) - Frontend asset building and testing
+
+### Security Workflows
+- **Frogbot Scan** (`frogbot-scan-pr.yml`) - JFrog Xray security scanning
+- **Mobb/CodeQL** (`mobb-codeql.yaml`) - Automated vulnerability fixing
+
+### Automation Workflows
+- **Issue Summarizer** (`summary.yml`) - AI-powered issue summarization
+- **PR Labeler** (`label.yml`) - Automatic PR labeling based on changed files
+- **Static Pages** (`static.yml`) - GitHub Pages deployment
+- **Python Publish** (`python-publish.yml`) - PyPI package publishing on releases
+
+### Workflow Status
+![CI Status](https://github.com/UniversalStandards/New-Government-agency-banking-Program/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/UniversalStandards/New-Government-agency-banking-Program/actions/workflows/codeql.yml/badge.svg)
+
+For detailed documentation on workflows, see [.github/WORKFLOWS.md](.github/WORKFLOWS.md).
+
 ## 🤝 Contributing
 
 1. Fork the repository

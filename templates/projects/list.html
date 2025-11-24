@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-project-diagram me-2"></i>All Projects</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="alert('Create Project feature coming soon')">
+                <i class="fas fa-plus me-1"></i>New Project
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Status</th>
+                            <th>Budget</th>
+                            <th>Progress</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="project-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading projects...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+});
+
+function loadProjects() {
+    fetch('/projects/api/projects')
+        .then(response => response.json())
+        .then(projects => {
+            const tbody = document.getElementById('project-list');
+            if (projects.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No projects found</td></tr>';
+                return;
+            }
+            
+            const statusColors = {
+                'planning': 'secondary',
+                'in_progress': 'primary',
+                'on_hold': 'warning',
+                'completed': 'success',
+                'cancelled': 'danger'
+            };
+            
+            tbody.innerHTML = projects.map(proj => `
+                <tr>
+                    <td><strong>${proj.name}</strong></td>
+                    <td>
+                        <span class="badge bg-${statusColors[proj.status] || 'secondary'}">
+                            ${proj.status.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>$${proj.budget ? parseFloat(proj.budget).toFixed(2) : 'N/A'}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" style="width: ${proj.completion_percentage}%">
+                                ${proj.completion_percentage}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>${proj.start_date || 'N/A'}</td>
+                    <td>${proj.end_date || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewProject('${proj.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading projects:', error);
+            document.getElementById('project-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading projects</td></tr>';
+        });
+}
+
+function viewProject(id) {
+    window.location.href = `/projects/${id}/tasks`;
+}
+</script>
+{% endblock %}

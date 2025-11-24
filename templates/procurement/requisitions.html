@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase Requisitions - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-clipboard-list me-2"></i>Purchase Requisitions</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="alert('Create Requisition feature coming soon')">
+                <i class="fas fa-plus me-1"></i>New Requisition
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Req #</th>
+                            <th>Title</th>
+                            <th>Department</th>
+                            <th>Estimated Cost</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requisition-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading requisitions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRequisitions();
+});
+
+function loadRequisitions() {
+    fetch('/procurement/api/requisitions')
+        .then(response => response.json())
+        .then(requisitions => {
+            const tbody = document.getElementById('requisition-list');
+            if (requisitions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No requisitions found</td></tr>';
+                return;
+            }
+            
+            const statusColors = {
+                'draft': 'secondary',
+                'pending_approval': 'warning',
+                'approved': 'success',
+                'ordered': 'info',
+                'received': 'success',
+                'cancelled': 'danger'
+            };
+            
+            tbody.innerHTML = requisitions.map(req => `
+                <tr>
+                    <td><strong>${req.requisition_number}</strong></td>
+                    <td>${req.title}</td>
+                    <td>${req.department_id || 'N/A'}</td>
+                    <td>$${req.estimated_cost ? parseFloat(req.estimated_cost).toFixed(2) : '0.00'}</td>
+                    <td>
+                        <span class="badge bg-${statusColors[req.status] || 'secondary'}">
+                            ${req.status.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>${req.created_at ? new Date(req.created_at).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                        ${req.status === 'pending_approval' ? `
+                            <button class="btn btn-sm btn-success" onclick="approveRequisition('${req.id}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-primary" onclick="viewRequisition('${req.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        `}
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading requisitions:', error);
+            document.getElementById('requisition-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading requisitions</td></tr>';
+        });
+}
+
+function approveRequisition(id) {
+    if (!confirm('Approve this requisition?')) return;
+    
+    fetch(`/procurement/api/requisitions/${id}/approve`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Requisition approved');
+            loadRequisitions();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function viewRequisition(id) {
+    alert('View requisition details: ' + id);
+}
+</script>
+{% endblock %}

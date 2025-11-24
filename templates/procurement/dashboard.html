@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Procurement Management - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-shopping-cart me-2"></i>Procurement Management Dashboard</h1>
+            <p class="text-muted">Manage vendors, purchase orders, and requisitions</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-building fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Vendor Management</h5>
+                    <p class="card-text">Manage supplier relationships and vendor information</p>
+                    <a href="{{ url_for('procurement.vendors') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-1"></i>View Vendors
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-invoice fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Purchase Orders</h5>
+                    <p class="card-text">Create and track purchase orders</p>
+                    <a href="{{ url_for('procurement.purchase_orders') }}" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-1"></i>View POs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Requisitions</h5>
+                    <p class="card-text">Submit and approve purchase requisitions</p>
+                    <a href="{{ url_for('procurement.requisitions') }}" class="btn btn-warning">
+                        <i class="fas fa-arrow-right me-1"></i>View Requisitions
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                    <h3 id="total-spend">$0</h3>
+                    <p class="mb-0">Total Procurement Spend</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Procurement Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 id="active-vendors" class="text-primary">-</h3>
+                            <p class="text-muted mb-0">Active Vendors</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="pending-pos" class="text-warning">-</h3>
+                            <p class="text-muted mb-0">Pending POs</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="pending-reqs" class="text-info">-</h3>
+                            <p class="text-muted mb-0">Pending Requisitions</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="this-month" class="text-success">$0</h3>
+                            <p class="text-muted mb-0">This Month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Placeholder statistics
+    document.getElementById('total-spend').textContent = '$0';
+    document.getElementById('active-vendors').textContent = '0';
+    document.getElementById('pending-pos').textContent = '0';
+    document.getElementById('pending-reqs').textContent = '0';
+    document.getElementById('this-month').textContent = '$0';
+});
+</script>
+{% endblock %}

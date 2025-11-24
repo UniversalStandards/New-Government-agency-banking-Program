@@ -24,6 +24,7 @@ on:
         - tests-only
 
 permissions:
+  contents: read
   contents: write
   security-events: write
   issues: write
@@ -49,7 +50,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -74,6 +75,12 @@ jobs:
     - name: Run comprehensive linting
       run: |
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Initialize database
+      run: |
+        python -c "from main import app, db; app.app_context().push(); db.create_all(); print('Database initialized')" || echo "Database initialization skipped"
+    - name: Test with pytest
+      run: |
+        pytest --maxfail=1 --disable-warnings -q || code=$?; if [ "$code" -ne 0 ] && [ "$code" -ne 5 ]; then exit "$code"; elif [ "$code" -eq 5 ]; then echo "No tests collected (exit 5)"; fi
 
     - name: Code formatting check with Black
       run: |
@@ -94,7 +101,7 @@ jobs:
         safety check || true
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: always()
       with:
         name: security-reports
@@ -118,7 +125,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -145,7 +152,7 @@ jobs:
         coverage report
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: matrix.python-version == '3.12'
       with:
         file: ./coverage.xml
@@ -172,7 +179,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -186,7 +193,7 @@ jobs:
         python -m build
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: build-artifacts
         path: dist/
@@ -283,7 +290,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
