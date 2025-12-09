@@ -7,7 +7,8 @@ import logging
 import os
 from datetime import datetime
 
-from flask import Flask, flash, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request
+from flask_login import LoginManager, current_user
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
@@ -20,17 +21,17 @@ logging.basicConfig(
 
 # Import configuration settings
 try:
-    pass
+    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
-    SECRET_KEY = "dev-key-change-in-production"
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
     DATABASE_URI = "sqlite:///gofap.db"
 
 # Initialize Flask application
 app = Flask(__name__)
-app.config["SECRET_KEY"] = SECRET_KEY
 app.config["DEBUG"] = DEBUG
+app.config["SECRET_KEY"] = SECRET_KEY
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -41,21 +42,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Please log in to access this page."
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    handlers=[logging.FileHandler("gofap.log"), logging.StreamHandler()],
-)
-logger = logging.getLogger(__name__)
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "auth.login"
-login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
+
+logger = logging.getLogger(__name__)
 
 from api import api_bp
 
@@ -63,27 +52,16 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import Account, Budget, Transaction, User, UserRole, db
+from models import User, UserRole
+from models import Account, Budget, User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
-# Import models after db initialization
-try:
-    from models import Account, Budget, Department, Transaction, User  # noqa: F401
-except ImportError:
-    # Models module not yet created - this is expected during initial setup
-    try:
-        pass
-    except ImportError:
-        pass
-
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
-
     return User.query.get(user_id)
 
 # Template context processor
@@ -108,18 +86,55 @@ try:
     from routes import data_import_bp
 
     app.register_blueprint(data_import_bp)
-    logging.info("Data import routes registered")
-except ImportError as e:
-    logging.warning(f"Could not register data import routes: {e}")
+except ImportError:
+    pass  # Data import routes not available
 
 # Register payment routes
 try:
     from routes.payments import payments_bp
 
+@app.errorhandler(404)
+def not_found(error):
+    """404 error handler."""
+    return jsonify({"error": "Not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """500 error handler."""
+    return jsonify({"error": "Internal server error"}), 500
+
+# Register payment routes
     app.register_blueprint(payments_bp)
     logging.info("Payment routes registered")
 except ImportError as e:
     logging.warning(f"Could not register payment routes: {e}")
+
+# Register HR routes
+try:
+    from routes.hr import hr_bp
+
+    app.register_blueprint(hr_bp)
+    logging.info("HR routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register HR routes: {e}")
+
+# Register project management routes
+try:
+    from routes.projects import projects_bp
+
+    app.register_blueprint(projects_bp)
+    logging.info("Project management routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register project management routes: {e}")
+
+# Register procurement routes
+try:
+    from routes.procurement import procurement_bp
+
+    app.register_blueprint(procurement_bp)
+    logging.info("Procurement routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register procurement routes: {e}")
 
 # Register CLI commands
 try:
@@ -130,114 +145,61 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template("errors/404.html"), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return render_template("errors/500.html"), 500
-
-# Main routes
+# Main application routes
 @app.route("/")
 def home():
-    """Home page route for GOFAP."""
+    """Home page route."""
     if current_user.is_authenticated:
-        return render_template("dashboard.html", user=current_user)
-    return render_template("index.html")
-
-@app.route("/health")
-def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "GOFAP"}
+        try:
+            return render_template("dashboard.html", user=current_user)
+        except Exception as e:
+            logging.warning(f"Could not render dashboard: {e}")
+            return jsonify(
+                {
+                    "message": "Welcome to GOFAP - Government Operations and Financial Accounting Platform",
+                    "features": {
+                        "financial": "/transactions, /budgets, /reports",
+                        "hr": "/hr/ (employees, leave requests, payroll)",
+                        "projects": "/projects/ (project management, tasks, milestones)",
+                        "procurement": "/procurement/ (vendors, purchase orders, requisitions)",
+                    },
+                }
+            )
+    try:
+        return render_template("index.html")
+    except:
+        return jsonify(
+            {
+                "message": "Welcome to GOFAP - Government Operations and Financial Accounting Platform",
+                "version": "1.0.0",
+                "status": "running",
+            }
+        )
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    """Dashboard page showing system overview."""
+    """Main dashboard page."""
     try:
-        from models import Account, Budget, Transaction
-
-        # Get user's accounts
-        user_accounts = Account.query.filter_by(user_id=current_user.id).all()
-        total_balance = sum(acc.balance for acc in user_accounts)
-
-        # Get recent transactions
-        recent_transactions = (
-            Transaction.query.join(Account)
-            .filter(Account.user_id == current_user.id)
-            .order_by(Transaction.created_at.desc())
-            .limit(10)
-            .all()
-        )
-
-        # Get budget information
-        user_budgets = (
-            Budget.query.join(Department)
-            .join(Account)
-            .filter(Account.user_id == current_user.id)
-            .all()
-        )
-
-        return render_template(
-            "dashboard.html",
-            accounts=user_accounts,
-            total_balance=total_balance,
-            recent_transactions=recent_transactions,
-            budgets=user_budgets,
-        )
-    except Exception as e:
-        logging.error(f"Dashboard error: {e}")
-        flash("Error loading dashboard data", "error")
-        return render_template("dashboard.html")
-
-@app.route("/accounts")
-def accounts():
-    """Accounts management page."""
-    try:
-        return render_template("accounts.html")
+        return render_template("dashboard.html", user=current_user)
     except:
-        return jsonify({"message": "GOFAP Account Management"})
-
-@app.route("/accounts/create")
-def create_account():
-    """Account creation page."""
-    try:
-        return render_template("create_account.html")
-    except:
-        return jsonify({"message": "GOFAP Account Creation"})
-
-@app.route("/api/accounts/create", methods=["POST"])
-def api_create_account():
-    """API endpoint for creating accounts."""
-    try:
-        data = request.get_json()
-        service = data.get("service")
-        account_type = data.get("account_type")
-        account_name = data.get("account_name")
-
-        if not all([service, account_type, account_name]):
-            return jsonify({"error": "Missing required fields"}), 400
-
-        # Here you would integrate with the actual service APIs
-        # For now, return a success response
         return jsonify(
             {
-                "success": True,
-                "message": f"{service} account created successfully",
-                "account_id": f"mock_{service}_{account_type}_account",
+                "message": "GOFAP Dashboard",
+                "user": current_user.username,
+                "role": current_user.role.value,
             }
         )
 
-    except Exception:
-        logging.exception("Exception occurred while creating account")
-        return (
-            jsonify({"error": "An internal error occurred. Please try again later."}),
-            500,
-        )
+@app.route("/health")
+def health():
+    """Health check endpoint (non-API)."""
+    return jsonify({"status": "healthy", "service": "GOFAP"})
 
+# Error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template("errors/404.html"), 404
 @app.route("/transactions")
 def transactions():
     """Transactions page."""
@@ -288,8 +250,14 @@ def get_budgets():
         budgets = Budget.query.filter_by(
             department=current_user.department, is_active=True
         ).all()
-
     return jsonify([budget.to_dict() for budget in budgets])
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template("errors/500.html"), 500
+
+# Main routes - minimal routes, most are in blueprints
 
 if __name__ == "__main__":
     # Create tables and initialize database

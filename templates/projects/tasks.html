@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Project Tasks - GOFAP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-tasks me-2"></i>Project Tasks</h1>
+            <p class="text-muted">Project: <strong>{{ project.name if project else 'Loading...' }}</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="alert('Add Task feature coming soon')">
+                <i class="fas fa-plus me-1"></i>Add Task
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Task</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Due Date</th>
+                            <th>Hours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="task-list">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading tasks...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const projectId = window.location.pathname.split('/')[2];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTasks();
+});
+
+function loadTasks() {
+    fetch(`/projects/api/projects/${projectId}/tasks`)
+        .then(response => response.json())
+        .then(tasks => {
+            const tbody = document.getElementById('task-list');
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No tasks found</td></tr>';
+                return;
+            }
+            
+            const statusColors = {
+                'todo': 'secondary',
+                'in_progress': 'primary',
+                'review': 'warning',
+                'completed': 'success',
+                'blocked': 'danger'
+            };
+            
+            const priorityColors = {
+                'low': 'info',
+                'medium': 'secondary',
+                'high': 'warning',
+                'urgent': 'danger'
+            };
+            
+            tbody.innerHTML = tasks.map(task => `
+                <tr>
+                    <td><strong>${task.title}</strong></td>
+                    <td>${task.assigned_to || 'Unassigned'}</td>
+                    <td>
+                        <span class="badge bg-${statusColors[task.status]}">
+                            ${task.status.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${priorityColors[task.priority]}">
+                            ${task.priority}
+                        </span>
+                    </td>
+                    <td>${task.due_date || 'N/A'}</td>
+                    <td>${task.actual_hours || 0} / ${task.estimated_hours || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewTask('${task.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading tasks:', error);
+            document.getElementById('task-list').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading tasks</td></tr>';
+        });
+}
+
+function viewTask(id) {
+    alert('View task details: ' + id);
+}
+</script>
+{% endblock %}
