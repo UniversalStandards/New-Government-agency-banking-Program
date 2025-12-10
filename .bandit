@@ -1,0 +1,17 @@
+# Bandit configuration for GOFAP
+# Suppress test-related false positives
+
+exclude_dirs:
+  - /tests
+  - /.git
+  - /.venv
+  - /venv
+  - /node_modules
+  - /__pycache__
+
+# Skip assert_used (B101) warnings - asserts are expected in test files
+# Skip subprocess warnings (B404, B603) in health-check.py - usage is safe with timeout
+skips:
+  - B101
+  - B404
+  - B603

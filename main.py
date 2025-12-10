@@ -25,7 +25,12 @@ try:
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError(
+            "SECRET_KEY environment variable must be set. "
+            "Never use hardcoded secrets in production."
+        )
     DATABASE_URI = "sqlite:///gofap.db"
 
 # Initialize Flask application
@@ -89,10 +94,7 @@ try:
 except ImportError:
     pass  # Data import routes not available
 
-# Register payment routes
-try:
-    from routes.payments import payments_bp
-
+# Error handlers
 @app.errorhandler(404)
 def not_found(error):
     """404 error handler."""
@@ -104,6 +106,8 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 # Register payment routes
+try:
+    from routes.payments import payments_bp
     app.register_blueprint(payments_bp)
     logging.info("Payment routes registered")
 except ImportError as e:
