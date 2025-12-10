@@ -423,7 +423,7 @@ def get_modern_treasury_account(api_key: str, account_id: str) -> requests.Respo
     }
 
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=30)
     return response
 
 def update_modern_treasury_account(
@@ -436,7 +436,7 @@ def update_modern_treasury_account(
     }
 
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
-    response = requests.patch(url, json=update_params, headers=headers)
+    response = requests.patch(url, json=update_params, headers=headers, timeout=30)
     return response
 
 def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Response:
@@ -447,7 +447,7 @@ def delete_modern_treasury_account(api_key: str, account_id: str) -> requests.Re
     }
 
     url = f"{MT_BASE_URL}/external_accounts/{account_id}"
-    response = requests.delete(url, headers=headers)
+    response = requests.delete(url, headers=headers, timeout=30)
     return response
 
 async def create_modern_treasury_account_async(

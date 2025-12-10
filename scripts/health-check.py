@@ -192,7 +192,8 @@ def check_security() -> Dict[str, Any]:
             for pattern in sensitive_patterns:
                 if f"{pattern}=" in content or f"{pattern}:" in content:
                     found_patterns.append(f"{py_file}:{pattern}")
-        except:
+        except (OSError, UnicodeDecodeError):
+            # Skip files that can't be read or decoded
             continue
 
     checks["secrets_scan"] = {

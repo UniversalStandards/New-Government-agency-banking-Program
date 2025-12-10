@@ -35,7 +35,12 @@ MODERN_TREASURY_ORG_ID = os.environ.get("MODERN_TREASURY_ORG_ID", "")
 MODERN_TREASURY_WEBHOOK_SECRET = os.environ.get("MODERN_TREASURY_WEBHOOK_SECRET", "")
 
 # Security configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY environment variable must be set. "
+        "Never use hardcoded secrets in production."
+    )
 SESSION_COOKIE_SECURE = ENVIRONMENT == "production"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
@@ -120,9 +125,6 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 MODERN_TREASURY_API_KEY = os.environ.get("MODERN_TREASURY_API_KEY", "")
 MODERN_TREASURY_ORG_ID = os.environ.get("MODERN_TREASURY_ORG_ID", "")
-
-# Security configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
 
 # Application configuration
 APP_NAME = "Government Operations and Financial Accounting Platform (GOFAP)"
