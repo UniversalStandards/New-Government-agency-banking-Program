@@ -29,8 +29,13 @@ import re
 class IssueBulkProcessor:
     """Processes issues in bulk for the GOFAP repository."""
 
-    def __init__(self, repo: str = "UniversalStandards/New-Government-agency-banking-Program"):
-        self.repo = repo
+    def __init__(self, repo: str = None):
+        import os
+        
+        self.repo = repo or os.environ.get(
+            "GITHUB_REPOSITORY", 
+            "UniversalStandards/New-Government-agency-banking-Program"
+        )
         self.issues = []
         self.categories = defaultdict(list)
 
@@ -233,7 +238,7 @@ class IssueBulkProcessor:
                 {"number": issue["number"], "title": issue["title"]} for issue in issues
             ]
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
         print(f"\nExported categories to {output_file}")
@@ -356,7 +361,7 @@ def main():
     elif args.action == "report":
         report = processor.generate_report()
         print(report)
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(report)
         print(f"\nReport saved to {args.output}")
 

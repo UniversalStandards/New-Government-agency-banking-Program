@@ -9,7 +9,7 @@ on:
   pull_request:
     types: [opened, closed, reopened, ready_for_review]
   workflow_run:
-    workflows: ["*"]
+    workflows: ["Comprehensive CI", "Python Application", "Python Package", "CodeQL", "Node.js with Gulp"]
     types: [completed]
   schedule:
     # Run daily for maintenance tasks
@@ -560,13 +560,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // Fetch all open issues
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              per_page: 100
-            });
+            // Fetch all open issues with pagination
+            let allIssues = [];
+            let page = 1;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const { data: issues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100,
+                page: page
+              });
+              
+              allIssues = allIssues.concat(issues);
+              hasMore = issues.length === 100;
+              page++;
+            }
+            
+            const issues = { data: allIssues };
             
             // Initialize counters
             const stats = {
