@@ -93,21 +93,22 @@ except ImportError:
 try:
     from routes.payments import payments_bp
 
+    app.register_blueprint(payments_bp)
+    logging.info("Payment routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register payment routes: {e}")
+
+
 @app.errorhandler(404)
 def not_found(error):
     """404 error handler."""
     return jsonify({"error": "Not found"}), 404
 
+
 @app.errorhandler(500)
 def internal_error(error):
     """500 error handler."""
     return jsonify({"error": "Internal server error"}), 500
-
-# Register payment routes
-    app.register_blueprint(payments_bp)
-    logging.info("Payment routes registered")
-except ImportError as e:
-    logging.warning(f"Could not register payment routes: {e}")
 
 # Register HR routes
 try:
