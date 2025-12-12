@@ -17,24 +17,23 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Set
-import re
+from typing import Dict, List
 
 # Note: This script requires the GitHub CLI (gh) to be installed and authenticated
-
 
 class IssueBulkProcessor:
     """Processes issues in bulk for the GOFAP repository."""
 
     def __init__(self, repo: str = None):
         import os
-        
+
         self.repo = repo or os.environ.get(
-            "GITHUB_REPOSITORY", 
-            "UniversalStandards/New-Government-agency-banking-Program"
+            "GITHUB_REPOSITORY",
+            "UniversalStandards/New-Government-agency-banking-Program",
         )
         self.issues = []
         self.categories = defaultdict(list)
@@ -97,7 +96,9 @@ class IssueBulkProcessor:
 
         for issue in self.issues:
             labels = [label["name"].lower() for label in issue.get("labels", [])]
-            updated_at = datetime.fromisoformat(issue["updatedAt"].replace("Z", "+00:00"))
+            updated_at = datetime.fromisoformat(
+                issue["updatedAt"].replace("Z", "+00:00")
+            )
 
             # Priority categorization
             if "critical" in labels:
@@ -138,7 +139,13 @@ class IssueBulkProcessor:
                 categories["stale"].append(issue)
 
             # Uncategorized (no type labels)
-            type_labels = ["bug", "enhancement", "documentation", "question", "security"]
+            type_labels = [
+                "bug",
+                "enhancement",
+                "documentation",
+                "question",
+                "security",
+            ]
             if not any(label in labels for label in type_labels):
                 categories["uncategorized"].append(issue)
 
@@ -191,7 +198,9 @@ class IssueBulkProcessor:
         report.append("## Type Breakdown\n")
         report.append(f"- 🐛 **Bugs:** {len(self.categories['bugs'])}")
         report.append(f"- ✨ **Enhancements:** {len(self.categories['enhancements'])}")
-        report.append(f"- 📚 **Documentation:** {len(self.categories['documentation'])}")
+        report.append(
+            f"- 📚 **Documentation:** {len(self.categories['documentation'])}"
+        )
         report.append(f"- 🔒 **Security:** {len(self.categories['security'])}\n")
 
         # Component breakdown
@@ -206,7 +215,9 @@ class IssueBulkProcessor:
         report.append("## Action Items\n")
         report.append(f"- 🔍 **Needs Triage:** {len(self.categories['needs_triage'])}")
         report.append(f"- ⏰ **Stale Issues:** {len(self.categories['stale'])}")
-        report.append(f"- ❓ **Uncategorized:** {len(self.categories['uncategorized'])}\n")
+        report.append(
+            f"- ❓ **Uncategorized:** {len(self.categories['uncategorized'])}\n"
+        )
 
         # Top critical issues
         if self.categories["critical"]:
@@ -221,7 +232,9 @@ class IssueBulkProcessor:
             report.append(f"Total: {len(self.categories['stale'])}\n")
             for issue in self.categories["stale"][:5]:
                 updated = issue["updatedAt"][:10]
-                report.append(f"- #{issue['number']}: {issue['title']} (last update: {updated})")
+                report.append(
+                    f"- #{issue['number']}: {issue['title']} (last update: {updated})"
+                )
             report.append("")
 
         return "\n".join(report)
@@ -243,7 +256,9 @@ class IssueBulkProcessor:
 
         print(f"\nExported categories to {output_file}")
 
-    def bulk_label(self, issue_numbers: List[int], labels: List[str], dry_run: bool = True):
+    def bulk_label(
+        self, issue_numbers: List[int], labels: List[str], dry_run: bool = True
+    ):
         """Add labels to multiple issues."""
         import subprocess
 
@@ -313,7 +328,6 @@ class IssueBulkProcessor:
             except subprocess.CalledProcessError as e:
                 print(f"  ✗ Error closing #{number}: {e.stderr.decode()}")
 
-
 def main():
     parser = argparse.ArgumentParser(
         description="Bulk process issues in GOFAP repository"
@@ -379,9 +393,10 @@ def main():
         if not args.issues:
             print("Error: --issues required for close action")
             sys.exit(1)
-        reason = "Closing as part of bulk issue cleanup. Please reopen if still relevant."
+        reason = (
+            "Closing as part of bulk issue cleanup. Please reopen if still relevant."
+        )
         processor.bulk_close(args.issues, reason, dry_run=args.dry_run)
-
 
 if __name__ == "__main__":
     main()
