@@ -10,7 +10,6 @@ from flask import Flask
 from flask_login import LoginManager
 
 from models import AccountType  # noqa: F401; Transaction,
-from models import Account, TransactionType, User, UserRole, db
 from models import Account, User, UserRole, db
 
 @pytest.fixture

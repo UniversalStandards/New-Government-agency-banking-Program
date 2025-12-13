@@ -8,7 +8,6 @@ import os
 from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
-from flask_login import LoginManager, current_user
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
@@ -52,7 +51,6 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import User, UserRole
 from models import Account, Budget, User, UserRole
 
 # Register blueprints
@@ -98,12 +96,10 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register payment routes: {e}")
 
-
 @app.errorhandler(404)
 def not_found(error):
     """404 error handler."""
     return jsonify({"error": "Not found"}), 404
-
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -201,6 +197,7 @@ def health():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template("errors/404.html"), 404
+
 @app.route("/transactions")
 def transactions():
     """Transactions page."""
