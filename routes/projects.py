@@ -31,6 +31,15 @@ def index():
     except:
         return jsonify({"message": "Project Management Dashboard"})
 
+@projects_bp.route("/ai-board")
+@login_required
+def ai_board():
+    """AI-powered project board dashboard."""
+    try:
+        return render_template("projects/ai_board.html")
+    except:
+        return jsonify({"message": "AI Project Board Dashboard"})
+
 @projects_bp.route("/list")
 @login_required
 def list_projects():
