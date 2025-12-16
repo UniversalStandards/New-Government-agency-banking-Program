@@ -141,7 +141,11 @@ def auto_assign_task():
     task.assigned_to = best_assignee["user_id"]
     task.status = TaskStatus.TODO
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to assign task: {str(e)}"}), 500
 
     return jsonify(
         {
@@ -200,21 +204,25 @@ def decompose_task():
                 return jsonify({"error": "Insufficient permissions"}), 403
 
         created_subtasks = []
-        for subtask_data in subtask_suggestions:
-            subtask = Task(
-                project_id=project_id,
-                title=subtask_data["title"],
-                description=subtask_data["description"],
-                priority=TaskPriority(subtask_data["priority"]),
-                estimated_hours=subtask_data["estimated_hours"],
-                parent_task_id=parent_task_id,
-                status=TaskStatus.TODO,
-            )
-            db.session.add(subtask)
-            db.session.flush()
-            created_subtasks.append(subtask.to_dict())
+        try:
+            for subtask_data in subtask_suggestions:
+                subtask = Task(
+                    project_id=project_id,
+                    title=subtask_data["title"],
+                    description=subtask_data["description"],
+                    priority=TaskPriority(subtask_data["priority"]),
+                    estimated_hours=subtask_data["estimated_hours"],
+                    parent_task_id=parent_task_id,
+                    status=TaskStatus.TODO,
+                )
+                db.session.add(subtask)
+                db.session.flush()
+                created_subtasks.append(subtask.to_dict())
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to create subtasks: {str(e)}"}), 500
 
         return jsonify(
             {"success": True, "created_subtasks": created_subtasks, "count": len(created_subtasks)}
@@ -271,7 +279,12 @@ def create_task_from_description():
             task.assigned_to = task_data["suggested_assignee"]["user_id"]
 
         db.session.add(task)
-        db.session.commit()
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to create task: {str(e)}"}), 500
 
         return jsonify(
             {

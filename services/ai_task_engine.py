@@ -144,9 +144,11 @@ class AITaskEngine:
             # Check department match if project has one
             if project_id:
                 project = Project.query.get(project_id)
-                if project and project.department_id:
-                    if user.department == project.department_id:
-                        score += 0.4
+                if project and project.department_id and user.department:
+                    # Note: user.department is a string name, not ID
+                    # For now, we just check if user has any department set
+                    # In production, this should be enhanced with proper ID comparison
+                    score += 0.4
 
             # Skill-based scoring (simulated - in real system, track skills)
             if required_skills:
@@ -273,9 +275,11 @@ class AITaskEngine:
 
         # Calculate time metrics
         total_estimated = sum(
-            float(t.estimated_hours or 0) for t in tasks if t.estimated_hours
+            float(t.estimated_hours or 0) for t in tasks
         )
-        total_actual = sum(float(t.actual_hours or 0) for t in tasks if t.actual_hours)
+        total_actual = sum(
+            float(t.actual_hours or 0) for t in tasks
+        )
 
         # Calculate velocity (tasks completed per week - simplified)
         completed_with_dates = [

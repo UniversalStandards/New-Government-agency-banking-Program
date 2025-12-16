@@ -449,7 +449,12 @@ function loadBuildStatus() {
     if (!currentProjectId) return;
     
     fetch(`/api/ai-projects/projects/${currentProjectId}/build-status`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(status => {
             // Update metrics
             document.getElementById('metric-completion').textContent = 
@@ -474,6 +479,11 @@ function loadBuildStatus() {
         })
         .catch(error => {
             console.error('Error loading build status:', error);
+            // Show fallback values
+            document.getElementById('metric-completion').textContent = 'N/A';
+            document.getElementById('metric-velocity').textContent = 'N/A';
+            document.getElementById('metric-health').textContent = 'N/A';
+            document.getElementById('metric-predicted').textContent = 'N/A';
         });
 }
 
