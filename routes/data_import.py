@@ -9,6 +9,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 from data_import.config import load_config
 from data_import.scheduler import create_scheduler
 from data_import.sync_engine import SyncEngine  # Remove this line
+from utils import safe_error_response
 
 # Create blueprint
 data_import_bp = Blueprint("data_import", __name__, url_prefix="/data-import")
@@ -95,11 +96,11 @@ def trigger_sync():
             return redirect(url_for("data_import.dashboard"))
 
     except Exception as e:
-        logger.error(f"Sync trigger error: {e}")
+        error_msg = safe_error_response(e, "Failed to trigger sync operation")
         if request.is_json:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": error_msg}), 500
         else:
-            flash(f"Sync error: {e}", "error")
+            flash(f"Sync error: {error_msg}", "error")
             return redirect(url_for("data_import.dashboard"))
 
 @data_import_bp.route("/scheduler/start", methods=["POST"])
@@ -123,11 +124,11 @@ def start_scheduler():
             return redirect(url_for("data_import.dashboard"))
 
     except Exception as e:
-        logger.error(f"Scheduler start error: {e}")
+        error_msg = safe_error_response(e, "Failed to start scheduler")
         if request.is_json:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": error_msg}), 500
         else:
-            flash(f"Failed to start scheduler: {e}", "error")
+            flash(f"Failed to start scheduler: {error_msg}", "error")
             return redirect(url_for("data_import.dashboard"))
 
 @data_import_bp.route("/scheduler/stop", methods=["POST"])
@@ -151,11 +152,11 @@ def stop_scheduler():
             return redirect(url_for("data_import.dashboard"))
 
     except Exception as e:
-        logger.error(f"Scheduler stop error: {e}")
+        error_msg = safe_error_response(e, "Failed to stop scheduler")
         if request.is_json:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": error_msg}), 500
         else:
-            flash(f"Failed to stop scheduler: {e}", "error")
+            flash(f"Failed to stop scheduler: {error_msg}", "error")
             return redirect(url_for("data_import.dashboard"))
 
 @data_import_bp.route("/data")
@@ -235,8 +236,8 @@ def api_data():
         )
 
     except Exception as e:
-        logger.error(f"API data error: {e}")
-        return jsonify({"error": str(e)}), 500
+        error_msg = safe_error_response(e, "Failed to retrieve data")
+        return jsonify({"error": error_msg}), 500
 
 @data_import_bp.route("/config")
 def config():
@@ -284,5 +285,5 @@ def test_connections():
         )
 
     except Exception as e:
-        logger.error(f"Connection test error: {e}")
-        return jsonify({"error": str(e)}), 500
+        error_msg = safe_error_response(e, "Failed to test connections")
+        return jsonify({"error": error_msg}), 500

@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from ..service import Service
+from utils import safe_error_response
 
 class ModernTreasuryService(Service):
     """Modern Treasury service for cash management."""
@@ -50,8 +51,8 @@ class ModernTreasuryService(Service):
                 "data": counterparty,
             }
         except Exception as e:
-            self.logger.error(f"Modern Treasury counterparty creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create counterparty")
+            return {"success": False, "error": error_msg}
 
     def process_payment(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a payment order."""
@@ -80,8 +81,8 @@ class ModernTreasuryService(Service):
                 "data": payment_order,
             }
         except Exception as e:
-            self.logger.error(f"Modern Treasury payment failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Payment processing failed")
+            return {"success": False, "error": error_msg}
 
     def get_balance(self, account_id: str) -> Dict[str, Any]:
         """Get account balance."""
@@ -95,8 +96,8 @@ class ModernTreasuryService(Service):
             balance_data = response.json()
             return {"success": True, "balance": balance_data}
         except Exception as e:
-            self.logger.error(f"Modern Treasury balance retrieval failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to retrieve balance")
+            return {"success": False, "error": error_msg}
 
     def create_account(self, account_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create an internal account."""
@@ -117,5 +118,5 @@ class ModernTreasuryService(Service):
             account = response.json()
             return {"success": True, "account_id": account["id"], "data": account}
         except Exception as e:
-            self.logger.error(f"Modern Treasury account creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create account")
+            return {"success": False, "error": error_msg}

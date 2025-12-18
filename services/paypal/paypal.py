@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from ..service import Service
+from utils import safe_error_response
 
 class PaypalService(Service):
     """Complete PayPal payment service implementation."""
@@ -78,8 +79,8 @@ class PaypalService(Service):
             customer = response.json()
             return {"success": True, "customer_id": customer["id"], "data": customer}
         except Exception as e:
-            self.logger.error(f"PayPal customer creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create customer")
+            return {"success": False, "error": error_msg}
 
     def process_payment(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process a payment through PayPal."""
@@ -119,8 +120,8 @@ class PaypalService(Service):
                 "data": order,
             }
         except Exception as e:
-            self.logger.error(f"PayPal payment failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Payment processing failed")
+            return {"success": False, "error": error_msg}
 
     def get_balance(self, account_id: str = None) -> Dict[str, Any]:
         """Get PayPal account balance."""
@@ -138,8 +139,8 @@ class PaypalService(Service):
             balance_data = response.json()
             return {"success": True, "balances": balance_data.get("balances", [])}
         except Exception as e:
-            self.logger.error(f"PayPal balance retrieval failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to retrieve balance")
+            return {"success": False, "error": error_msg}
 
     def create_account(self, account_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a PayPal merchant account."""
