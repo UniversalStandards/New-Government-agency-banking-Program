@@ -120,4 +120,3 @@ async def create_stripe_customer_async(
     except Exception as e:
         error_msg = safe_error_response(e, "Failed to create Stripe customer")
         return {"success": False, "error": error_msg}
-    return stripe.Customer.create(**params)
