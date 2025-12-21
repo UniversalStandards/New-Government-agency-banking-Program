@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from configs.settings import APP_NAME, DEBUG, VERSION, get_config
 
@@ -75,11 +76,14 @@ assert hasattr(settings, 'MODERN_TREASURY_API_KEY'), "Should have MODERN_TREASUR
 print("SUCCESS")
 """
 
+    # Get project root directory (3 levels up from this test file)
+    project_root = Path(__file__).parent.parent.parent
+
     result = subprocess.run(
         [sys.executable, "-c", test_code],
         capture_output=True,
         text=True,
-        cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        cwd=str(project_root),
     )
 
     assert result.returncode == 0, f"Import failed: {result.stderr}"
