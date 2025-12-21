@@ -9,19 +9,10 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
-from models import (
-    Project,
-    Task,
-    TaskPriority,
-    TaskStatus,
-    User,
-    UserRole,
-    db,
-)
+from models import Project, Task, TaskPriority, TaskStatus, UserRole, db
 from services.ai_task_engine import AITaskEngine, BuildTracker
 
 ai_projects_bp = Blueprint("ai_projects", __name__, url_prefix="/api/ai-projects")
-
 
 @ai_projects_bp.route("/tasks/analyze", methods=["POST"])
 @login_required
@@ -63,7 +54,6 @@ def analyze_task():
         }
     )
 
-
 @ai_projects_bp.route("/tasks/suggest-assignee", methods=["POST"])
 @login_required
 def suggest_assignee():
@@ -103,7 +93,6 @@ def suggest_assignee():
     return jsonify(
         {"suggestions": suggestions, "timestamp": datetime.utcnow().isoformat()}
     )
-
 
 @ai_projects_bp.route("/tasks/auto-assign", methods=["POST"])
 @login_required
@@ -155,7 +144,6 @@ def auto_assign_task():
             "confidence": suggestions["confidence"],
         }
     )
-
 
 @ai_projects_bp.route("/tasks/decompose", methods=["POST"])
 @login_required
@@ -225,11 +213,16 @@ def decompose_task():
             return jsonify({"error": f"Failed to create subtasks: {str(e)}"}), 500
 
         return jsonify(
-            {"success": True, "created_subtasks": created_subtasks, "count": len(created_subtasks)}
+            {
+                "success": True,
+                "created_subtasks": created_subtasks,
+                "count": len(created_subtasks),
+            }
         )
 
-    return jsonify({"suggestions": subtask_suggestions, "count": len(subtask_suggestions)})
-
+    return jsonify(
+        {"suggestions": subtask_suggestions, "count": len(subtask_suggestions)}
+    )
 
 @ai_projects_bp.route("/tasks/from-description", methods=["POST"])
 @login_required
@@ -279,7 +272,7 @@ def create_task_from_description():
             task.assigned_to = task_data["suggested_assignee"]["user_id"]
 
         db.session.add(task)
-        
+
         try:
             db.session.commit()
         except Exception as e:
@@ -296,7 +289,6 @@ def create_task_from_description():
         )
 
     return jsonify({"suggestion": task_data})
-
 
 @ai_projects_bp.route("/projects/<project_id>/build-status", methods=["GET"])
 @login_required
@@ -319,7 +311,6 @@ def get_build_status(project_id):
     build_status = BuildTracker.get_build_status(project_id)
 
     return jsonify(build_status)
-
 
 @ai_projects_bp.route("/projects/<project_id>/create-feature", methods=["POST"])
 @login_required
@@ -354,10 +345,7 @@ def create_feature_tasks(project_id):
     # Get created tasks
     tasks = [Task.query.get(task_id).to_dict() for task_id in task_ids]
 
-    return jsonify(
-        {"success": True, "created_tasks": tasks, "count": len(tasks)}
-    ), 201
-
+    return jsonify({"success": True, "created_tasks": tasks, "count": len(tasks)}), 201
 
 @ai_projects_bp.route("/analytics/board", methods=["GET"])
 @login_required
@@ -393,9 +381,7 @@ def get_board_analytics():
         overdue = sum(
             1
             for t in tasks
-            if t.due_date
-            and t.due_date < today
-            and t.status != TaskStatus.COMPLETED
+            if t.due_date and t.due_date < today and t.status != TaskStatus.COMPLETED
         )
         overdue_tasks += overdue
 
@@ -438,7 +424,6 @@ def get_board_analytics():
             "timestamp": datetime.utcnow().isoformat(),
         }
     )
-
 
 @ai_projects_bp.route("/health", methods=["GET"])
 def health_check():

@@ -3,8 +3,9 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from ..service import Service
 from utils import safe_error_response
+
+from ..service import Service
 
 class ModernTreasuryService(Service):
     """Modern Treasury service for cash management."""
