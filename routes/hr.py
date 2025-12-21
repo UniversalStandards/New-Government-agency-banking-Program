@@ -16,6 +16,7 @@ from models import (
     UserRole,
     db,
 )
+from utils import safe_error_response
 
 hr_bp = Blueprint("hr", __name__, url_prefix="/hr")
 
@@ -87,7 +88,8 @@ def create_employee():
         return jsonify({"success": True, "employee": employee.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create employee record")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @hr_bp.route("/leave-requests")
 @login_required
@@ -141,7 +143,8 @@ def create_leave_request():
         return jsonify({"success": True, "leave_request": leave_request.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create leave request")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @hr_bp.route("/api/leave-requests/<request_id>/approve", methods=["POST"])
 @login_required
@@ -171,7 +174,8 @@ def approve_leave_request(request_id):
         return jsonify({"success": True, "leave_request": leave_request.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to approve leave request")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @hr_bp.route("/performance")
 @login_required

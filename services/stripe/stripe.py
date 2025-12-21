@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 import stripe
 
 from ..service import Service
+from utils import safe_error_response
 
 class StripeService(Service):
     """Complete Stripe payment service implementation."""
@@ -27,8 +28,8 @@ class StripeService(Service):
             customer = stripe.Customer.create(**customer_data)
             return {"success": True, "customer_id": customer.id, "data": customer}
         except stripe.error.StripeError as e:
-            self.logger.error(f"Stripe customer creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create customer")
+            return {"success": False, "error": error_msg}
 
     def process_payment(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process a payment through Stripe."""
@@ -47,8 +48,8 @@ class StripeService(Service):
                 "data": payment_intent,
             }
         except stripe.error.StripeError as e:
-            self.logger.error(f"Stripe payment failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Payment processing failed")
+            return {"success": False, "error": error_msg}
 
     def get_balance(self, account_id: str = None) -> Dict[str, Any]:
         """Get Stripe account balance."""
@@ -60,8 +61,8 @@ class StripeService(Service):
                 "pending": balance.pending,
             }
         except stripe.error.StripeError as e:
-            self.logger.error(f"Stripe balance retrieval failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to retrieve balance")
+            return {"success": False, "error": error_msg}
 
     def create_account(self, account_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a Stripe Connect account."""
@@ -80,8 +81,8 @@ class StripeService(Service):
             )
             return {"success": True, "account_id": account.id, "data": account}
         except stripe.error.StripeError as e:
-            self.logger.error(f"Stripe account creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create account")
+            return {"success": False, "error": error_msg}
 
     def create_payment_method(
         self, payment_method_data: Dict[str, Any]
@@ -95,5 +96,5 @@ class StripeService(Service):
                 "data": payment_method,
             }
         except stripe.error.StripeError as e:
-            self.logger.error(f"Payment method creation failed: {e}")
-            return {"success": False, "error": str(e)}
+            error_msg = safe_error_response(e, "Failed to create payment method")
+            return {"success": False, "error": error_msg}

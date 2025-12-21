@@ -18,6 +18,7 @@ from models import (
     VendorStatus,
     db,
 )
+from utils import safe_error_response
 
 procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
 
@@ -89,7 +90,8 @@ def create_vendor():
         return jsonify({"success": True, "vendor": vendor.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create vendor")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/api/vendors/<vendor_id>", methods=["PUT"])
 @login_required
@@ -129,7 +131,8 @@ def update_vendor(vendor_id):
         return jsonify({"success": True, "vendor": vendor.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to update vendor")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/requisitions")
 @login_required
@@ -185,7 +188,8 @@ def create_requisition():
         return jsonify({"success": True, "requisition": requisition.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create requisition")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/api/requisitions/<req_id>/approve", methods=["POST"])
 @login_required
@@ -212,7 +216,8 @@ def approve_requisition(req_id):
         return jsonify({"success": True, "requisition": requisition.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to approve requisition")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/purchase-orders")
 @login_required
@@ -318,7 +323,8 @@ def create_purchase_order():
         )
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create purchase order")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/api/purchase-orders/<po_id>", methods=["GET"])
 @login_required
@@ -373,7 +379,8 @@ def update_po_status(po_id):
         return jsonify({"success": True, "purchase_order": po.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to update purchase order status")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @procurement_bp.route("/api/purchase-orders/<po_id>/receive", methods=["POST"])
 @login_required
@@ -411,4 +418,5 @@ def receive_po_items(po_id):
         return jsonify({"success": True, "purchase_order": po.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to receive purchase order items")
+        return jsonify({"success": False, "error": error_msg}), 400
