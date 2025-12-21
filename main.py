@@ -124,6 +124,24 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register project management routes: {e}")
 
+# Register AI-enhanced project management routes
+try:
+    from routes.ai_projects import ai_projects_bp
+
+    app.register_blueprint(ai_projects_bp)
+    logging.info("AI project management routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register AI project management routes: {e}")
+
+# Register autonomous agent routes
+try:
+    from routes.autonomous_api import autonomous_api_bp
+
+    app.register_blueprint(autonomous_api_bp)
+    logging.info("Autonomous agent routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register autonomous agent routes: {e}")
+
 # Register procurement routes
 try:
     from routes.procurement import procurement_bp
