@@ -3,9 +3,10 @@
 import os
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
-from configs.settings import APP_NAME, DEBUG, VERSION, get_config
+from configs.settings import APP_NAME, DEBUG, SECRET_KEY, VERSION, get_config
 
 
 def test_debug_configuration():
@@ -56,25 +57,27 @@ def test_import_without_secret_key():
     Regression test for: https://github.com/UniversalStandards/New-Government-agency-banking-Program/issues/294
     """
     # Run a subprocess without SECRET_KEY to ensure import works
-    test_code = """
-import os
-import sys
+    test_code = textwrap.dedent(
+        f"""
+        import os
+        import sys
 
-# Ensure SECRET_KEY is not in environment
-os.environ.pop('SECRET_KEY', None)
+        # Ensure SECRET_KEY is not in environment
+        os.environ.pop('SECRET_KEY', None)
 
-# This should NOT raise ValueError
-from configs import settings
+        # This should NOT raise ValueError
+        from configs import settings
 
-# Verify we got the default value
-assert settings.SECRET_KEY == 'dev-key-change-in-production', f"Expected default SECRET_KEY, got: {settings.SECRET_KEY}"
+        # Verify we got the default value
+        assert settings.SECRET_KEY == '{SECRET_KEY}', f"Expected default SECRET_KEY, got: {{settings.SECRET_KEY}}"
 
-# Verify we can access API keys
-assert hasattr(settings, 'STRIPE_SECRET_KEY'), "Should have STRIPE_SECRET_KEY"
-assert hasattr(settings, 'MODERN_TREASURY_API_KEY'), "Should have MODERN_TREASURY_API_KEY"
+        # Verify we can access API keys
+        assert hasattr(settings, 'STRIPE_SECRET_KEY'), "Should have STRIPE_SECRET_KEY"
+        assert hasattr(settings, 'MODERN_TREASURY_API_KEY'), "Should have MODERN_TREASURY_API_KEY"
 
-print("SUCCESS")
-"""
+        print("SUCCESS")
+        """
+    )
 
     # Get project root directory (3 levels up from this test file)
     project_root = Path(__file__).parent.parent.parent
