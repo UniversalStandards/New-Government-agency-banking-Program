@@ -6,8 +6,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-def safe_error_response(exception: Exception, default_message: str = "An error occurred") -> str:
+def safe_error_response(
+    exception: Exception, default_message: str = "An error occurred"
+) -> str:
     """
     Safely handle exceptions by logging the full error and returning a generic message.
 
