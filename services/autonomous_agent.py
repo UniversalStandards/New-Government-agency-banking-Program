@@ -12,14 +12,10 @@ This module provides autonomous capabilities to:
 Integrates with GitHub Actions for full automation.
 """
 
-import json
-import os
 import re
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
-from models import Project, Task, TaskPriority, TaskStatus, db
-
+from models import Task, TaskPriority, TaskStatus, db
 
 class AutonomousAgent:
     """Autonomous agent for self-healing project management."""
@@ -108,8 +104,7 @@ class AutonomousAgent:
 
         # Determine actions based on content
         if any(
-            word in content
-            for word in ["fix", "bug", "error", "broken", "not working"]
+            word in content for word in ["fix", "bug", "error", "broken", "not working"]
         ):
             strategy["suggested_actions"].append("Generate fix and create PR")
 
@@ -117,9 +112,7 @@ class AutonomousAgent:
             strategy["suggested_actions"].append("Generate implementation plan")
             strategy["suggested_actions"].append("Create task breakdown")
 
-        if any(
-            word in content for word in ["document", "docs", "readme", "guide"]
-        ):
+        if any(word in content for word in ["document", "docs", "readme", "guide"]):
             strategy["suggested_actions"].append("Auto-generate documentation")
 
         if any(word in content for word in ["test", "testing", "coverage"]):
@@ -264,7 +257,9 @@ class AutonomousAgent:
         pr_strategy["pr_title"] = f"🤖 Auto-fix: {fix_type.title()} - {task_title}"
 
         # Generate PR body
-        pr_strategy["pr_body"] = f"""## 🤖 Automated Fix
+        pr_strategy[
+            "pr_body"
+        ] = f"""## 🤖 Automated Fix
 
 **Issue**: #{task_data.get('issue_number', 'N/A')}
 **Fix Type**: {fix_type}
@@ -453,7 +448,10 @@ See configuration section for details.
 
         # Step 3: Create PR strategy
         pr_strategy = AutonomousAgent.create_pr_strategy(
-            {"title": issue_data.get("title"), "issue_number": issue_data.get("number")},
+            {
+                "title": issue_data.get("title"),
+                "issue_number": issue_data.get("number"),
+            },
             fix_data,
         )
         workflow_result["steps_completed"].append(
@@ -466,7 +464,6 @@ See configuration section for details.
         workflow_result["status"] = "pr_created"
 
         return workflow_result
-
 
 class GitHubBoardSync:
     """Synchronize GitHub issues/PRs with project board."""
@@ -500,7 +497,9 @@ class GitHubBoardSync:
         return stats
 
     @staticmethod
-    def create_task_from_github_issue(issue_data: Dict, project_id: str) -> Optional[str]:
+    def create_task_from_github_issue(
+        issue_data: Dict, project_id: str
+    ) -> Optional[str]:
         """
         Create project board task from GitHub issue.
 
@@ -522,7 +521,9 @@ class GitHubBoardSync:
                 "medium": TaskPriority.MEDIUM,
                 "low": TaskPriority.LOW,
             }
-            priority = priority_map.get(strategy.get("priority", "medium"), TaskPriority.MEDIUM)
+            priority = priority_map.get(
+                strategy.get("priority", "medium"), TaskPriority.MEDIUM
+            )
 
             # Create task
             task = Task(
@@ -532,9 +533,9 @@ class GitHubBoardSync:
                 priority=priority,
                 status=TaskStatus.TODO,
                 estimated_hours=(
-                    4 if strategy.get("estimated_effort") == "low"
-                    else 8 if strategy.get("estimated_effort") == "medium"
-                    else 16
+                    4
+                    if strategy.get("estimated_effort") == "low"
+                    else 8 if strategy.get("estimated_effort") == "medium" else 16
                 ),
             )
 
@@ -542,5 +543,5 @@ class GitHubBoardSync:
             db.session.commit()
 
             return task.id
-        except Exception as e:
+        except Exception:
             return None

@@ -4,8 +4,9 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from ..service import Service
 from utils import safe_error_response
+
+from ..service import Service
 
 class PaypalService(Service):
     """Complete PayPal payment service implementation."""

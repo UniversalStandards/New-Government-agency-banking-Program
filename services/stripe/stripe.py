@@ -2,9 +2,9 @@ import os
 from typing import Any, Dict, Optional
 
 import stripe
+from utils import safe_error_response
 
 from ..service import Service
-from utils import safe_error_response
 
 class StripeService(Service):
     """Complete Stripe payment service implementation."""
