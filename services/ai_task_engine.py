@@ -5,21 +5,10 @@ This module provides AI-driven task analysis, automatic assignment suggestions,
 and intelligent build tracking capabilities using GitHub Copilot-style patterns.
 """
 
-import json
-import re
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
-from models import (
-    Project,
-    Task,
-    TaskPriority,
-    TaskStatus,
-    User,
-    UserRole,
-    db,
-)
-
+from models import Project, Task, TaskPriority, TaskStatus, User, UserRole, db
 
 class AITaskEngine:
     """AI-powered task analysis and assignment engine."""
@@ -268,18 +257,12 @@ class AITaskEngine:
         # Calculate metrics
         total_tasks = len(tasks)
         completed_tasks = sum(1 for t in tasks if t.status == TaskStatus.COMPLETED)
-        in_progress_tasks = sum(
-            1 for t in tasks if t.status == TaskStatus.IN_PROGRESS
-        )
+        in_progress_tasks = sum(1 for t in tasks if t.status == TaskStatus.IN_PROGRESS)
         blocked_tasks = sum(1 for t in tasks if t.status == TaskStatus.BLOCKED)
 
         # Calculate time metrics
-        total_estimated = sum(
-            float(t.estimated_hours or 0) for t in tasks
-        )
-        total_actual = sum(
-            float(t.actual_hours or 0) for t in tasks
-        )
+        total_estimated = sum(float(t.estimated_hours or 0) for t in tasks)
+        total_actual = sum(float(t.actual_hours or 0) for t in tasks)
 
         # Calculate velocity (tasks completed per week - simplified)
         completed_with_dates = [
@@ -364,7 +347,6 @@ class AITaskEngine:
             "confidence": 0.8,
         }
 
-
 class BuildTracker:
     """Track build and feature development progress."""
 
@@ -434,11 +416,11 @@ class BuildTracker:
         progress["health_status"] = (
             "excellent"
             if health_score >= 90
-            else "good"
-            if health_score >= 75
-            else "fair"
-            if health_score >= 60
-            else "poor"
+            else (
+                "good"
+                if health_score >= 75
+                else "fair" if health_score >= 60 else "poor"
+            )
         )
 
         return progress
