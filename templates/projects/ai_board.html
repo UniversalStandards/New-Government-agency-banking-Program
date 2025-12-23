@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}AI Project Board - GOFAP{% endblock %}
+
+{% block extra_css %}
+<style>
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+
+.kanban-column {
+    min-width: 300px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    flex-shrink: 0;
+}
+
+.kanban-column-header {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-card {
+    background: white;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.task-priority-urgent {
+    border-left: 4px solid #dc3545;
+}
+
+.task-priority-high {
+    border-left: 4px solid #fd7e14;
+}
+
+.task-priority-medium {
+    border-left: 4px solid #ffc107;
+}
+
+.task-priority-low {
+    border-left: 4px solid #28a745;
+}
+
+.task-title {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.task-meta {
+    font-size: 0.75rem;
+    color: #6c757d;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ai-suggestion-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ai-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.ai-metric {
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.ai-metric h3 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+.ai-metric p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+}
+
+.quick-action-btn {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.build-health-indicator {
+    width: 100%;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.build-health-bar {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.health-excellent { background: #28a745; }
+.health-good { background: #17a2b8; }
+.health-fair { background: #ffc107; }
+.health-poor { background: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- AI Panel -->
+    <div class="ai-panel">
+        <div class="row align-items-center mb-3">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-robot me-2"></i>
+                    AI-Powered Project Board
+                </h2>
+                <p class="mb-0">Intelligent task assignment, tracking, and build management</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="quick-action-btn me-2" onclick="analyzeNewTask()">
+                    <i class="fas fa-magic me-1"></i>AI Task Creator
+                </button>
+                <button class="quick-action-btn" onclick="refreshBoard()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Metrics -->
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="ai-metric">
+                    <h3 id="metric-completion">-</h3>
+                    <p>Completion Rate</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="ai-metric">
+                    <h3 id="metric-velocity">-</h3>
+                    <p>Weekly Velocity</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="ai-metric">
+                    <h3 id="metric-health">-</h3>
+                    <p>Project Health</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="ai-metric">
+                    <h3 id="metric-predicted">-</h3>
+                    <p>Est. Completion</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Build Health Indicator -->
+        <div class="build-health-indicator">
+            <div id="health-bar" class="build-health-bar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Project Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Select Project</label>
+                    <select id="project-selector" class="form-select" onchange="loadProject()">
+                        <option value="">Loading projects...</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-primary" onclick="showCreateFeature()">
+                        <i class="fas fa-plus me-1"></i>Create Feature
+                    </button>
+                    <button class="btn btn-outline-info" onclick="showBuildStatus()">
+                        <i class="fas fa-chart-line me-1"></i>Build Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board" id="kanban-board">
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span><i class="fas fa-inbox me-1"></i>To Do</span>
+                <span class="badge bg-secondary" id="count-todo">0</span>
+            </div>
+            <div id="column-todo" class="task-container"></div>
+        </div>
+
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span><i class="fas fa-play-circle me-1"></i>In Progress</span>
+                <span class="badge bg-primary" id="count-progress">0</span>
+            </div>
+            <div id="column-in_progress" class="task-container"></div>
+        </div>
+
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span><i class="fas fa-eye me-1"></i>Review</span>
+                <span class="badge bg-warning" id="count-review">0</span>
+            </div>
+            <div id="column-review" class="task-container"></div>
+        </div>
+
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span><i class="fas fa-check-circle me-1"></i>Completed</span>
+                <span class="badge bg-success" id="count-completed">0</span>
+            </div>
+            <div id="column-completed" class="task-container"></div>
+        </div>
+
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span><i class="fas fa-ban me-1"></i>Blocked</span>
+                <span class="badge bg-danger" id="count-blocked">0</span>
+            </div>
+            <div id="column-blocked" class="task-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Task Creator Modal -->
+<div class="modal fade" id="aiTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-magic me-2"></i>AI Task Creator
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Describe your task in natural language:</label>
+                    <textarea id="task-description" class="form-control" rows="4" 
+                        placeholder="Example: Create a new API endpoint for user authentication that supports JWT tokens and includes rate limiting"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="generateTask()">
+                    <i class="fas fa-wand-magic me-1"></i>Generate Task with AI
+                </button>
+                
+                <div id="ai-suggestions" class="mt-4" style="display:none;">
+                    <h6 class="fw-bold">AI Analysis:</h6>
+                    <div id="suggestion-content"></div>
+                    <button class="btn btn-success mt-3" onclick="createTaskFromSuggestion()">
+                        <i class="fas fa-check me-1"></i>Create Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal fade" id="taskDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="task-detail-title">Task Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="task-detail-body">
+                <!-- Task details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-primary" onclick="suggestAssignee()">
+                    <i class="fas fa-user-plus me-1"></i>AI Suggest Assignee
+                </button>
+                <button class="btn btn-outline-info" onclick="decomposeTask()">
+                    <i class="fas fa-sitemap me-1"></i>Decompose into Subtasks
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentProjectId = null;
+let currentTask = null;
+let aiSuggestion = null;
+
+// Load projects on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+});
+
+// Load available projects
+function loadProjects() {
+    fetch('/projects/api/projects')
+        .then(response => response.json())
+        .then(projects => {
+            const selector = document.getElementById('project-selector');
+            selector.innerHTML = '<option value="">Select a project...</option>';
+            
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                selector.appendChild(option);
+            });
+            
+            if (projects.length > 0) {
+                selector.value = projects[0].id;
+                loadProject();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading projects:', error);
+            alert('Failed to load projects');
+        });
+}
+
+// Load project board
+function loadProject() {
+    const selector = document.getElementById('project-selector');
+    currentProjectId = selector.value;
+    
+    if (!currentProjectId) return;
+    
+    // Load tasks
+    loadTasks();
+    
+    // Load build status
+    loadBuildStatus();
+}
+
+// Load tasks for current project
+function loadTasks() {
+    if (!currentProjectId) return;
+    
+    fetch(`/projects/api/projects/${currentProjectId}/tasks`)
+        .then(response => response.json())
+        .then(tasks => {
+            // Clear columns
+            ['todo', 'in_progress', 'review', 'completed', 'blocked'].forEach(status => {
+                document.getElementById(`column-${status}`).innerHTML = '';
+                document.getElementById(`count-${status}`).textContent = '0';
+            });
+            
+            // Group tasks by status
+            const grouped = {
+                todo: [],
+                in_progress: [],
+                review: [],
+                completed: [],
+                blocked: []
+            };
+            
+            tasks.forEach(task => {
+                const status = task.status;
+                if (grouped[status]) {
+                    grouped[status].push(task);
+                }
+            });
+            
+            // Render tasks
+            Object.keys(grouped).forEach(status => {
+                const container = document.getElementById(`column-${status}`);
+                const count = grouped[status].length;
+                document.getElementById(`count-${status}`).textContent = count;
+                
+                grouped[status].forEach(task => {
+                    container.appendChild(createTaskCard(task));
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading tasks:', error);
+        });
+}
+
+// Create task card element
+function createTaskCard(task) {
+    const card = document.createElement('div');
+    card.className = `task-card task-priority-${task.priority}`;
+    card.onclick = () => showTaskDetail(task);
+    
+    const title = document.createElement('div');
+    title.className = 'task-title';
+    title.textContent = task.title;
+    
+    const meta = document.createElement('div');
+    meta.className = 'task-meta';
+    meta.innerHTML = `
+        <span><i class="fas fa-clock me-1"></i>${task.estimated_hours || 0}h</span>
+        ${task.assigned_to ? '<span><i class="fas fa-user me-1"></i>Assigned</span>' : '<span class="ai-suggestion-badge"><i class="fas fa-robot"></i>AI Available</span>'}
+    `;
+    
+    card.appendChild(title);
+    card.appendChild(meta);
+    
+    return card;
+}
+
+// Load build status
+function loadBuildStatus() {
+    if (!currentProjectId) return;
+    
+    fetch(`/api/ai-projects/projects/${currentProjectId}/build-status`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(status => {
+            // Update metrics
+            document.getElementById('metric-completion').textContent = 
+                status.completion_percentage + '%';
+            document.getElementById('metric-velocity').textContent = 
+                status.velocity.toFixed(1) + '/wk';
+            document.getElementById('metric-health').textContent = 
+                status.health_score.toFixed(0);
+            
+            if (status.predicted_completion) {
+                const date = new Date(status.predicted_completion);
+                document.getElementById('metric-predicted').textContent = 
+                    date.toLocaleDateString();
+            } else {
+                document.getElementById('metric-predicted').textContent = 'N/A';
+            }
+            
+            // Update health bar
+            const healthBar = document.getElementById('health-bar');
+            healthBar.style.width = status.health_score + '%';
+            healthBar.className = 'build-health-bar health-' + status.health_status;
+        })
+        .catch(error => {
+            console.error('Error loading build status:', error);
+            // Show fallback values
+            document.getElementById('metric-completion').textContent = 'N/A';
+            document.getElementById('metric-velocity').textContent = 'N/A';
+            document.getElementById('metric-health').textContent = 'N/A';
+            document.getElementById('metric-predicted').textContent = 'N/A';
+        });
+}
+
+// Show AI task creator modal
+function analyzeNewTask() {
+    const modal = new bootstrap.Modal(document.getElementById('aiTaskModal'));
+    modal.show();
+}
+
+// Generate task from AI
+function generateTask() {
+    const description = document.getElementById('task-description').value;
+    
+    if (!description.trim()) {
+        alert('Please enter a task description');
+        return;
+    }
+    
+    if (!currentProjectId) {
+        alert('Please select a project first');
+        return;
+    }
+    
+    fetch('/api/ai-projects/tasks/from-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            description: description,
+            project_id: currentProjectId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        aiSuggestion = data.suggestion;
+        displayAISuggestion(data.suggestion);
+    })
+    .catch(error => {
+        console.error('Error generating task:', error);
+        alert('Failed to generate task');
+    });
+}
+
+// Display AI suggestion
+function displayAISuggestion(suggestion) {
+    const content = document.getElementById('suggestion-content');
+    content.innerHTML = `
+        <div class="card">
+            <div class="card-body">
+                <h6 class="fw-bold">Title:</h6>
+                <p>${suggestion.title}</p>
+                
+                <h6 class="fw-bold">Priority:</h6>
+                <span class="badge bg-${getPriorityColor(suggestion.priority)}">${suggestion.priority}</span>
+                
+                <h6 class="fw-bold mt-2">Estimated Hours:</h6>
+                <p>${suggestion.estimated_hours} hours</p>
+                
+                ${suggestion.suggested_assignee ? `
+                    <h6 class="fw-bold">Suggested Assignee:</h6>
+                    <p>${suggestion.suggested_assignee.full_name} (${suggestion.suggested_assignee.username})</p>
+                ` : ''}
+                
+                <h6 class="fw-bold">AI Confidence:</h6>
+                <div class="progress">
+                    <div class="progress-bar" style="width: ${suggestion.confidence * 100}%">
+                        ${(suggestion.confidence * 100).toFixed(0)}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('ai-suggestions').style.display = 'block';
+}
+
+// Create task from AI suggestion
+function createTaskFromSuggestion() {
+    if (!aiSuggestion) return;
+    
+    fetch('/api/ai-projects/tasks/from-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            description: document.getElementById('task-description').value,
+            project_id: currentProjectId,
+            create: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Task created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('aiTaskModal')).hide();
+            loadProject();
+        }
+    })
+    .catch(error => {
+        console.error('Error creating task:', error);
+        alert('Failed to create task');
+    });
+}
+
+// Show task detail
+function showTaskDetail(task) {
+    currentTask = task;
+    document.getElementById('task-detail-title').textContent = task.title;
+    document.getElementById('task-detail-body').innerHTML = `
+        <p><strong>Description:</strong> ${task.description || 'No description'}</p>
+        <p><strong>Status:</strong> <span class="badge bg-info">${task.status}</span></p>
+        <p><strong>Priority:</strong> <span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span></p>
+        <p><strong>Estimated:</strong> ${task.estimated_hours || 0} hours</p>
+        <p><strong>Actual:</strong> ${task.actual_hours || 0} hours</p>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
+    modal.show();
+}
+
+// Get priority color
+function getPriorityColor(priority) {
+    const colors = {
+        urgent: 'danger',
+        high: 'warning',
+        medium: 'info',
+        low: 'success'
+    };
+    return colors[priority] || 'secondary';
+}
+
+// Refresh board
+function refreshBoard() {
+    loadProject();
+}
+
+// Placeholder functions
+function showCreateFeature() {
+    alert('Create Feature dialog - Coming soon!');
+}
+
+function showBuildStatus() {
+    alert('Detailed Build Status - Coming soon!');
+}
+
+function suggestAssignee() {
+    if (!currentTask) return;
+    alert('AI Assignee Suggestion - Coming soon!');
+}
+
+function decomposeTask() {
+    if (!currentTask) return;
+    alert('Task Decomposition - Coming soon!');
+}
+</script>
+{% endblock %}
