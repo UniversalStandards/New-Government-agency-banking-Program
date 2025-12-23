@@ -2,6 +2,7 @@
 Test cases for GOFAP models.
 """
 
+import os
 import pytest
 from flask import Flask
 
@@ -26,7 +27,8 @@ def app():
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = "test-secret-key"
+    # Generate random secret key for testing to avoid hardcoded passwords
+    app.config["SECRET_KEY"] = os.urandom(32).hex()
 
     db.init_app(app)
 

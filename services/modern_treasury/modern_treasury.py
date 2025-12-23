@@ -42,6 +42,7 @@ class ModernTreasuryService(Service):
                 f"{self.base_url}/counterparties",
                 headers=self.get_headers(),
                 json=payload,
+                timeout=30,
             )
             response.raise_for_status()
 
@@ -71,6 +72,7 @@ class ModernTreasuryService(Service):
                 f"{self.base_url}/payment_orders",
                 headers=self.get_headers(),
                 json=payload,
+                timeout=30,
             )
             response.raise_for_status()
 
@@ -91,6 +93,7 @@ class ModernTreasuryService(Service):
             response = requests.get(
                 f"{self.base_url}/internal_accounts/{account_id}/balance_reports",
                 headers=self.get_headers(),
+                timeout=30,
             )
             response.raise_for_status()
 
@@ -113,6 +116,7 @@ class ModernTreasuryService(Service):
                 f"{self.base_url}/internal_accounts",
                 headers=self.get_headers(),
                 json=payload,
+                timeout=30,
             )
             response.raise_for_status()
 
