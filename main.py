@@ -8,7 +8,6 @@ import os
 from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
-from flask_login import LoginManager, current_user
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
@@ -57,7 +56,6 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import User, UserRole
 from models import Account, Budget, User, UserRole
 
 # Register blueprints
@@ -95,6 +93,15 @@ except ImportError:
     pass  # Data import routes not available
 
 # Error handlers
+# Register payment routes
+try:
+    from routes.payments import payments_bp
+
+    app.register_blueprint(payments_bp)
+    logging.info("Payment routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register payment routes: {e}")
+
 @app.errorhandler(404)
 def not_found(error):
     """404 error handler."""
@@ -130,6 +137,24 @@ try:
     logging.info("Project management routes registered")
 except ImportError as e:
     logging.warning(f"Could not register project management routes: {e}")
+
+# Register AI-enhanced project management routes
+try:
+    from routes.ai_projects import ai_projects_bp
+
+    app.register_blueprint(ai_projects_bp)
+    logging.info("AI project management routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register AI project management routes: {e}")
+
+# Register autonomous agent routes
+try:
+    from routes.autonomous_api import autonomous_api_bp
+
+    app.register_blueprint(autonomous_api_bp)
+    logging.info("Autonomous agent routes registered")
+except ImportError as e:
+    logging.warning(f"Could not register autonomous agent routes: {e}")
 
 # Register procurement routes
 try:
@@ -204,6 +229,7 @@ def health():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template("errors/404.html"), 404
+
 @app.route("/transactions")
 def transactions():
     """Transactions page."""

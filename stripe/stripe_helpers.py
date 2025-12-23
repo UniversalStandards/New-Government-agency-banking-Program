@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import stripe
 from configs.settings import STRIPE_SECRET_KEY
+from utils import safe_error_response
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,8 @@ async def create_stripe_customer_async(
             },
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        error_msg = safe_error_response(e, "Failed to create Stripe customer")
+        return {"success": False, "error": error_msg}
 
 import logging
 from typing import Any, Dict
@@ -116,6 +118,5 @@ async def create_stripe_customer_async(
         customer = create_stripe_customer(params)
         return {"success": True, "id": customer.id}
     except Exception as e:
-        logger.error(f"Error creating Stripe customer: {e}")
-        return {"success": False, "error": str(e)}
-    return stripe.Customer.create(**params)
+        error_msg = safe_error_response(e, "Failed to create Stripe customer")
+        return {"success": False, "error": error_msg}

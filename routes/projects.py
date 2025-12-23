@@ -19,6 +19,7 @@ from models import (
     UserRole,
     db,
 )
+from utils import safe_error_response
 
 projects_bp = Blueprint("projects", __name__, url_prefix="/projects")
 
@@ -30,6 +31,15 @@ def index():
         return render_template("projects/dashboard.html")
     except:
         return jsonify({"message": "Project Management Dashboard"})
+
+@projects_bp.route("/ai-board")
+@login_required
+def ai_board():
+    """AI-powered project board dashboard."""
+    try:
+        return render_template("projects/ai_board.html")
+    except:
+        return jsonify({"message": "AI Project Board Dashboard"})
 
 @projects_bp.route("/list")
 @login_required
@@ -99,7 +109,8 @@ def create_project():
         return jsonify({"success": True, "project": project.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create project")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @projects_bp.route("/api/projects/<project_id>", methods=["GET"])
 @login_required
@@ -152,7 +163,8 @@ def update_project(project_id):
         return jsonify({"success": True, "project": project.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to update project")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @projects_bp.route("/<project_id>/tasks")
 @login_required
@@ -214,7 +226,8 @@ def create_task():
         return jsonify({"success": True, "task": task.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create task")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @projects_bp.route("/api/tasks/<task_id>", methods=["PUT"])
 @login_required
@@ -259,7 +272,8 @@ def update_task(task_id):
         return jsonify({"success": True, "task": task.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to update task")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @projects_bp.route("/api/tasks/<task_id>/time", methods=["POST"])
 @login_required
@@ -289,7 +303,8 @@ def log_time(task_id):
         return jsonify({"success": True, "time_entry": time_entry.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to log time entry")
+        return jsonify({"success": False, "error": error_msg}), 400
 
 @projects_bp.route("/api/milestones", methods=["POST"])
 @login_required
@@ -321,4 +336,5 @@ def create_milestone():
         return jsonify({"success": True, "milestone": milestone.to_dict()}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 400
+        error_msg = safe_error_response(e, "Failed to create milestone")
+        return jsonify({"success": False, "error": error_msg}), 400

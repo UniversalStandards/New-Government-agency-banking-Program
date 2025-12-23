@@ -61,17 +61,22 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-primary w-100 mb-2">
                                 <i class="fas fa-list me-1"></i>View All Projects
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('projects.ai_board') }}" class="btn btn-outline-purple w-100 mb-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                                <i class="fas fa-robot me-1"></i>AI Project Board
+                            </a>
+                        </div>
+                        <div class="col-md-3">
                             <button class="btn btn-outline-success w-100 mb-2" onclick="alert('Create Project feature coming soon')">
                                 <i class="fas fa-plus me-1"></i>Create New Project
                             </button>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <button class="btn btn-outline-info w-100 mb-2" onclick="alert('My Tasks feature coming soon')">
                                 <i class="fas fa-user-check me-1"></i>My Assigned Tasks
                             </button>
