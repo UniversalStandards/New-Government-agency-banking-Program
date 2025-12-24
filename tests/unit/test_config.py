@@ -8,17 +8,14 @@ from pathlib import Path
 
 from configs.settings import APP_NAME, DEBUG, SECRET_KEY, VERSION, get_config
 
-
 def test_debug_configuration():
     """Test DEBUG configuration is properly loaded."""
     assert isinstance(DEBUG, bool)
-
 
 def test_app_constants():
     """Test application constants are properly set."""
     assert APP_NAME == "Government Operations and Financial Accounting Platform (GOFAP)"
     assert VERSION == "1.0.0"
-
 
 def test_get_config_function():
     """Test the get_config utility function."""
@@ -34,7 +31,6 @@ def test_get_config_function():
     test_none = get_config("NON_EXISTENT_VAR")
     assert test_none is None
 
-
 def test_environment_variable_loading():
     """Test that environment variables are properly loaded."""
     # Test setting a temporary environment variable
@@ -45,7 +41,6 @@ def test_environment_variable_loading():
 
     # Clean up
     del os.environ["TEST_CONFIG_VAR"]
-
 
 def test_import_without_secret_key():
     """
@@ -94,7 +89,6 @@ def test_import_without_secret_key():
         "SUCCESS" in result.stdout
     ), f"Test did not complete successfully: {result.stdout}"
 
-
 def test_secret_key_has_default():
     """Test that SECRET_KEY always has a default value to prevent import-time errors."""
     from configs import settings
@@ -103,7 +97,6 @@ def test_secret_key_has_default():
     assert settings.SECRET_KEY is not None
     assert settings.SECRET_KEY != ""
     assert isinstance(settings.SECRET_KEY, str)
-
 
 def test_validate_config_not_called_at_import():
     """
