@@ -115,6 +115,7 @@ def internal_error(error):
 # Register payment routes
 try:
     from routes.payments import payments_bp
+
     app.register_blueprint(payments_bp)
     logging.info("Payment routes registered")
 except ImportError as e:
