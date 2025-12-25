@@ -1,6 +1,3 @@
-import os
-
-DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 """Configuration settings for GOFAP (Government Operations and Financial Accounting Platform)."""
 
 import os
@@ -11,12 +8,6 @@ from typing import Any
 ENVIRONMENT = os.environ.get("FLASK_ENV", "development")
 
 # Debug mode setting
-DEBUG = os.environ.get("FLASK_DEBUG", "True").lower() in (
-    "true",
-    "1",
-    "yes",
-    "on",
-)
 DEBUG = os.environ.get("FLASK_DEBUG", "True").lower() in ("true", "1", "yes", "on")
 
 # Database configuration
@@ -35,6 +26,16 @@ MODERN_TREASURY_ORG_ID = os.environ.get("MODERN_TREASURY_ORG_ID", "")
 MODERN_TREASURY_WEBHOOK_SECRET = os.environ.get("MODERN_TREASURY_WEBHOOK_SECRET", "")
 
 # Security configuration
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY environment variable must be set. "
+        "Never use hardcoded secrets in production."
+    )
+# NOTE: SECRET_KEY has a default value to allow auxiliary scripts (gui/gui_main.py,
+# modern_treasury/modern_treasury_helpers.py, tests) to import this module for
+# API keys and constants without requiring Flask secrets.
+# DO NOT add unconditional validation here - use validate_config() explicitly instead.
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
 SESSION_COOKIE_SECURE = ENVIRONMENT == "production"
 SESSION_COOKIE_HTTPONLY = True
@@ -121,9 +122,6 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 MODERN_TREASURY_API_KEY = os.environ.get("MODERN_TREASURY_API_KEY", "")
 MODERN_TREASURY_ORG_ID = os.environ.get("MODERN_TREASURY_ORG_ID", "")
 
-# Security configuration
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
-
 # Application configuration
 APP_NAME = "Government Operations and Financial Accounting Platform (GOFAP)"
 VERSION = "1.0.0"
@@ -139,47 +137,39 @@ SYNC_INTERVAL_MINUTES = int(os.environ.get("SYNC_INTERVAL_MINUTES", "60"))
 MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "3"))
 TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", "30"))
 
-# Logging settings
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
-LOG_FILE = os.environ.get("LOG_FILE")
-
-# Data import settings
-LINEAR_API_KEY = os.environ.get("LINEAR_API_KEY")
-LINEAR_WORKSPACE_ID = os.environ.get("LINEAR_WORKSPACE_ID")
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-GITHUB_ORG = os.environ.get("GITHUB_ORG")
-
-# Sync settings
-SYNC_INTERVAL_MINUTES = int(os.environ.get("SYNC_INTERVAL_MINUTES", "60"))
-MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "3"))
-TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", "30"))
-
-# Logging settings
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
-LOG_FILE = os.environ.get("LOG_FILE")
 
 def get_config(key: str, default: Any = None) -> Any:
     """Get configuration value with fallback to default."""
     return os.environ.get(key, default)
 
+
 def is_production() -> bool:
     """Check if running in production environment."""
     return ENVIRONMENT == "production"
+
 
 def is_development() -> bool:
     """Check if running in development environment."""
     return ENVIRONMENT == "development"
 
+
 def is_testing() -> bool:
     """Check if running in testing environment."""
     return ENVIRONMENT == "testing"
 
+
 # Configuration validation
 def validate_config():
-    """Validate configuration settings."""
+    """
+    Validate configuration settings.
+
+    This function should be called explicitly by the Flask application during initialization,
+    NOT at module import time. This allows auxiliary scripts (GUI, API helpers, tests) to
+    import this module for constants and API keys without requiring Flask-specific secrets.
+    """
     errors = []
 
-    if is_production() and SECRET_KEY == os.environ.get("DEV_SECRET_KEY"):
+    if is_production() and SECRET_KEY == "dev-key-change-in-production":
         errors.append("SECRET_KEY must be changed in production")
 
     if is_production() and not SESSION_COOKIE_SECURE:

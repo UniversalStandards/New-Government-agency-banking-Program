@@ -46,7 +46,7 @@ class PaypalService(Service):
         data = "grant_type=client_credentials"
 
         response = requests.post(
-            f"{self.base_url}/v1/oauth2/token", headers=headers, data=data
+            f"{self.base_url}/v1/oauth2/token", headers=headers, data=data, timeout=30
         )
         response.raise_for_status()
 
@@ -74,6 +74,7 @@ class PaypalService(Service):
                 f"{self.base_url}/v1/customer/vault/customers",
                 headers=headers,
                 json=customer_payload,
+                timeout=30,
             )
             response.raise_for_status()
 
@@ -110,6 +111,7 @@ class PaypalService(Service):
                 f"{self.base_url}/v2/checkout/orders",
                 headers=headers,
                 json=payment_payload,
+                timeout=30,
             )
             response.raise_for_status()
 
@@ -133,7 +135,7 @@ class PaypalService(Service):
             }
 
             response = requests.get(
-                f"{self.base_url}/v1/reporting/balances", headers=headers
+                f"{self.base_url}/v1/reporting/balances", headers=headers, timeout=30
             )
             response.raise_for_status()
 
