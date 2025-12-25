@@ -137,26 +137,21 @@ SYNC_INTERVAL_MINUTES = int(os.environ.get("SYNC_INTERVAL_MINUTES", "60"))
 MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "3"))
 TIMEOUT_SECONDS = int(os.environ.get("TIMEOUT_SECONDS", "30"))
 
-
 def get_config(key: str, default: Any = None) -> Any:
     """Get configuration value with fallback to default."""
     return os.environ.get(key, default)
-
 
 def is_production() -> bool:
     """Check if running in production environment."""
     return ENVIRONMENT == "production"
 
-
 def is_development() -> bool:
     """Check if running in development environment."""
     return ENVIRONMENT == "development"
 
-
 def is_testing() -> bool:
     """Check if running in testing environment."""
     return ENVIRONMENT == "testing"
-
 
 # Configuration validation
 def validate_config():
