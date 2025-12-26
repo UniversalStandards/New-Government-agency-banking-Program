@@ -62,18 +62,15 @@ from models import Account, Budget, User, UserRole
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
-
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
-
 # Template context processor
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
-
 
 # Add cache control headers for static files in development
 @app.after_request
@@ -86,7 +83,6 @@ def add_header(response):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
-
 
 # Register blueprints
 try:
@@ -159,7 +155,6 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
-
 # Main application routes
 @app.route("/")
 def home():
@@ -191,7 +186,6 @@ def home():
             }
         )
 
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -207,12 +201,10 @@ def dashboard():
             }
         )
 
-
 @app.route("/health")
 def health():
     """Health check endpoint (non-API)."""
     return jsonify({"status": "healthy", "service": "GOFAP"})
-
 
 @app.route("/transactions")
 def transactions():
@@ -222,7 +214,6 @@ def transactions():
     except:
         return jsonify({"message": "GOFAP Transaction Management"})
 
-
 @app.route("/budgets")
 def budgets():
     """Budgets page."""
@@ -230,7 +221,6 @@ def budgets():
         return render_template("budgets.html")
     except:
         return jsonify({"message": "GOFAP Budget Management"})
-
 
 @app.route("/reports")
 def reports():
@@ -240,14 +230,12 @@ def reports():
     except:
         return jsonify({"message": "GOFAP Reports and Analytics"})
 
-
 @app.route("/api/accounts", methods=["GET"])
 @login_required
 def get_accounts():
     """API endpoint to get user's accounts."""
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
-
 
 @app.route("/payments")
 @login_required
@@ -257,7 +245,6 @@ def payments():
         return render_template("payments.html")
     except:
         return jsonify({"message": "GOFAP Payment Processing"})
-
 
 @app.route("/api/budgets", methods=["GET"])
 @login_required
@@ -271,20 +258,17 @@ def get_budgets():
         ).all()
     return jsonify([budget.to_dict() for budget in budgets])
 
-
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     """404 error handler."""
     return render_template("errors/404.html"), 404
 
-
 @app.errorhandler(500)
 def internal_server_error(error):
     """500 error handler."""
     db.session.rollback()
     return render_template("errors/500.html"), 500
-
 
 # Main routes - minimal routes, most are in blueprints
 
