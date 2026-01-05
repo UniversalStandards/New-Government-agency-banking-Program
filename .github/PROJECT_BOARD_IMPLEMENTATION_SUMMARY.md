@@ -288,11 +288,12 @@ All 19 workflow files validated:
 ✅ project-board-automation.yml
 ✅ project-board-sync.yml (NEW)
 ✅ python-app.yml
-✅ python-app.yml
 ✅ python-package.yml
 ✅ python-publish.yml
 ✅ security-scan.yml
 ✅ static.yml
+✅ summary.yml
+✅ mobb-codeql.yaml
 ✅ summary.yml
 ```
 

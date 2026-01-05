@@ -4,6 +4,30 @@
 
 This document describes the comprehensive automation system for managing GitHub project boards, issues, pull requests, and workflows. The system provides intelligent triage, autonomous fixes, and automated item movement through project board columns.
 
+## ⚠️ Important: Organization Project Access
+
+**For organization-level project boards (GitHub Projects v2):**
+
+The standard `GITHUB_TOKEN` provided to workflows only has repository-level permissions and **cannot access organization projects**. To enable organization project board automation:
+
+1. **Create a Personal Access Token (PAT)** or **GitHub App token** with:
+   - `project` scope (read/write project boards)
+   - `read:org` scope (read organization data)
+
+2. **Store the token as a repository secret:**
+   ```bash
+   # Go to repository Settings > Secrets and variables > Actions
+   # Create new secret: ORG_PROJECT_TOKEN
+   ```
+
+3. **Update the workflow to use the secret:**
+   ```yaml
+   # In .github/workflows/project-board-sync.yml, line 53
+   github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
+   ```
+
+**Alternative: Use repository-level projects** if organization access is not available. Change the GraphQL queries to use `repository` instead of `organization`.
+
 ## Architecture
 
 ### Core Components

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_review: ${{ steps.analysis.outputs.should_review }}
-      review_decision: ${{ steps.analysis.outputs.review_decision }}
+      review_decision: ${{ steps.ci-check.outputs.review_decision_final }}
       review_comment: ${{ steps.analysis.outputs.review_comment }}
       safe_to_merge: ${{ steps.analysis.outputs.safe_to_merge }}
       pr_number: ${{ steps.export-pr-number.outputs.pr_number }}
@@ -127,10 +127,10 @@ jobs:
               shouldReview = false;
             }
             
-            // Check PR author
+            // Check PR author (use strict checks to prevent spoofing)
             const isBot = pr.user.type === 'Bot';
-            const isDependabot = pr.user.login.includes('dependabot');
-            const isGithubActions = pr.user.login.includes('github-actions');
+            const isDependabot = pr.user.login === 'dependabot[bot]' || pr.user.id === 49699333;
+            const isGithubActions = pr.user.login === 'github-actions[bot]' && pr.user.id === 41898282;
             
             // Analyze file changes
             const onlyDocs = files.every(f => 
@@ -154,16 +154,29 @@ jobs:
               f.filename.match(/^(package\.json|requirements\.txt|Gemfile|go\.mod|Cargo\.toml)$/)
             );
             
-            const onlyFormatting = files.every(f => {
-              // Check if changes are only whitespace/formatting
+            // Better formatting detection - count total meaningful changes across all files
+            let totalMeaningfulChanges = 0;
+            for (const f of files) {
               const patch = f.patch || '';
-              const meaningfulChanges = patch.split('\n').filter(line => {
-                if (!line.startsWith('+') && !line.startsWith('-')) return false;
-                if (line.match(/^[+-]\s*$/)) return false; // Empty lines
-                return true;
-              });
-              return meaningfulChanges.length < 10; // Small formatting changes
-            });
+              if (!patch) {
+                totalMeaningfulChanges += 100; // Treat missing patches as significant
+                continue;
+              }
+              const lines = patch.split('\n');
+              for (const line of lines) {
+                // Skip metadata and context lines
+                if (line.startsWith('@@') || line.startsWith('diff ') || 
+                    line.startsWith('index ') || line.startsWith('--- ') || 
+                    line.startsWith('+++ ')) continue;
+                if (!line.startsWith('+') && !line.startsWith('-')) continue;
+                
+                const content = line.slice(1).trim();
+                if (content.length > 0) {
+                  totalMeaningfulChanges++;
+                }
+              }
+            }
+            const onlyFormatting = totalMeaningfulChanges < 20 && totalMeaningfulChanges > 0;
             
             const smallPR = data.additions + data.deletions < 100;
             const tinyPR = data.additions + data.deletions < 20;
@@ -174,9 +187,10 @@ jobs:
               safeToMerge = true;
               reasons.push('✅ Dependabot dependency update (small)');
             } else if (isGithubActions && onlyConfig) {
-              reviewDecision = 'APPROVE';
-              safeToMerge = true;
-              reasons.push('✅ GitHub Actions workflow update');
+              // GitHub Actions config changes require manual review for security
+              reviewDecision = 'COMMENT';
+              safeToMerge = false;
+              reasons.push('⚠️ GitHub Actions/config update requires manual review');
             } else if (onlyDocs && smallPR) {
               reviewDecision = 'APPROVE';
               safeToMerge = true;
@@ -187,6 +201,7 @@ jobs:
               reasons.push('✅ Test-only changes');
             } else if (onlyFormatting && tinyPR) {
               reviewDecision = 'APPROVE';
+              safeToMerge = true;
               reasons.push('✅ Code formatting only');
             } else if (isBot && tinyPR) {
               reviewDecision = 'APPROVE';
@@ -199,10 +214,13 @@ jobs:
               reasons.push('ℹ️ Manual review recommended');
             }
             
-            // Security checks
+            // Security checks - comprehensive pattern matching
             const hasSecurityFiles = files.some(f => 
-              f.filename.match(/^(\.env|secrets|credentials|keys|\.pem|\.key)/) ||
-              f.filename.includes('password')
+              f.filename.match(/\.(env|pem|key|p12|pfx|keystore|jks)$/i) ||
+              f.filename.match(/(secret|credential|password|token|auth|private[-_]?key)/i) ||
+              f.filename.match(/^(id_rsa|id_ed25519)/) ||
+              f.filename.match(/\.(aws|gcp|azure)\//i) ||
+              f.filename.includes('.ssh/')
             );
             
             if (hasSecurityFiles) {
@@ -244,8 +262,8 @@ jobs:
               safe_to_merge: safeToMerge
             };
       
-      - name: Check CI status
-        id: ci-status
+      - name: Check CI status and finalize review decision
+        id: ci-check
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -265,13 +283,18 @@ jobs:
             );
             
             const hasPending = checks.check_runs.some(run => run.status !== 'completed');
+            const hasFailed = checks.check_runs.some(run => 
+              run.status === 'completed' && run.conclusion !== 'success'
+            );
             
             console.log(`CI Status: ${allPassed ? 'PASSED' : hasPending ? 'PENDING' : 'FAILED'}`);
             console.log(`Total checks: ${checks.check_runs.length}`);
             
-            // Update review decision if CI is failing
-            let reviewDecision = '${{ steps.analysis.outputs.review_decision }}';
-            if (!allPassed && !hasPending && reviewDecision === 'APPROVE') {
+            // Get initial review decision from analysis step
+            let reviewDecision = JSON.parse('${{ steps.analysis.outputs.result }}').review_decision;
+            
+            // Downgrade APPROVE to COMMENT if CI is failing
+            if (hasFailed && reviewDecision === 'APPROVE') {
               console.log('⚠️ CI checks failing - changing review from APPROVE to COMMENT');
               reviewDecision = 'COMMENT';
             }
@@ -279,6 +302,7 @@ jobs:
             return {
               all_passed: allPassed,
               has_pending: hasPending,
+              has_failed: hasFailed,
               check_count: checks.check_runs.length,
               review_decision_final: reviewDecision
             };
@@ -298,7 +322,8 @@ jobs:
           script: |
             const prNumber = parseInt('${{ needs.analyze-pr.outputs.pr_number }}');
             const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
-            const comment = `${{ needs.analyze-pr.outputs.review_comment }}`;
+            // Use toJSON to safely escape the comment
+            const comment = ${{ toJSON(needs.analyze-pr.outputs.review_comment) }};
             
             if (!prNumber) {
               console.error('Could not determine PR number');

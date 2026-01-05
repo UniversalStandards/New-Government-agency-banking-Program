@@ -1,5 +1,18 @@
 name: 🎯 Advanced Project Board Sync & Automation
 
+# IMPORTANT: Organization Project Access
+# ========================================
+# This workflow accesses organization-level GitHub Projects v2, which requires
+# special permissions beyond the standard GITHUB_TOKEN.
+#
+# To enable this workflow:
+# 1. Create a Personal Access Token (PAT) with 'project' and 'read:org' scopes
+# 2. Store it as a repository secret named 'ORG_PROJECT_TOKEN'
+# 3. Update line 53 to use: github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
+#
+# Alternative: Use repository-level projects and change GraphQL queries
+# to use 'repository' instead of 'organization'.
+
 on:
   issues:
     types: [opened, edited, labeled, unlabeled, assigned, unassigned, closed, reopened]
@@ -52,65 +65,113 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const item = context.payload.issue || context.payload.pull_request;
-            if (!item) {
-              console.log('No item to add');
-              return;
-            }
+            // Handle workflow_dispatch for sync-all-items action
+            const isWorkflowDispatch = context.eventName === 'workflow_dispatch';
+            const actionInput = context.payload.inputs?.action;
             
-            console.log(`Adding ${item.pull_request ? 'PR' : 'issue'} #${item.number} to project board`);
-            
-            // Query to get project ID
-            const projectQuery = `
-              query($org: String!, $number: Int!) {
-                organization(login: $org) {
-                  projectV2(number: $number) {
-                    id
-                    title
-                  }
-                }
+            // Helper function to add a single item to the project
+            async function addItemToProject(item) {
+              if (!item) {
+                console.log('No item provided');
+                return false;
               }
-            `;
-            
-            try {
-              const projectResult = await github.graphql(projectQuery, {
-                org: process.env.ORG_NAME,
-                number: parseInt(process.env.PROJECT_NUMBER)
-              });
               
-              const projectId = projectResult.organization.projectV2.id;
-              console.log(`Found project: ${projectResult.organization.projectV2.title}`);
+              console.log(`Adding ${item.pull_request ? 'PR' : 'issue'} #${item.number} to project board`);
               
-              // Add item to project
-              const addItemMutation = `
-                mutation($projectId: ID!, $contentId: ID!) {
-                  addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                    item {
+              // Query to get project ID
+              const projectQuery = `
+                query($org: String!, $number: Int!) {
+                  organization(login: $org) {
+                    projectV2(number: $number) {
                       id
+                      title
                     }
                   }
                 }
               `;
               
-              const addResult = await github.graphql(addItemMutation, {
-                projectId: projectId,
-                contentId: item.node_id
-              });
+              try {
+                const projectResult = await github.graphql(projectQuery, {
+                  org: process.env.ORG_NAME,
+                  number: parseInt(process.env.PROJECT_NUMBER)
+                });
+                
+                const projectId = projectResult.organization.projectV2.id;
+                console.log(`Found project: ${projectResult.organization.projectV2.title}`);
+                
+                // Add item to project
+                const addItemMutation = `
+                  mutation($projectId: ID!, $contentId: ID!) {
+                    addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                      item {
+                        id
+                      }
+                    }
+                  }
+                `;
+                
+                const addResult = await github.graphql(addItemMutation, {
+                  projectId: projectId,
+                  contentId: item.node_id
+                });
+                
+                console.log(`Successfully added item #${item.number} to project board`);
+                
+                // Comment on issue/PR
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: item.number,
+                  body: `✅ **Added to Project Board**\n\nThis ${item.pull_request ? 'PR' : 'issue'} has been automatically added to the project board for tracking and management.\n\n---\n*Automated by Project Board Sync*`
+                });
+                
+                return true;
+              } catch (error) {
+                console.error(`Error adding item #${item.number} to project board:`, error.message);
+                return false;
+              }
+            }
+            
+            // Handle workflow_dispatch with sync-all-items action
+            if (isWorkflowDispatch && actionInput === 'sync-all-items') {
+              console.log('Syncing all open issues and PRs to project board...');
               
-              console.log(`Successfully added item to project board`);
-              
-              // Comment on issue/PR
-              await github.rest.issues.createComment({
+              // Fetch all open issues
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: item.number,
-                body: `✅ **Added to Project Board**\n\nThis ${item.pull_request ? 'PR' : 'issue'} has been automatically added to the project board for tracking and management.\n\n---\n*Automated by Project Board Sync*`
+                state: 'open',
+                per_page: 100
               });
               
-            } catch (error) {
-              console.error('Error adding to project board:', error.message);
-              // Don't fail the workflow if project board sync fails
+              console.log(`Found ${issues.length} open items to sync`);
+              
+              let successCount = 0;
+              let errorCount = 0;
+              
+              for (const item of issues) {
+                const success = await addItemToProject(item);
+                if (success) {
+                  successCount++;
+                } else {
+                  errorCount++;
+                }
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 100));
+              }
+              
+              console.log(`Sync complete: ${successCount} added, ${errorCount} errors`);
+              return;
             }
+            
+            // Handle regular issue/PR events
+            const item = context.payload.issue || context.payload.pull_request;
+            if (!item) {
+              console.log('No item to add (not triggered by issue/PR event)');
+              return;
+            }
+            
+            await addItemToProject(item);
 
   # Intelligent auto-triage with advanced labeling
   intelligent-triage:
@@ -289,7 +350,58 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Handle workflow_dispatch for auto-fix-issues action
+            const isWorkflowDispatch = context.eventName === 'workflow_dispatch';
+            const actionInput = context.payload.inputs?.action;
+            
+            // For workflow_dispatch with auto-fix-issues, fetch all auto-fixable issues
+            if (isWorkflowDispatch && actionInput === 'auto-fix-issues') {
+              console.log('Fetching all auto-fixable issues...');
+              
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'auto-fixable,quick-fix',
+                per_page: 100
+              });
+              
+              console.log(`Found ${issues.data.length} auto-fixable issues`);
+              
+              // Process first issue for now (full batch processing would need more work)
+              if (issues.data.length === 0) {
+                console.log('No auto-fixable issues found');
+                return { canAutoFix: false, fixTypes: [], issueNumber: null };
+              }
+              
+              const issue = issues.data[0];
+              const title = issue.title.toLowerCase();
+              const body = (issue.body || '').toLowerCase();
+              const content = title + ' ' + body;
+              
+              // Determine fix type
+              const fixTypes = [];
+              if (content.match(/\b(typo|spelling|misspell)\b/)) fixTypes.push('spelling');
+              if (content.match(/\b(syntax|indentation|format|pep8)\b/)) fixTypes.push('formatting');
+              if (content.match(/\b(import|unused import|missing import)\b/)) fixTypes.push('imports');
+              if (content.match(/\b(trailing whitespace|line ending)\b/)) fixTypes.push('whitespace');
+              
+              console.log(`Issue #${issue.number}: Fix types detected: ${fixTypes.join(', ')}`);
+              
+              return {
+                canAutoFix: fixTypes.length > 0,
+                fixTypes: fixTypes,
+                issueNumber: issue.number
+              };
+            }
+            
+            // Handle regular issue event
             const issue = context.payload.issue;
+            if (!issue) {
+              console.log('No issue in payload');
+              return { canAutoFix: false, fixTypes: [], issueNumber: null };
+            }
+            
             const title = (issue.title || '').toLowerCase();
             const body = (issue.body || '').toLowerCase();
             const content = title + ' ' + body;
@@ -384,6 +496,10 @@ jobs:
             });
 
   # Move items based on status changes
+  # NOTE: This job currently only COMMENTS about where items should move.
+  # Actual board movement requires additional GraphQL mutations to update
+  # the project item's Status field, which requires the project field IDs.
+  # See review comment for implementation details.
   move-board-items:
     name: 📊 Move Items Through Board
     runs-on: ubuntu-latest
@@ -436,11 +552,12 @@ jobs:
               console.log(`Should move to: ${targetStatus}`);
               
               // Comment on the item about board movement
+              // TODO: Add GraphQL mutation here to actually update the project item's Status field
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: item.number,
-                body: `📊 **Board Status Update**\n\nThis ${isPR ? 'PR' : 'issue'} should be moved to: **${targetStatus}**\n\n---\n*Automated by Project Board Sync*`
+                body: `📊 **Board Status Update**\n\nThis ${isPR ? 'PR' : 'issue'} should be moved to: **${targetStatus}**\n\n*Note: Automatic board movement requires additional GraphQL setup. See workflow comments for details.*\n\n---\n*Automated by Project Board Sync*`
               });
             }
 
