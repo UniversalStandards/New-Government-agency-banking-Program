@@ -178,9 +178,8 @@ workflow_dispatch:
     action:
       - sync-all-items         # Add all items to board
       - auto-triage-new        # Triage new issues
-      - auto-fix-issues        # Run autonomous fixes
+      - auto-fix-issues        # Analyze issues for fixes
       - move-items-by-status   # Update board positions
-      - clean-completed        # Archive completed items
       - full-automation        # Run all automation
 ```
 

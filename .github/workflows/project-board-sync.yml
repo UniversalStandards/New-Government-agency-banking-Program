@@ -356,7 +356,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
-            const result = ${{ steps.analyze.outputs.result }};
+            const result = JSON.parse('${{ steps.analyze.outputs.result }}');
             const fixTypes = result.fixTypes;
             
             await github.rest.issues.createComment({
