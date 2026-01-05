@@ -40,7 +40,20 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            let prNumber;
+            
+            // Handle different event types
+            if (context.payload.pull_request) {
+              prNumber = context.payload.pull_request.number;
+            } else if (context.payload.review) {
+              prNumber = context.payload.review.pull_request.number;
+            } else if (context.payload.inputs && context.payload.inputs.pr_number) {
+              prNumber = parseInt(context.payload.inputs.pr_number);
+            } else {
+              throw new Error('Could not determine PR number from event context');
+            }
+            
+            console.log(`Processing PR #${prNumber}`);
             
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
@@ -61,6 +74,7 @@ jobs:
             });
             
             return {
+              prNumber: prNumber,
               pr: pr,
               files: files,
               reviews: reviews,
@@ -162,6 +176,7 @@ jobs:
               reasons.push('✅ Documentation-only changes');
             } else if (onlyTests && smallPR) {
               reviewDecision = 'APPROVE';
+              safeToMerge = true;
               reasons.push('✅ Test-only changes');
             } else if (onlyFormatting && tinyPR) {
               reviewDecision = 'APPROVE';
@@ -198,24 +213,25 @@ jobs:
             - **Decision:** ${reviewDecision}
             
             **Analysis Results:**
-            ${reasons.map(r => `- ${r}`).join('\n')}
+            ${reasons.map(r => r).join('\n')}
             
-            ${reviewDecision === 'APPROVE' ? `
-            ✅ **This PR is approved for merging.**
+            ${reviewDecision === 'APPROVE' ? 
+            `✅ **This PR is approved for merging.**
             
-            ${safeToMerge ? '🔀 Adding \`safe-to-merge\` label for auto-merge eligibility.' : '⚠️ Manual merge recommended despite approval.'}
-            ` : reviewDecision === 'REQUEST_CHANGES' ? `
-            ❌ **Changes requested - manual review required.**
+            ${safeToMerge ? '🔀 Adding safe-to-merge label for auto-merge eligibility.' : '⚠️ Manual merge recommended despite approval.'}` : 
+            reviewDecision === 'REQUEST_CHANGES' ? 
+            `❌ **Changes requested - manual review required.**
             
-            Please address the concerns above before merging.
-            ` : `
-            ℹ️ **Manual review recommended.**
+            Please address the concerns above before merging.` : 
+            `ℹ️ **Manual review recommended.**
             
-            This PR requires human review before merging.
-            `}
+            This PR requires human review before merging.`}
             
             ---
             *Automated by PR Auto-Review System*`;
+            
+            // Use JSON.stringify to safely handle the comment with special characters
+            core.setOutput('review_comment_safe', JSON.stringify(reviewComment));
             
             return {
               should_review: shouldReview,
@@ -230,13 +246,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
-            
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber
-            });
+            const data = JSON.parse('${{ steps.pr-details.outputs.result }}');
+            const prNumber = data.prNumber;
+            const pr = data.pr;
             
             const { data: checks } = await github.rest.checks.listForRef({
               owner: context.repo.owner,
@@ -253,10 +265,18 @@ jobs:
             console.log(`CI Status: ${allPassed ? 'PASSED' : hasPending ? 'PENDING' : 'FAILED'}`);
             console.log(`Total checks: ${checks.check_runs.length}`);
             
+            // Update review decision if CI is failing
+            let reviewDecision = '${{ steps.analysis.outputs.review_decision }}';
+            if (!allPassed && !hasPending && reviewDecision === 'APPROVE') {
+              console.log('⚠️ CI checks failing - changing review from APPROVE to COMMENT');
+              reviewDecision = 'COMMENT';
+            }
+            
             return {
               all_passed: allPassed,
               has_pending: hasPending,
-              check_count: checks.check_runs.length
+              check_count: checks.check_runs.length,
+              review_decision_final: reviewDecision
             };
 
   # Submit automated review
@@ -272,9 +292,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            const data = JSON.parse('${{ needs.analyze-pr.outputs.review_comment }}');
+            const prNumber = data.prNumber || context.payload.pull_request?.number;
+            
+            if (!prNumber) {
+              console.error('Could not determine PR number');
+              return;
+            }
+            
             const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
-            const comment = `${{ needs.analyze-pr.outputs.review_comment }}`;
+            const commentSafe = JSON.parse('${{ steps.analysis.outputs.review_comment_safe }}' || '""');
+            const comment = commentSafe || '${{ needs.analyze-pr.outputs.review_comment }}';
             
             try {
               await github.rest.pulls.createReview({
@@ -304,7 +332,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            // Get PR number from step output
+            const analysisData = JSON.parse('${{ needs.analyze-pr.result }}' || '{}');
+            const prNumber = analysisData.prNumber || context.payload.pull_request?.number;
+            
+            if (!prNumber) {
+              console.error('Could not determine PR number');
+              return;
+            }
             
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
@@ -321,7 +356,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            const prNumber = context.payload.pull_request?.number;
+            
+            if (!prNumber) {
+              console.error('Could not determine PR number - skipping auto-merge label');
+              return;
+            }
             
             // Add auto-merge label to trigger the auto-merge workflow
             await github.rest.issues.addLabels({
@@ -362,7 +402,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            const prNumber = context.payload.pull_request?.number || 'unknown';
             const shouldReview = '${{ needs.analyze-pr.outputs.should_review }}';
             const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
             const safeToMerge = '${{ needs.analyze-pr.outputs.safe_to_merge }}';
