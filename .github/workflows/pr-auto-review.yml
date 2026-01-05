@@ -27,6 +27,7 @@ jobs:
       review_decision: ${{ steps.analysis.outputs.review_decision }}
       review_comment: ${{ steps.analysis.outputs.review_comment }}
       safe_to_merge: ${{ steps.analysis.outputs.safe_to_merge }}
+      pr_number: ${{ steps.export-pr-number.outputs.pr_number }}
     
     steps:
       - name: Checkout repository
@@ -83,6 +84,12 @@ jobs:
               deletions: pr.deletions,
               changedFiles: pr.changed_files
             };
+      
+      - name: Export PR number
+        id: export-pr-number
+        run: |
+          PR_NUM=$(echo '${{ steps.pr-details.outputs.result }}' | jq -r '.prNumber')
+          echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
       
       - name: Analyze PR for auto-review
         id: analysis
@@ -230,9 +237,6 @@ jobs:
             ---
             *Automated by PR Auto-Review System*`;
             
-            // Use JSON.stringify to safely handle the comment with special characters
-            core.setOutput('review_comment_safe', JSON.stringify(reviewComment));
-            
             return {
               should_review: shouldReview,
               review_decision: reviewDecision,
@@ -292,17 +296,16 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const data = JSON.parse('${{ needs.analyze-pr.outputs.review_comment }}');
-            const prNumber = data.prNumber || context.payload.pull_request?.number;
+            const prNumber = parseInt('${{ needs.analyze-pr.outputs.pr_number }}');
+            const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
+            const comment = `${{ needs.analyze-pr.outputs.review_comment }}`;
             
             if (!prNumber) {
               console.error('Could not determine PR number');
               return;
             }
             
-            const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
-            const commentSafe = JSON.parse('${{ steps.analysis.outputs.review_comment_safe }}' || '""');
-            const comment = commentSafe || '${{ needs.analyze-pr.outputs.review_comment }}';
+            console.log(`Submitting ${decision} review for PR #${prNumber}`);
             
             try {
               await github.rest.pulls.createReview({
@@ -332,9 +335,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // Get PR number from step output
-            const analysisData = JSON.parse('${{ needs.analyze-pr.result }}' || '{}');
-            const prNumber = analysisData.prNumber || context.payload.pull_request?.number;
+            const prNumber = parseInt('${{ needs.analyze-pr.outputs.pr_number }}');
             
             if (!prNumber) {
               console.error('Could not determine PR number');
@@ -356,7 +357,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.pull_request?.number;
+            const prNumber = parseInt('${{ needs.analyze-pr.outputs.pr_number }}');
             
             if (!prNumber) {
               console.error('Could not determine PR number - skipping auto-merge label');
