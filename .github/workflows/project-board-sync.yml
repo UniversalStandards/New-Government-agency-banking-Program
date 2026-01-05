@@ -22,7 +22,6 @@ on:
           - auto-triage-new
           - auto-fix-issues
           - move-items-by-status
-          - clean-completed
           - full-automation
 
 permissions:
@@ -277,7 +276,11 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install -q -r requirements.txt
+          # Install project dependencies if requirements.txt exists
+          if [ -f requirements.txt ]; then
+            pip install -q -r requirements.txt
+          fi
+          # Install code quality tools
           pip install -q black isort autopep8 flake8
       
       - name: Analyze issue for autonomous fix
@@ -320,6 +323,7 @@ jobs:
         run: |
           echo "🔧 Applying autonomous fixes..."
           
+          # Get fix types from previous step
           FIX_TYPES='${{ toJSON(fromJSON(steps.analyze.outputs.result).fixTypes) }}'
           
           # Apply formatting fixes
@@ -345,31 +349,35 @@ jobs:
           fi
         id: apply-fix
       
-      - name: Create auto-fix pull request
+      - name: Comment on issue about fixes
         if: steps.apply-fix.outputs.has_changes == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
-            const { fixTypes } = ${{ steps.analyze.outputs.result }};
+            const result = ${{ steps.analyze.outputs.result }};
+            const fixTypes = result.fixTypes;
             
-            // This would create a new branch and PR
-            // For now, just comment on the issue
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: `🤖 **Autonomous Fix Applied**
+              body: `🤖 **Autonomous Fix Analysis Complete**
               
-              **Fix Types:** ${fixTypes.join(', ')}
+              **Fix Types Identified:** ${fixTypes.join(', ')}
               
-              The autonomous agent has analyzed this issue and applied automatic fixes:
+              The autonomous agent has analyzed this issue and identified potential fixes:
               
-              ✅ **Actions Taken:**
-              ${fixTypes.includes('formatting') ? '- Applied Python code formatting (black, isort, autopep8)\n' : ''}${fixTypes.includes('imports') ? '- Optimized import statements\n' : ''}${fixTypes.includes('whitespace') ? '- Removed trailing whitespace\n' : ''}
-              **Status:** Fixes applied successfully
-              **Next Step:** A pull request will be created with these changes
+              ✅ **Fixes Available:**
+              ${fixTypes.includes('formatting') ? '- Python code formatting (black, isort, autopep8)\n' : ''}${fixTypes.includes('imports') ? '- Import statement optimization\n' : ''}${fixTypes.includes('whitespace') ? '- Trailing whitespace removal\n' : ''}
+              **Status:** Analysis complete
+              **Next Step:** Manual review recommended before applying fixes
+              
+              To apply these fixes, a maintainer can:
+              1. Run the formatting tools locally
+              2. Create a PR with the fixes
+              3. Link the PR to this issue
               
               ---
               *Automated by Autonomous Fix System*`
