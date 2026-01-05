@@ -1,0 +1,380 @@
+name: 🤖 PR Auto-Review & Approve
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: read
+
+jobs:
+  # Analyze PR for auto-review eligibility
+  analyze-pr:
+    name: 📊 Analyze PR
+    runs-on: ubuntu-latest
+    outputs:
+      should_review: ${{ steps.analysis.outputs.should_review }}
+      review_decision: ${{ steps.analysis.outputs.review_decision }}
+      review_comment: ${{ steps.analysis.outputs.review_comment }}
+      safe_to_merge: ${{ steps.analysis.outputs.safe_to_merge }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get PR details
+        id: pr-details
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            return {
+              pr: pr,
+              files: files,
+              reviews: reviews,
+              fileCount: files.length,
+              additions: pr.additions,
+              deletions: pr.deletions,
+              changedFiles: pr.changed_files
+            };
+      
+      - name: Analyze PR for auto-review
+        id: analysis
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const data = JSON.parse('${{ steps.pr-details.outputs.result }}');
+            const pr = data.pr;
+            const files = data.files;
+            const reviews = data.reviews;
+            
+            console.log(`Analyzing PR #${pr.number}: ${pr.title}`);
+            console.log(`Files changed: ${data.fileCount}, +${data.additions}/-${data.deletions}`);
+            
+            let shouldReview = true;
+            let reviewDecision = 'COMMENT'; // APPROVE, REQUEST_CHANGES, or COMMENT
+            let safeToMerge = false;
+            let reasons = [];
+            
+            // Skip if already approved by a human
+            const hasHumanApproval = reviews.some(r => 
+              r.state === 'APPROVED' && 
+              r.user.type !== 'Bot'
+            );
+            
+            if (hasHumanApproval) {
+              console.log('Already has human approval, skipping auto-review');
+              shouldReview = false;
+            }
+            
+            // Skip draft PRs
+            if (pr.draft) {
+              console.log('Draft PR, skipping auto-review');
+              shouldReview = false;
+            }
+            
+            // Check PR author
+            const isBot = pr.user.type === 'Bot';
+            const isDependabot = pr.user.login.includes('dependabot');
+            const isGithubActions = pr.user.login.includes('github-actions');
+            
+            // Analyze file changes
+            const onlyDocs = files.every(f => 
+              f.filename.match(/\.(md|txt|rst)$/i) ||
+              f.filename.startsWith('docs/')
+            );
+            
+            const onlyTests = files.every(f => 
+              f.filename.match(/test_.*\.py$/) ||
+              f.filename.startsWith('tests/') ||
+              f.filename.match(/\.test\.(js|ts)$/)
+            );
+            
+            const onlyConfig = files.every(f => 
+              f.filename.match(/\.(yml|yaml|json|toml|ini|cfg)$/i) ||
+              f.filename.startsWith('.github/') ||
+              f.filename.match(/^(\..*rc|.*\.config\.(js|ts))$/)
+            );
+            
+            const hasDependencyUpdates = files.some(f =>
+              f.filename.match(/^(package\.json|requirements\.txt|Gemfile|go\.mod|Cargo\.toml)$/)
+            );
+            
+            const onlyFormatting = files.every(f => {
+              // Check if changes are only whitespace/formatting
+              const patch = f.patch || '';
+              const meaningfulChanges = patch.split('\n').filter(line => {
+                if (!line.startsWith('+') && !line.startsWith('-')) return false;
+                if (line.match(/^[+-]\s*$/)) return false; // Empty lines
+                return true;
+              });
+              return meaningfulChanges.length < 10; // Small formatting changes
+            });
+            
+            const smallPR = data.additions + data.deletions < 100;
+            const tinyPR = data.additions + data.deletions < 20;
+            
+            // Auto-approve scenarios
+            if (isDependabot && hasDependencyUpdates && tinyPR) {
+              reviewDecision = 'APPROVE';
+              safeToMerge = true;
+              reasons.push('✅ Dependabot dependency update (small)');
+            } else if (isGithubActions && onlyConfig) {
+              reviewDecision = 'APPROVE';
+              safeToMerge = true;
+              reasons.push('✅ GitHub Actions workflow update');
+            } else if (onlyDocs && smallPR) {
+              reviewDecision = 'APPROVE';
+              safeToMerge = true;
+              reasons.push('✅ Documentation-only changes');
+            } else if (onlyTests && smallPR) {
+              reviewDecision = 'APPROVE';
+              reasons.push('✅ Test-only changes');
+            } else if (onlyFormatting && tinyPR) {
+              reviewDecision = 'APPROVE';
+              reasons.push('✅ Code formatting only');
+            } else if (isBot && tinyPR) {
+              reviewDecision = 'APPROVE';
+              reasons.push('✅ Bot-created small change');
+            } else if (smallPR && pr.title.toLowerCase().match(/^(fix|docs|test|chore|style):/)) {
+              reviewDecision = 'COMMENT';
+              reasons.push('ℹ️ Small conventional commit change');
+            } else {
+              reviewDecision = 'COMMENT';
+              reasons.push('ℹ️ Manual review recommended');
+            }
+            
+            // Security checks
+            const hasSecurityFiles = files.some(f => 
+              f.filename.match(/^(\.env|secrets|credentials|keys|\.pem|\.key)/) ||
+              f.filename.includes('password')
+            );
+            
+            if (hasSecurityFiles) {
+              reviewDecision = 'REQUEST_CHANGES';
+              safeToMerge = false;
+              reasons.push('⚠️ Security-sensitive files detected - manual review required');
+            }
+            
+            const reviewComment = `## 🤖 Automated PR Review
+            
+            **PR Analysis:**
+            - **Files Changed:** ${data.fileCount}
+            - **Lines Changed:** +${data.additions}/-${data.deletions}
+            - **Author:** @${pr.user.login} ${pr.user.type === 'Bot' ? '(Bot)' : '(Human)'}
+            - **Decision:** ${reviewDecision}
+            
+            **Analysis Results:**
+            ${reasons.map(r => `- ${r}`).join('\n')}
+            
+            ${reviewDecision === 'APPROVE' ? `
+            ✅ **This PR is approved for merging.**
+            
+            ${safeToMerge ? '🔀 Adding \`safe-to-merge\` label for auto-merge eligibility.' : '⚠️ Manual merge recommended despite approval.'}
+            ` : reviewDecision === 'REQUEST_CHANGES' ? `
+            ❌ **Changes requested - manual review required.**
+            
+            Please address the concerns above before merging.
+            ` : `
+            ℹ️ **Manual review recommended.**
+            
+            This PR requires human review before merging.
+            `}
+            
+            ---
+            *Automated by PR Auto-Review System*`;
+            
+            return {
+              should_review: shouldReview,
+              review_decision: reviewDecision,
+              review_comment: reviewComment,
+              safe_to_merge: safeToMerge
+            };
+      
+      - name: Check CI status
+        id: ci-status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            });
+            
+            const allPassed = checks.check_runs.length > 0 && checks.check_runs.every(run => 
+              run.status === 'completed' && run.conclusion === 'success'
+            );
+            
+            const hasPending = checks.check_runs.some(run => run.status !== 'completed');
+            
+            console.log(`CI Status: ${allPassed ? 'PASSED' : hasPending ? 'PENDING' : 'FAILED'}`);
+            console.log(`Total checks: ${checks.check_runs.length}`);
+            
+            return {
+              all_passed: allPassed,
+              has_pending: hasPending,
+              check_count: checks.check_runs.length
+            };
+
+  # Submit automated review
+  submit-review:
+    name: ✅ Submit Review
+    runs-on: ubuntu-latest
+    needs: analyze-pr
+    if: needs.analyze-pr.outputs.should_review == 'true'
+    
+    steps:
+      - name: Submit PR review
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
+            const comment = `${{ needs.analyze-pr.outputs.review_comment }}`;
+            
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                event: decision,
+                body: comment
+              });
+              
+              console.log(`Review submitted: ${decision}`);
+            } catch (error) {
+              console.error('Error submitting review:', error.message);
+              
+              // Fallback to comment if review fails
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
+      
+      - name: Add safe-to-merge label
+        if: needs.analyze-pr.outputs.safe_to_merge == 'true' && needs.analyze-pr.outputs.review_decision == 'APPROVE'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['safe-to-merge', 'auto-approved']
+            });
+            
+            console.log('Added safe-to-merge and auto-approved labels');
+      
+      - name: Add auto-merge label for eligible PRs
+        if: needs.analyze-pr.outputs.safe_to_merge == 'true' && needs.analyze-pr.outputs.review_decision == 'APPROVE'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            
+            // Add auto-merge label to trigger the auto-merge workflow
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['auto-merge']
+            });
+            
+            console.log('Added auto-merge label - PR is eligible for automatic merging');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `🔀 **Auto-Merge Enabled**
+              
+              This PR has been automatically approved and is now eligible for auto-merge.
+              
+              The PR will be automatically merged once all CI checks pass.
+              
+              To disable auto-merge, remove the \`auto-merge\` label.
+              
+              ---
+              *Automated by PR Auto-Review System*`
+            });
+
+  # Monitoring and reporting
+  review-summary:
+    name: 📊 Review Summary
+    runs-on: ubuntu-latest
+    needs: [analyze-pr, submit-review]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request?.number || ${{ github.event.inputs.pr_number }};
+            const shouldReview = '${{ needs.analyze-pr.outputs.should_review }}';
+            const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
+            const safeToMerge = '${{ needs.analyze-pr.outputs.safe_to_merge }}';
+            
+            console.log('## PR Auto-Review Summary');
+            console.log(`PR #${prNumber}`);
+            console.log(`Should Review: ${shouldReview}`);
+            console.log(`Decision: ${decision}`);
+            console.log(`Safe to Merge: ${safeToMerge}`);
+            
+            if (shouldReview === 'true') {
+              console.log('✅ Review submitted successfully');
+            } else {
+              console.log('ℹ️ Review skipped (already approved or draft)');
+            }
