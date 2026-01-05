@@ -290,8 +290,9 @@ jobs:
             console.log(`CI Status: ${allPassed ? 'PASSED' : hasPending ? 'PENDING' : 'FAILED'}`);
             console.log(`Total checks: ${checks.check_runs.length}`);
             
-            // Get initial review decision from analysis step
-            let reviewDecision = JSON.parse('${{ steps.analysis.outputs.result }}').review_decision;
+            // Get initial review decision from analysis step output
+            const analysisResult = JSON.parse('${{ steps.analysis.outputs.result }}');
+            let reviewDecision = analysisResult.review_decision;
             
             // Downgrade APPROVE to COMMENT if CI is failing
             if (hasFailed && reviewDecision === 'APPROVE') {
@@ -322,8 +323,8 @@ jobs:
           script: |
             const prNumber = parseInt('${{ needs.analyze-pr.outputs.pr_number }}');
             const decision = '${{ needs.analyze-pr.outputs.review_decision }}';
-            // Use toJSON to safely escape the comment
-            const comment = ${{ toJSON(needs.analyze-pr.outputs.review_comment) }};
+            // Use toJSON in GitHub Actions expression to safely escape the comment
+            const comment = '${{ toJSON(needs.analyze-pr.outputs.review_comment) }}' ? JSON.parse('${{ toJSON(needs.analyze-pr.outputs.review_comment) }}') : '';
             
             if (!prNumber) {
               console.error('Could not determine PR number');
