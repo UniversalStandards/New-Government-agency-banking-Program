@@ -1,0 +1,275 @@
+name: 🚀 Azure Deployment
+
+on:
+  push:
+    branches: [main, production]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  AZURE_WEBAPP_NAME: gofap-app
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # Build and test
+  build-and-test:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run linting
+        run: |
+          pip install flake8 black isort
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          black --check .
+          isort --check-only .
+      
+      - name: Run tests
+        run: |
+          pip install pytest pytest-cov pytest-flask
+          pytest --cov=. --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+      
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-files
+          path: |
+            .
+            !node_modules
+            !.git
+            !.github
+            !tests
+            !.pytest_cache
+  
+  # Build Docker image and push to Azure Container Registry
+  build-docker:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+      
+      - name: Build and push Docker image
+        run: |
+          docker build . -t ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
+          docker build . -t ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/${{ env.AZURE_WEBAPP_NAME }}:latest
+          docker push ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
+          docker push ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/${{ env.AZURE_WEBAPP_NAME }}:latest
+  
+  # Deploy to Azure App Service
+  deploy-azure:
+    name: 🌐 Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: build-docker
+    environment:
+      name: ${{ github.ref == 'refs/heads/production' && 'production' || 'staging' }}
+      url: ${{ steps.deploy-webapp.outputs.webapp-url }}
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Get secrets from Azure Key Vault
+        uses: azure/get-keyvault-secrets@v1
+        with:
+          keyvault: ${{ secrets.AZURE_KEY_VAULT_NAME }}
+          secrets: |
+            SECRET-KEY
+            DATABASE-URL
+            STRIPE-SECRET-KEY
+            STRIPE-PUBLISHABLE-KEY
+            MODERN-TREASURY-API-KEY
+        id: keyvault
+      
+      - name: Deploy to Azure Web App
+        id: deploy-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/${{ env.AZURE_WEBAPP_NAME }}:${{ github.sha }}
+      
+      - name: Configure App Settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-settings-json: |
+            [
+              {
+                "name": "FLASK_ENV",
+                "value": "production",
+                "slotSetting": false
+              },
+              {
+                "name": "SECRET_KEY",
+                "value": "${{ steps.keyvault.outputs.SECRET-KEY }}",
+                "slotSetting": false
+              },
+              {
+                "name": "DATABASE_URL",
+                "value": "${{ steps.keyvault.outputs.DATABASE-URL }}",
+                "slotSetting": false
+              },
+              {
+                "name": "STRIPE_SECRET_KEY",
+                "value": "${{ steps.keyvault.outputs.STRIPE-SECRET-KEY }}",
+                "slotSetting": false
+              },
+              {
+                "name": "WEBSITES_PORT",
+                "value": "5000",
+                "slotSetting": false
+              }
+            ]
+      
+      - name: Run database migrations
+        run: |
+          az webapp ssh --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --command "cd /home/site/wwwroot && python -m flask db upgrade"
+      
+      - name: Restart App Service
+        run: |
+          az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
+      
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f ${{ steps.deploy-webapp.outputs.webapp-url }} || exit 1
+  
+  # Configure Cloudflare
+  configure-cloudflare:
+    name: ☁️ Configure Cloudflare
+    runs-on: ubuntu-latest
+    needs: deploy-azure
+    if: github.ref == 'refs/heads/production'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure Cloudflare DNS
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: |
+            # Update DNS records to point to Azure
+            curl -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records/${{ secrets.CLOUDFLARE_DNS_RECORD_ID }}" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{"type":"CNAME","name":"gofap","content":"${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net","ttl":1,"proxied":true}'
+      
+      - name: Purge Cloudflare cache
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+      
+      - name: Configure Cloudflare Page Rules
+        run: |
+          # Enable caching for static assets
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/pagerules" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{
+              "targets": [{"target": "url", "constraint": {"operator": "matches", "value": "*gofap.gov/static/*"}}],
+              "actions": [
+                {"id": "cache_level", "value": "cache_everything"},
+                {"id": "edge_cache_ttl", "value": 86400}
+              ],
+              "priority": 1,
+              "status": "active"
+            }'
+  
+  # Post-deployment verification
+  verify-deployment:
+    name: ✅ Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-azure, configure-cloudflare]
+    
+    steps:
+      - name: Check application health
+        run: |
+          curl -f https://gofap.gov/health || exit 1
+      
+      - name: Run smoke tests
+        run: |
+          curl -f https://gofap.gov/ || exit 1
+          curl -f https://gofap.gov/api/health || exit 1
+      
+      - name: Notify deployment status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request?.number || 1,
+              body: `🚀 **Deployment Successful**
+              
+              **Environment:** ${{ github.ref == 'refs/heads/production' && 'Production' || 'Staging' }}
+              **Commit:** ${context.sha.substring(0, 7)}
+              **URL:** https://gofap.gov
+              
+              All health checks passed ✅`
+            });
