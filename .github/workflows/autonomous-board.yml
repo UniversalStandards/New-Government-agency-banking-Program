@@ -101,7 +101,7 @@ jobs:
             require('fs').writeFileSync('sync-summary.json', JSON.stringify(summary, null, 2));
       
       - name: Upload sync summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: sync-summary
           path: sync-summary.json
