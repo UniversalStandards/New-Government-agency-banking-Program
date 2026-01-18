@@ -96,8 +96,7 @@ os.makedirs("migrations/versions", exist_ok=True)
 Path("migrations/versions/__init__.py").touch()
 
 with open("migrations/env.py", "w") as f:
-    f.write(
-        """from flask_migrate import Migrate, MigrateCommand
+    f.write("""from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 from app import app, db
 
@@ -108,8 +107,7 @@ manager.add_command('db', MigrateCommand)
 
 if __name__ == '__main__':
     manager.run()
-"""
-    )
+""")
 
 # Additional requirements
 with open("requirements.txt", "a") as f:
@@ -119,8 +117,7 @@ with open("requirements.txt", "a") as f:
 os.makedirs("api", exist_ok=True)
 Path("api/__init__.py").touch()
 with open("api/routes.py", "w") as f:
-    f.write(
-        """from flask_restful import Api, Resource
+    f.write("""from flask_restful import Api, Resource
 from app import app
 
 class TransactionAPI(Resource):
@@ -132,12 +129,10 @@ def post(self):
 
 api = Api(app)
 api.add_resource(TransactionAPI, '/transactions')
-"""
-    )
+""")
 # Additional API resources
 with open("api/user.py", "w") as f:
-    f.write(
-        """from flask_restful import Resource
+    f.write("""from flask_restful import Resource
 
 class UserAPI(Resource):
     def get(self, user_id):
@@ -145,16 +140,13 @@ class UserAPI(Resource):
 
     def post(self):
         return {'status': 'success', 'message': 'User created.'}
-"""
-    )
+""")
 
 with open("api/__init__.py", "a") as f:
-    f.write(
-        """
+    f.write("""
 from .user import UserAPI
 api.add_resource(UserAPI, '/users/<int:user_id>')
-"""
-    )
+""")
 
 # Additional static files
 with open("static/favicon.ico", "wb") as f:
@@ -162,8 +154,7 @@ with open("static/favicon.ico", "wb") as f:
 
 # Additional templates
 with open("templates/login.html", "w") as f:
-    f.write(
-        """<!DOCTYPE html>
+    f.write("""<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -174,11 +165,9 @@ with open("templates/login.html", "w") as f:
 <body>
     <h1>Login to your account</h1>
 </body>
-</html>"""
-    )
+</html>""")
 with open("templates/register.html", "w") as f:
-    f.write(
-        """<!DOCTYPE html>
+    f.write("""<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
@@ -189,11 +178,9 @@ with open("templates/register.html", "w") as f:
 <body>
     <h1>Register for an account</h1>
 </body>
-</html>"""
-    )
+</html>""")
 with open("templates/login.html", "a") as f:
-    f.write(
-        """<form action='/login' method='post'>
+    f.write("""<form action='/login' method='post'>
         <label for='username'>Username:</label>
         <input type='text' id='username' name='username' required><br>
         <label for='password'>Password:</label>
@@ -202,5 +189,4 @@ with open("templates/login.html", "a") as f:
     </form>
 </body>
 </html>
-"""
-    )
+""")
