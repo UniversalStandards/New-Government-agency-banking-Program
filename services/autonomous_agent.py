@@ -257,9 +257,7 @@ class AutonomousAgent:
         pr_strategy["pr_title"] = f"🤖 Auto-fix: {fix_type.title()} - {task_title}"
 
         # Generate PR body
-        pr_strategy[
-            "pr_body"
-        ] = f"""## 🤖 Automated Fix
+        pr_strategy["pr_body"] = f"""## 🤖 Automated Fix
 
 **Issue**: #{task_data.get('issue_number', 'N/A')}
 **Fix Type**: {fix_type}
