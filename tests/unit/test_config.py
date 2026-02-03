@@ -52,8 +52,7 @@ def test_import_without_secret_key():
     Regression test for: https://github.com/UniversalStandards/New-Government-agency-banking-Program/issues/294
     """
     # Run a subprocess without SECRET_KEY to ensure import works
-    test_code = textwrap.dedent(
-        f"""
+    test_code = textwrap.dedent(f"""
         import os
         import sys
 
@@ -71,8 +70,7 @@ def test_import_without_secret_key():
         assert hasattr(settings, 'MODERN_TREASURY_API_KEY'), "Should have MODERN_TREASURY_API_KEY"
 
         print("SUCCESS")
-        """
-    )
+        """)
 
     # Get project root directory (3 levels up from this test file)
     project_root = Path(__file__).parent.parent.parent
