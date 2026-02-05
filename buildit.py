@@ -55,8 +55,7 @@ for service in service_folders:
 
 # Enhanced configuration
 with open("configs/settings.py", "w") as f:
-    f.write(
-        """\"\"\"Configuration settings for GOFAP.\"\"\"
+    f.write("""\"\"\"Configuration settings for GOFAP.\"\"\"
 
 import os
 
@@ -78,8 +77,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
 # Application configuration
 APP_NAME = "Government Operations and Financial Accounting Platform (GOFAP)"
 VERSION = "1.0.0"
-"""
-    )
+""")
 
 print("Project structure created successfully!")
 print("GOFAP - Government Operations and Financial Accounting Platform")
