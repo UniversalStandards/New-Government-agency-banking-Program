@@ -129,7 +129,9 @@ def register_data_import_commands(app):
                 click.echo("\n🎉 All connections are healthy!")
             else:
                 failed_services = [svc for svc, status in results.items() if not status]
-                click.echo(f"\n⚠️  Connection issues with: {', '.join(failed_services)}")
+                click.echo(
+                    f"\n⚠️  Connection issues with: {', '.join(failed_services)}"
+                )
 
         except Exception as e:
             click.echo(f"❌ Error: {e}")
