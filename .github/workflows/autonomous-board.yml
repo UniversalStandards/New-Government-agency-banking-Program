@@ -185,7 +185,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { autoFixable, fixType, issueNumber } = ${{ steps.analyze.outputs.result }};
+            const { autoFixable, fixType, issueNumber } = JSON.parse('${{ steps.analyze.outputs.result }}');
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -232,7 +232,7 @@ jobs:
               ref: pr.head.sha
             });
             
-            const allPassed = checks.check_runs.length > 0 && checks.check_runs.every(run => 
+            const allPassed = checks.check_runs && checks.check_runs.length > 0 && checks.check_runs.every(run => 
               run.status === 'completed' && run.conclusion === 'success'
             );
             
@@ -278,6 +278,8 @@ jobs:
               commit_message: `Auto-merged by Autonomous Agent\n\nAll CI checks passed and PR approved.`
             });
             
+            const checkResult = JSON.parse('${{ steps.check-ci.outputs.result }}');
+            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -287,7 +289,7 @@ jobs:
               This PR has been automatically merged by the Autonomous Agent.
               
               **Status:**
-              - ✅ All CI checks passed (${fromJSON('${{ steps.check-ci.outputs.result }}').checksCount} checks)
+              - ✅ All CI checks passed (${checkResult.checksCount} checks)
               - ✅ PR approved
               - ✅ No changes requested
               
@@ -352,7 +354,11 @@ jobs:
         run: |
           echo "Generating API documentation..."
           mkdir -p docs/api
-          pdoc --html --output-dir docs/api services/ routes/ || true
+          if [ -d "services" ] || [ -d "routes" ]; then
+            pdoc --html --output-dir docs/api services/ routes/ || echo "Warning: Documentation generation had errors"
+          else
+            echo "Skipping: services/ or routes/ directories not found"
+          fi
       
       - name: Create documentation PR
         uses: actions/github-script@v7
