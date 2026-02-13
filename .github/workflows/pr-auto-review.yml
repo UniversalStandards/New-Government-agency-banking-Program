@@ -278,17 +278,17 @@ jobs:
               ref: pr.head.sha
             });
             
-            const allPassed = checks.check_runs.length > 0 && checks.check_runs.every(run => 
+            const allPassed = checks.check_runs && checks.check_runs.length > 0 && checks.check_runs.every(run => 
               run.status === 'completed' && run.conclusion === 'success'
             );
             
-            const hasPending = checks.check_runs.some(run => run.status !== 'completed');
-            const hasFailed = checks.check_runs.some(run => 
+            const hasPending = checks.check_runs && checks.check_runs.some(run => run.status !== 'completed');
+            const hasFailed = checks.check_runs && checks.check_runs.some(run => 
               run.status === 'completed' && run.conclusion !== 'success'
             );
             
             console.log(`CI Status: ${allPassed ? 'PASSED' : hasPending ? 'PENDING' : 'FAILED'}`);
-            console.log(`Total checks: ${checks.check_runs.length}`);
+            console.log(`Total checks: ${checks.check_runs ? checks.check_runs.length : 0}`);
             
             // Get initial review decision from analysis step output
             const analysisResult = JSON.parse('${{ steps.analysis.outputs.result }}');
@@ -304,7 +304,7 @@ jobs:
               all_passed: allPassed,
               has_pending: hasPending,
               has_failed: hasFailed,
-              check_count: checks.check_runs.length,
+              check_count: checks.check_runs ? checks.check_runs.length : 0,
               review_decision_final: reviewDecision
             };
 
