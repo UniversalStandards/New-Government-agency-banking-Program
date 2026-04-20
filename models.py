@@ -18,6 +18,7 @@ class UserRole(Enum):
     HR_MANAGER = "hr_manager"
     DEPARTMENT_HEAD = "department_head"
     EMPLOYEE = "employee"
+    USER = "employee"
     CITIZEN = "citizen"
 
 class AccountType(Enum):

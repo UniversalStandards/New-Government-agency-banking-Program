@@ -26,12 +26,6 @@ MODERN_TREASURY_ORG_ID = os.environ.get("MODERN_TREASURY_ORG_ID", "")
 MODERN_TREASURY_WEBHOOK_SECRET = os.environ.get("MODERN_TREASURY_WEBHOOK_SECRET", "")
 
 # Security configuration
-SECRET_KEY = os.environ.get("SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError(
-        "SECRET_KEY environment variable must be set. "
-        "Never use hardcoded secrets in production."
-    )
 # NOTE: SECRET_KEY has a default value to allow auxiliary scripts (gui/gui_main.py,
 # modern_treasury/modern_treasury_helpers.py, tests) to import this module for
 # API keys and constants without requiring Flask secrets.

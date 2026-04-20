@@ -237,6 +237,48 @@ def get_accounts():
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
 
+@app.route("/accounts")
+def accounts():
+    """Accounts management page."""
+    try:
+        return render_template("accounts.html")
+    except Exception:
+        return jsonify({"message": "GOFAP Account Management"})
+
+@app.route("/accounts/create")
+def create_account():
+    """Account creation page."""
+    try:
+        return render_template("create_account.html")
+    except Exception:
+        return jsonify({"message": "GOFAP Account Creation"})
+
+@app.route("/api/accounts/create", methods=["POST"])
+def api_create_account():
+    """API endpoint for creating accounts."""
+    try:
+        data = request.get_json() or {}
+        service = data.get("service")
+        account_type = data.get("account_type")
+        account_name = data.get("account_name")
+
+        if not all([service, account_type, account_name]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"{service} account created successfully",
+                "account_id": f"mock_{service}_{account_type}_account",
+            }
+        )
+    except Exception:
+        logging.exception("Exception occurred while creating account")
+        return (
+            jsonify({"error": "An internal error occurred. Please try again later."}),
+            500,
+        )
+
 @app.route("/payments")
 @login_required
 def payments():
