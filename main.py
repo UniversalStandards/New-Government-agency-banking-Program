@@ -5,6 +5,7 @@ Main application entry point with comprehensive Flask setup.
 
 import logging
 import os
+import uuid
 from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
@@ -283,7 +284,7 @@ def api_create_account():
             account_name=account_name,
             account_type=account_type_enum,
             external_service=service,
-            external_id=f"mock_{service}_{account_type}_account",
+            external_id=f"{service}_{uuid.uuid4().hex}",
         )
         db.session.add(account)
         db.session.commit()
@@ -296,7 +297,12 @@ def api_create_account():
             }
         )
     except Exception:
-        logging.exception("Exception occurred while creating account")
+        logging.exception(
+            "Failed to create account (user_id=%s, service=%s, account_name=%s)",
+            current_user.id,
+            request.get_json(silent=True).get("service") if request.get_json(silent=True) else None,
+            request.get_json(silent=True).get("account_name") if request.get_json(silent=True) else None,
+        )
         return (
             jsonify({"error": "An internal error occurred. Please try again later."}),
             500,
