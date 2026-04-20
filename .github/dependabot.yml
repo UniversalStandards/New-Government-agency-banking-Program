@@ -1,75 +1,366 @@
-version: 2
-updates:
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "10:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
-    labels:
-      - "python"
-      - "dependencies"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
+# ==============================================================================
+# Dependabot Automated Dependency Management Configuration
+# Repository : UniversalStandards/New-Government-agency-banking-Program
+# Config rev : 3.0.0
+# Last edited: 2026-04-20
+#
+# Ecosystems covered
+# ──────────────────
+#   pip             Python application + security + tooling dependencies
+#   npm             JavaScript/TypeScript build toolchain (Gulp, Jest, TS, ESLint)
+#   github-actions  CI/CD workflow action version pinning (22 workflow files)
+#   docker          Container base image and layer updates
+#
+# Design principles
+# ─────────────────
+#   • Zero-duplicate entries — one authoritative block per ecosystem+directory
+#   • Intelligent grouping   — batch related packages into single PRs to reduce noise
+#   • Staggered schedules    — offset run times to prevent CI queue saturation
+#   • Semver-aware ignores   — protect known major-version breakpoints
+#   • Security-first labels  — downstream workflows route on these labels
+#   • Auto-rebase            — all PRs stay rebased on main automatically
+#   • Versioning strategy    — maximise compatible updates without lock-file churn
+#
+# Schedule overview (all UTC)
+# ───────────────────────────
+#   pip             Daily      05:00  (before primary CI windows)
+#   npm             Daily      05:30  (30-min offset from pip)
+#   github-actions  Weekly Mon 04:00  (start of work week)
+#   docker          Weekly Wed 04:00  (midweek, post Monday CI stabilises)
+# ==============================================================================
 
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 3
-    labels:
-      - "github-actions"
-      - "ci-cd"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  # Python dependencies
+version: 2
+
+updates:
+
+  # ============================================================================
+  # 1. PYTHON — pip
+  #    Covers: Flask web framework, SQLAlchemy ORM, Stripe/Modern Treasury
+  #    payment rails, cryptography, Celery async workers, Pytest testing,
+  #    Bandit/Mypy/Black/Flake8/Ruff static analysis, Pydantic validation,
+  #    Sentry/OpenTelemetry observability, and all transitive dependencies.
+  # ============================================================================
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "daily"
-      time: "06:00"
+      time: "05:00"
       timezone: "UTC"
-    open-pull-requests-limit: 10
-    assignees:
-      - "*"
-    reviewers:
-      - "*"
+    open-pull-requests-limit: 15
+    rebase-strategy: "auto"
+    versioning-strategy: "increase"
     labels:
       - "dependencies"
       - "python"
       - "automated"
     commit-message:
-      prefix: "⬆️ "
-      prefix-development: "⬆️ dev"
+      prefix: "⬆️ pip"
+      prefix-development: "⬆️ pip-dev"
       include: "scope"
-    # Group related updates
+
+    # --------------------------------------------------------------------------
+    # Groups — batch functionally related packages into single PRs
+    # --------------------------------------------------------------------------
     groups:
-      flask:
+
+      # Flask web framework ecosystem
+      flask-web-framework:
+        applies-to: version-updates
         patterns:
           - "flask*"
           - "werkzeug"
           - "jinja2"
+          - "itsdangerous"
+          - "click"
+          - "markupsafe"
+
+      # Database ORM, migrations and drivers
+      database-orm:
+        applies-to: version-updates
+        patterns:
+          - "sqlalchemy*"
+          - "flask-sqlalchemy"
+          - "flask-migrate"
+          - "alembic"
+          - "psycopg2*"
+          - "asyncpg"
+          - "databases"
+
+      # Payment and financial API integrations
+      payment-integrations:
+        applies-to: version-updates
+        patterns:
+          - "stripe"
+          - "modern-treasury*"
+          - "plaid*"
+          - "paypalrestsdk"
+          - "braintree"
+
+      # Security and cryptography — routed as security-updates for fast-track
+      security-crypto:
+        applies-to: security-updates
+        patterns:
+          - "cryptography"
+          - "bcrypt"
+          - "pyjwt*"
+          - "passlib"
+          - "pyotp"
+          - "python-jose*"
+          - "authlib"
+          - "certifi"
+          - "pyopenssl"
+
+      # HTTP clients and outbound API communication
+      http-clients:
+        applies-to: version-updates
+        patterns:
+          - "requests"
+          - "requests-*"
+          - "httpx"
+          - "aiohttp"
+          - "urllib3"
+          - "httpcore"
+
+      # Async task queues and caching infrastructure
+      async-workers:
+        applies-to: version-updates
+        patterns:
+          - "celery*"
+          - "redis"
+          - "kombu"
+          - "billiard"
+          - "amqp"
+          - "flower"
+
+      # Data validation and serialisation
+      data-validation:
+        applies-to: version-updates
+        patterns:
+          - "pydantic*"
+          - "marshmallow*"
+          - "cerberus"
+          - "voluptuous"
+          - "jsonschema"
+
+      # Testing framework and test utilities
       testing:
+        applies-to: version-updates
         patterns:
           - "pytest*"
           - "coverage"
-      security:
-        patterns:
-          - "cryptography"
-          - "stripe"
-      linting:
-        patterns:
-          - "flake8"
-          - "black"
-          - "mypy"
+          - "factory-boy"
+          - "faker"
+          - "hypothesis"
+          - "responses"
+          - "freezegun"
+          - "vcrpy"
+          - "httpretty"
 
-  # GitHub Actions
+      # Code quality, linting and static analysis
+      linting-qa:
+        applies-to: version-updates
+        patterns:
+          - "flake8*"
+          - "black"
+          - "mypy*"
+          - "bandit"
+          - "isort"
+          - "pylint"
+          - "pyupgrade"
+          - "autoflake"
+          - "ruff"
+          - "vulture"
+
+      # Observability, APM and monitoring
+      observability:
+        applies-to: version-updates
+        patterns:
+          - "sentry-sdk"
+          - "datadog*"
+          - "ddtrace"
+          - "prometheus-client*"
+          - "opentelemetry*"
+          - "elastic-apm"
+
+      # General utilities and developer experience helpers
+      utilities:
+        applies-to: version-updates
+        patterns:
+          - "python-dotenv"
+          - "pyyaml"
+          - "toml"
+          - "tomli"
+          - "rich"
+          - "typer"
+          - "loguru"
+          - "structlog"
+          - "arrow"
+          - "pendulum"
+          - "humanize"
+          - "tabulate"
+
+      # WSGI/ASGI servers
+      application-servers:
+        applies-to: version-updates
+        patterns:
+          - "gunicorn"
+          - "uvicorn*"
+          - "hypercorn"
+          - "waitress"
+
+    # --------------------------------------------------------------------------
+    # Ignore rules — block breaking major-version upgrades until validated
+    # --------------------------------------------------------------------------
+    ignore:
+      # Flask: 3.x → 4.x requires significant migration; hold for manual review
+      - dependency-name: "flask"
+        update-types: ["version-update:semver-major"]
+
+      # SQLAlchemy: 2.x core rewrite guards against future breakage
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+
+      # Celery: major config format changes between major versions
+      - dependency-name: "celery"
+        update-types: ["version-update:semver-major"]
+
+      # Pydantic: v2 was a full API rewrite; guard v3 until migration ready
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+
+
+  # ============================================================================
+  # 2. JAVASCRIPT / TYPESCRIPT — npm
+  #    Covers: Gulp 4.x build pipeline, Jest 29.x testing framework,
+  #    TypeScript 5.x compiler, ESLint 8.x + Prettier 3.x linting stack,
+  #    Sass 1.x CSS preprocessor, Husky 9.x git hooks, lint-staged 15.x,
+  #    and all @types/* definition packages.
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "05:30"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
+    versioning-strategy: "increase-if-necessary"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "npm"
+      - "automated"
+    commit-message:
+      prefix: "⬆️ npm"
+      prefix-development: "⬆️ npm-dev"
+      include: "scope"
+
+    # --------------------------------------------------------------------------
+    # Groups
+    # --------------------------------------------------------------------------
+    groups:
+
+      # Gulp build pipeline — all plugins must move together to avoid API drift
+      gulp-pipeline:
+        applies-to: version-updates
+        patterns:
+          - "gulp"
+          - "gulp-*"
+          - "gulp-cli"
+
+      # Jest testing framework and its companion packages
+      jest-testing:
+        applies-to: version-updates
+        patterns:
+          - "jest"
+          - "jest-*"
+          - "@jest/*"
+          - "@types/jest"
+          - "babel-jest"
+          - "ts-jest"
+
+      # ESLint + Prettier — tightly coupled; always update together
+      linting-formatting:
+        applies-to: version-updates
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "prettier"
+          - "prettier-*"
+          - "lint-staged"
+
+      # TypeScript compiler and its ESLint integration
+      typescript-stack:
+        applies-to: version-updates
+        patterns:
+          - "typescript"
+          - "@typescript-eslint/*"
+          - "gulp-typescript"
+
+      # DefinitelyTyped type definitions
+      type-definitions:
+        applies-to: version-updates
+        patterns:
+          - "@types/*"
+
+      # Sass and CSS processing pipeline
+      sass-css-pipeline:
+        applies-to: version-updates
+        patterns:
+          - "sass"
+          - "gulp-sass"
+          - "gulp-autoprefixer"
+          - "gulp-clean-css"
+          - "autoprefixer"
+          - "postcss"
+          - "postcss-*"
+
+      # Git commit hooks and automation
+      git-hooks:
+        applies-to: version-updates
+        patterns:
+          - "husky"
+          - "commitlint"
+          - "@commitlint/*"
+
+      # Miscellaneous build utilities
+      build-utilities:
+        applies-to: version-updates
+        patterns:
+          - "cross-env"
+          - "rimraf"
+          - "npm-run-all"
+          - "concurrently"
+          - "del"
+          - "del-cli"
+
+    # --------------------------------------------------------------------------
+    # Ignore rules
+    # --------------------------------------------------------------------------
+    ignore:
+      # ESLint v9 replaced .eslintrc with flat config — hold until migration
+      - dependency-name: "eslint"
+        versions: [">=9"]
+
+      # TypeScript major versions can introduce breaking type-check regressions
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+      # Gulp 5.x introduced breaking changes to task runner API
+      - dependency-name: "gulp"
+        update-types: ["version-update:semver-major"]
+
+      # gulp-imagemin v9+ is ESM-only and breaks CommonJS Gulpfile require()
+      - dependency-name: "gulp-imagemin"
+        versions: [">=9"]
+
+
+  # ============================================================================
+  # 3. GITHUB ACTIONS — workflow action version pinning
+  #    Covers: All 22 workflow files including CodeQL, Frogbot, Azure deploy,
+  #    autonomous board, project board sync, security scan, PR auto-review,
+  #    dependency review, documentation, python-app, npm-gulp, and more.
+  # ============================================================================
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
@@ -77,18 +368,71 @@ updates:
       day: "monday"
       time: "04:00"
       timezone: "UTC"
-    open-pull-requests-limit: 5
-    assignees:
-      - "*"
+    open-pull-requests-limit: 8
+    rebase-strategy: "auto"
     labels:
       - "github-actions"
       - "ci-cd"
       - "automated"
     commit-message:
-      prefix: "🔧 "
+      prefix: "🔧 ci"
       include: "scope"
 
-  # Docker (if Dockerfile exists in future)
+    # --------------------------------------------------------------------------
+    # Groups — batch by action category
+    # --------------------------------------------------------------------------
+    groups:
+
+      # GitHub's own first-party actions — low risk; safe to batch
+      github-official-actions:
+        applies-to: version-updates
+        patterns:
+          - "actions/*"
+
+      # Security scanning and SAST actions — grouped for visibility
+      security-scan-actions:
+        applies-to: version-updates
+        patterns:
+          - "github/codeql-action"
+          - "aquasecurity/*"
+          - "snyk/*"
+          - "jfrog/*"
+          - "ossf/*"
+          - "mobb-dev/*"
+
+      # Cloud deployment and infrastructure actions
+      deployment-actions:
+        applies-to: version-updates
+        patterns:
+          - "azure/*"
+          - "aws-actions/*"
+          - "google-github-actions/*"
+          - "hashicorp/*"
+
+      # PR and issue workflow automation
+      workflow-automation-actions:
+        applies-to: version-updates
+        patterns:
+          - "peter-evans/*"
+          - "stefanzweifel/*"
+          - "dorny/*"
+          - "EnricoMi/*"
+          - "hmarr/*"
+          - "tibdex/*"
+
+      # Code quality and review gate actions
+      quality-actions:
+        applies-to: version-updates
+        patterns:
+          - "reviewdog/*"
+          - "super-linter/*"
+          - "github/super-linter"
+
+
+  # ============================================================================
+  # 4. DOCKER — container base image and layer updates
+  #    Covers: Root Dockerfile (Python application image, multi-stage build)
+  # ============================================================================
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -97,11 +441,32 @@ updates:
       time: "04:00"
       timezone: "UTC"
     open-pull-requests-limit: 3
+    rebase-strategy: "auto"
     labels:
       - "docker"
       - "infrastructure"
       - "automated"
+    commit-message:
+      prefix: "🐳 docker"
+      include: "scope"
 
-# Security and vulnerability alerts
-# Enable security updates for all ecosystems
-enable-security-updates: true
+    # --------------------------------------------------------------------------
+    # Groups — batch digest updates for base images
+    # --------------------------------------------------------------------------
+    groups:
+      base-image-digests:
+        applies-to: version-updates
+        patterns:
+          - "python"
+          - "nginx"
+          - "alpine"
+          - "debian"
+          - "ubuntu"
+
+    # --------------------------------------------------------------------------
+    # Ignore rules
+    # --------------------------------------------------------------------------
+    ignore:
+      # Block Python base image major bumps (e.g. 3.x → 4.x) until tested
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
