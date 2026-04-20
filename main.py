@@ -297,11 +297,12 @@ def api_create_account():
             }
         )
     except Exception:
+        json_data = request.get_json(silent=True) or {}
         logging.exception(
             "Failed to create account (user_id=%s, service=%s, account_name=%s)",
             current_user.id,
-            request.get_json(silent=True).get("service") if request.get_json(silent=True) else None,
-            request.get_json(silent=True).get("account_name") if request.get_json(silent=True) else None,
+            json_data.get("service"),
+            json_data.get("account_name"),
         )
         return (
             jsonify({"error": "An internal error occurred. Please try again later."}),
