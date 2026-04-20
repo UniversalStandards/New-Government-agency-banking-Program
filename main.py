@@ -262,22 +262,37 @@ def create_account():
 @login_required
 def api_create_account():
     """API endpoint for creating accounts."""
+    data = {}
     try:
         if current_user.role not in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
             return jsonify({"error": "Insufficient permissions"}), 403
 
         data = request.get_json() or {}
-        service = data.get("service")
-        account_type = data.get("account_type")
-        account_name = data.get("account_name")
+        service = (data.get("service") or "").strip().lower()
+        account_type = (data.get("account_type") or "").strip().lower()
+        account_name = (data.get("account_name") or "").strip()
 
-        if not all([service, account_type, account_name]):
-            return jsonify({"error": "Missing required fields"}), 400
+        missing_fields = [
+            field
+            for field, value in {
+                "service": service,
+                "account_type": account_type,
+                "account_name": account_name,
+            }.items()
+            if not value
+        ]
+        if missing_fields:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+        allowed_services = {"stripe", "modern_treasury", "paypal"}
+        if service not in allowed_services:
+            return jsonify({"error": "Invalid service. Valid values are: stripe, modern_treasury, paypal"}), 400
 
         try:
-            account_type_enum = AccountType(account_type.lower())
+            account_type_enum = AccountType(account_type)
         except ValueError:
-            return jsonify({"error": "Invalid account_type"}), 400
+            valid_account_types = ", ".join([account.value for account in AccountType])
+            return jsonify({"error": f"Invalid account_type. Valid values are: {valid_account_types}"}), 400
 
         account = Account(
             user_id=current_user.id,
@@ -297,12 +312,11 @@ def api_create_account():
             }
         )
     except Exception:
-        json_data = request.get_json(silent=True) or {}
         logging.exception(
             "Failed to create account (user_id=%s, service=%s, account_name=%s)",
             current_user.id,
-            json_data.get("service"),
-            json_data.get("account_name"),
+            data.get("service"),
+            data.get("account_name"),
         )
         return (
             jsonify({"error": "An internal error occurred. Please try again later."}),
