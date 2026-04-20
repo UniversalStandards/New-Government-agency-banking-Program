@@ -56,7 +56,7 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import Account, Budget, User, UserRole
+from models import Account, AccountType, Budget, User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -238,25 +238,33 @@ def get_accounts():
     return jsonify([account.to_dict() for account in accounts])
 
 @app.route("/accounts")
+@login_required
 def accounts():
     """Accounts management page."""
     try:
         return render_template("accounts.html")
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Could not render accounts page: {e}")
         return jsonify({"message": "GOFAP Account Management"})
 
 @app.route("/accounts/create")
+@login_required
 def create_account():
     """Account creation page."""
     try:
         return render_template("create_account.html")
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Could not render account creation page: {e}")
         return jsonify({"message": "GOFAP Account Creation"})
 
 @app.route("/api/accounts/create", methods=["POST"])
+@login_required
 def api_create_account():
     """API endpoint for creating accounts."""
     try:
+        if current_user.role not in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
+            return jsonify({"error": "Insufficient permissions"}), 403
+
         data = request.get_json() or {}
         service = data.get("service")
         account_type = data.get("account_type")
@@ -265,11 +273,26 @@ def api_create_account():
         if not all([service, account_type, account_name]):
             return jsonify({"error": "Missing required fields"}), 400
 
+        try:
+            account_type_enum = AccountType(account_type.lower())
+        except ValueError:
+            return jsonify({"error": "Invalid account_type"}), 400
+
+        account = Account(
+            user_id=current_user.id,
+            account_name=account_name,
+            account_type=account_type_enum,
+            external_service=service,
+            external_id=f"mock_{service}_{account_type}_account",
+        )
+        db.session.add(account)
+        db.session.commit()
+
         return jsonify(
             {
                 "success": True,
                 "message": f"{service} account created successfully",
-                "account_id": f"mock_{service}_{account_type}_account",
+                "account_id": account.id,
             }
         )
     except Exception:
