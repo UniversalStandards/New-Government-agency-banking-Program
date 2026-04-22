@@ -1,7 +1,7 @@
 # GOFAP - Government Operations and Financial Accounting Platform
 # Production-ready Docker configuration
 
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
