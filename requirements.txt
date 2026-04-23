@@ -16,7 +16,7 @@ aiohttp>=3.12.14
 # modern-treasury>=1.0.0
 
 # Security and utilities
-python-dotenv>=1.0.0
+python-dotenv>=1.2.2
 cryptography>=42.0.4
 werkzeug>=3.0.6
 
