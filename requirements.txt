@@ -27,9 +27,9 @@ pymysql>=1.1.1
 schedule>=1.2.0
 
 # Development dependencies
-pytest>=7.4.2
-pytest-flask>=1.2.0
-pytest-cov>=4.1.0
+pytest>=9.0.3
+pytest-flask>=1.3.0
+pytest-cov>=7.1.0
 black>=24.3.0
 flake8>=6.0.0
 mypy>=1.5.1
