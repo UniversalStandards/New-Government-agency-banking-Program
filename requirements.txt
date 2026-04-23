@@ -36,6 +36,6 @@ mypy>=1.5.1
 isort>=5.12.0
 
 # Production server
-gunicorn>=22.0.0
+gunicorn>=25.3.0
 flask-login
 psycopg2-binary
