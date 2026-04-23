@@ -9,8 +9,8 @@ WTForms>=3.0.1
 
 # API integrations
 stripe>=6.0.0
-requests>=2.32.4
-aiohttp>=3.12.14
+requests>=2.33.1
+aiohttp>=3.13.5
 
 # Modern Treasury integration
 # modern-treasury>=1.0.0
