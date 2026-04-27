@@ -17,7 +17,7 @@ aiohttp>=3.12.14
 
 # Security and utilities
 python-dotenv>=1.0.0
-cryptography>=42.0.4
+cryptography>=47.0.0
 werkzeug>=3.0.6
 
 # Database support
