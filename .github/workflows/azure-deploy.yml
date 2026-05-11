@@ -31,10 +31,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -64,7 +64,7 @@ jobs:
           name: codecov-umbrella
       
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -75,7 +75,7 @@ jobs:
           npm run build
       
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: production-files
           path: |
@@ -95,7 +95,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
@@ -205,7 +205,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Configure Cloudflare DNS
         uses: cloudflare/wrangler-action@v3
@@ -258,7 +258,7 @@ jobs:
           curl -f https://gofap.gov/api/health || exit 1
       
       - name: Notify deployment status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.createComment({
