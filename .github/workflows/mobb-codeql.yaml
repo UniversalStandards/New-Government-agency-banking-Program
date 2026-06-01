@@ -35,22 +35,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
           output: results
 
       - name: Run Mobb on the findings and get fixes
         if: always()
-        uses: mobb-dev/action/review@v1.1
+        uses: mobb-dev/action/review@v1.2
         with:
           report-file: results/${{ matrix.codeql_output_filename }}
           api-key: ${{ secrets.MOBB_API_TOKEN }}
