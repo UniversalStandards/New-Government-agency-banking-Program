@@ -6,10 +6,12 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
+
 
 class UserRole(Enum):
     ADMIN = "admin"
@@ -21,12 +23,14 @@ class UserRole(Enum):
     USER = EMPLOYEE
     CITIZEN = "citizen"
 
+
 class AccountType(Enum):
     CHECKING = "checking"
     SAVINGS = "savings"
     CREDIT = "credit"
     DEBIT = "debit"
     EXTERNAL = "external"
+
 
 class TransactionType(Enum):
     DEPOSIT = "deposit"
@@ -37,6 +41,7 @@ class TransactionType(Enum):
     REFUND = "refund"
     FEE = "fee"
 
+
 class TransactionStatus(Enum):
     PENDING = "pending"
     PROCESSING = "processing"
@@ -44,7 +49,8 @@ class TransactionStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-class User(db.Model):
+
+class User(UserMixin, db.Model):
     """User model for authentication and authorization."""
 
     __tablename__ = "users"
@@ -91,6 +97,7 @@ class User(db.Model):
             "last_login": self.last_login.isoformat() if self.last_login else None,
         }
 
+
 class Account(db.Model):
     """Account model for financial accounts."""
 
@@ -133,6 +140,7 @@ class Account(db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 class Transaction(db.Model):
     """Transaction model for financial transactions."""
@@ -178,6 +186,7 @@ class Transaction(db.Model):
             ),
         }
 
+
 class Budget(db.Model):
     """Budget model for financial planning."""
 
@@ -220,6 +229,7 @@ class Budget(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class BudgetItem(db.Model):
     """Budget item model for detailed budget breakdown."""
 
@@ -251,6 +261,7 @@ class BudgetItem(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class AuditLog(db.Model):
     """Audit log model for tracking system changes."""
 
@@ -281,6 +292,7 @@ class AuditLog(db.Model):
             "user_agent": self.user_agent,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 class Department(db.Model):
     """Department model for government departments."""
@@ -322,6 +334,7 @@ class Department(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 # HR Management Enums
 class EmploymentStatus(Enum):
     ACTIVE = "active"
@@ -329,6 +342,7 @@ class EmploymentStatus(Enum):
     TERMINATED = "terminated"
     RETIRED = "retired"
     SUSPENDED = "suspended"
+
 
 class LeaveType(Enum):
     VACATION = "vacation"
@@ -339,11 +353,13 @@ class LeaveType(Enum):
     BEREAVEMENT = "bereavement"
     UNPAID = "unpaid"
 
+
 class LeaveStatus(Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
     CANCELLED = "cancelled"
+
 
 # Project Management Enums
 class ProjectStatus(Enum):
@@ -353,6 +369,7 @@ class ProjectStatus(Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
+
 class TaskStatus(Enum):
     TODO = "todo"
     IN_PROGRESS = "in_progress"
@@ -360,11 +377,13 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     BLOCKED = "blocked"
 
+
 class TaskPriority(Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
+
 
 # Procurement Enums
 class PurchaseOrderStatus(Enum):
@@ -375,12 +394,15 @@ class PurchaseOrderStatus(Enum):
     RECEIVED = "received"
     CANCELLED = "cancelled"
 
+
 class VendorStatus(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
 
+
 # ============= HR Management Models =============
+
 
 class Employee(db.Model):
     """Employee model for HR management."""
@@ -432,6 +454,7 @@ class Employee(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class LeaveRequest(db.Model):
     """Leave request model for employee time off."""
 
@@ -472,6 +495,7 @@ class LeaveRequest(db.Model):
             "comments": self.comments,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 class PerformanceReview(db.Model):
     """Performance review model for employee evaluations."""
@@ -516,6 +540,7 @@ class PerformanceReview(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class PayrollRecord(db.Model):
     """Payroll record model for employee payments."""
 
@@ -559,7 +584,9 @@ class PayrollRecord(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 # ============= Project Management Models =============
+
 
 class Project(db.Model):
     """Project model for project management."""
@@ -610,6 +637,7 @@ class Project(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class Task(db.Model):
     """Task model for project tasks."""
 
@@ -659,6 +687,7 @@ class Task(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class Milestone(db.Model):
     """Milestone model for project milestones."""
 
@@ -687,6 +716,7 @@ class Milestone(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class TimeEntry(db.Model):
     """Time entry model for time tracking."""
 
@@ -711,7 +741,9 @@ class TimeEntry(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 # ============= Procurement Models =============
+
 
 class Vendor(db.Model):
     """Vendor model for supplier management."""
@@ -754,6 +786,7 @@ class Vendor(db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 class PurchaseOrder(db.Model):
     """Purchase order model for procurement."""
@@ -818,6 +851,7 @@ class PurchaseOrder(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+
 class PurchaseOrderItem(db.Model):
     """Purchase order item model for line items."""
 
@@ -849,6 +883,7 @@ class PurchaseOrderItem(db.Model):
             "unit_of_measure": self.unit_of_measure,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 class Requisition(db.Model):
     """Requisition model for purchase requests."""

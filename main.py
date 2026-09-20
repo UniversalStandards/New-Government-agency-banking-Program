@@ -52,10 +52,8 @@ login_manager.login_message_category = "info"
 logger = logging.getLogger(__name__)
 
 from api import api_bp
-
 # Import blueprints
 from auth import auth_bp
-
 # Import models after db initialization
 from models import Account, AccountType, Budget, User, UserRole
 
@@ -63,15 +61,18 @@ from models import Account, AccountType, Budget, User, UserRole
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
+
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
+
 # Template context processor
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
+
 
 # Add cache control headers for static files in development
 @app.after_request
@@ -84,6 +85,7 @@ def add_header(response):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
 
 # Register blueprints
 try:
@@ -156,6 +158,7 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
+
 # Main application routes
 @app.route("/")
 def home():
@@ -187,6 +190,7 @@ def home():
             }
         )
 
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -202,10 +206,12 @@ def dashboard():
             }
         )
 
+
 @app.route("/health")
 def health():
     """Health check endpoint (non-API)."""
     return jsonify({"status": "healthy", "service": "GOFAP"})
+
 
 @app.route("/transactions")
 def transactions():
@@ -215,6 +221,7 @@ def transactions():
     except:
         return jsonify({"message": "GOFAP Transaction Management"})
 
+
 @app.route("/budgets")
 def budgets():
     """Budgets page."""
@@ -222,6 +229,7 @@ def budgets():
         return render_template("budgets.html")
     except:
         return jsonify({"message": "GOFAP Budget Management"})
+
 
 @app.route("/reports")
 def reports():
@@ -231,12 +239,14 @@ def reports():
     except:
         return jsonify({"message": "GOFAP Reports and Analytics"})
 
+
 @app.route("/api/accounts", methods=["GET"])
 @login_required
 def get_accounts():
     """API endpoint to get user's accounts."""
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
+
 
 @app.route("/accounts")
 @login_required
@@ -248,6 +258,7 @@ def accounts():
         logging.warning(f"Could not render accounts page: {e}")
         return jsonify({"message": "GOFAP Account Management"})
 
+
 @app.route("/accounts/create")
 @login_required
 def create_account():
@@ -258,13 +269,18 @@ def create_account():
         logging.warning(f"Could not render account creation page: {e}")
         return jsonify({"message": "GOFAP Account Creation"})
 
+
 @app.route("/api/accounts/create", methods=["POST"])
 @login_required
 def api_create_account():
     """API endpoint for creating accounts."""
     data = {}
     try:
-        if current_user.role not in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
+        if current_user.role not in [
+            UserRole.ADMIN,
+            UserRole.TREASURER,
+            UserRole.ACCOUNTANT,
+        ]:
             return jsonify({"error": "Insufficient permissions"}), 403
 
         data = request.get_json() or {}
@@ -282,17 +298,36 @@ def api_create_account():
             if not value
         ]
         if missing_fields:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+            return (
+                jsonify(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"}
+                ),
+                400,
+            )
 
         allowed_services = {"stripe", "modern_treasury", "paypal"}
         if service not in allowed_services:
-            return jsonify({"error": "Invalid service. Valid values are: stripe, modern_treasury, paypal"}), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Invalid service. Valid values are: stripe, modern_treasury, paypal"
+                    }
+                ),
+                400,
+            )
 
         try:
             account_type_enum = AccountType(account_type)
         except ValueError:
             valid_account_types = ", ".join([account.value for account in AccountType])
-            return jsonify({"error": f"Invalid account_type. Valid values are: {valid_account_types}"}), 400
+            return (
+                jsonify(
+                    {
+                        "error": f"Invalid account_type. Valid values are: {valid_account_types}"
+                    }
+                ),
+                400,
+            )
 
         account = Account(
             user_id=current_user.id,
@@ -323,6 +358,7 @@ def api_create_account():
             500,
         )
 
+
 @app.route("/payments")
 @login_required
 def payments():
@@ -331,6 +367,7 @@ def payments():
         return render_template("payments.html")
     except:
         return jsonify({"message": "GOFAP Payment Processing"})
+
 
 @app.route("/api/budgets", methods=["GET"])
 @login_required
@@ -344,17 +381,20 @@ def get_budgets():
         ).all()
     return jsonify([budget.to_dict() for budget in budgets])
 
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     """404 error handler."""
     return render_template("errors/404.html"), 404
 
+
 @app.errorhandler(500)
 def internal_server_error(error):
     """500 error handler."""
     db.session.rollback()
     return render_template("errors/500.html"), 500
+
 
 # Main routes - minimal routes, most are in blueprints
 
