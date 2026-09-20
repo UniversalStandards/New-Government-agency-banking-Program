@@ -38,6 +38,8 @@ if os.environ.get(
 ).lower() == "production" and SECRET_KEY in (
     "",
     "dev-key-change-in-production",
+    "your-secret-key-change-in-production",
+    "your-super-secret-key-change-this-in-production",
 ):
     raise ValueError(
         "SECRET_KEY environment variable must be set to a non-default value in production."
