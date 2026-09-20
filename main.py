@@ -315,12 +315,12 @@ def api_create_account():
                 400,
             )
 
-        allowed_services = {"stripe", "modern_treasury", "paypal"}
+        allowed_services = {"stripe", "modern_treasury"}
         if service not in allowed_services:
             return (
                 jsonify(
                     {
-                        "error": "Invalid service. Valid values are: stripe, modern_treasury, paypal"
+                        "error": "Invalid service. Valid values are: stripe, modern_treasury"
                     }
                 ),
                 400,
@@ -352,7 +352,7 @@ def api_create_account():
         return jsonify(
             {
                 "success": True,
-                "message": f"{service} account created successfully",
+                "message": "Account record created successfully",
                 "account_id": account.id,
             }
         )
