@@ -5,6 +5,7 @@ Main application entry point with comprehensive Flask setup.
 
 import logging
 import os
+import uuid
 from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
@@ -56,7 +57,7 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import Account, Budget, User, UserRole
+from models import Account, AccountType, Budget, User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -236,6 +237,91 @@ def get_accounts():
     """API endpoint to get user's accounts."""
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
+
+@app.route("/accounts")
+@login_required
+def accounts():
+    """Accounts management page."""
+    try:
+        return render_template("accounts.html")
+    except Exception as e:
+        logging.warning(f"Could not render accounts page: {e}")
+        return jsonify({"message": "GOFAP Account Management"})
+
+@app.route("/accounts/create")
+@login_required
+def create_account():
+    """Account creation page."""
+    try:
+        return render_template("create_account.html")
+    except Exception as e:
+        logging.warning(f"Could not render account creation page: {e}")
+        return jsonify({"message": "GOFAP Account Creation"})
+
+@app.route("/api/accounts/create", methods=["POST"])
+@login_required
+def api_create_account():
+    """API endpoint for creating accounts."""
+    data = {}
+    try:
+        if current_user.role not in [UserRole.ADMIN, UserRole.TREASURER, UserRole.ACCOUNTANT]:
+            return jsonify({"error": "Insufficient permissions"}), 403
+
+        data = request.get_json() or {}
+        service = (data.get("service") or "").strip().lower()
+        account_type = (data.get("account_type") or "").strip().lower()
+        account_name = (data.get("account_name") or "").strip()
+
+        missing_fields = [
+            field
+            for field, value in {
+                "service": service,
+                "account_type": account_type,
+                "account_name": account_name,
+            }.items()
+            if not value
+        ]
+        if missing_fields:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+        allowed_services = {"stripe", "modern_treasury", "paypal"}
+        if service not in allowed_services:
+            return jsonify({"error": "Invalid service. Valid values are: stripe, modern_treasury, paypal"}), 400
+
+        try:
+            account_type_enum = AccountType(account_type)
+        except ValueError:
+            valid_account_types = ", ".join([account.value for account in AccountType])
+            return jsonify({"error": f"Invalid account_type. Valid values are: {valid_account_types}"}), 400
+
+        account = Account(
+            user_id=current_user.id,
+            account_name=account_name,
+            account_type=account_type_enum,
+            external_service=service,
+            external_id=f"{service}_{uuid.uuid4().hex}",
+        )
+        db.session.add(account)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"{service} account created successfully",
+                "account_id": account.id,
+            }
+        )
+    except Exception:
+        logging.exception(
+            "Failed to create account (user_id=%s, service=%s, account_name=%s)",
+            current_user.id,
+            data.get("service"),
+            data.get("account_name"),
+        )
+        return (
+            jsonify({"error": "An internal error occurred. Please try again later."}),
+            500,
+        )
 
 @app.route("/payments")
 @login_required

@@ -178,7 +178,7 @@ jobs:
 
     - name: Generate SBOM (Software Bill of Materials)
       run: |
-        cyclonedx-py -o gofap-sbom.json
+        cyclonedx-py requirements -o gofap-sbom.json
 
     - name: Run Safety dependency scan
       run: |
