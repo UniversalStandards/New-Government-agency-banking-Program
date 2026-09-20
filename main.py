@@ -33,6 +33,16 @@ except ImportError:
         )
     DATABASE_URI = "sqlite:///gofap.db"
 
+if os.environ.get(
+    "FLASK_ENV", "development"
+).lower() == "production" and SECRET_KEY in (
+    "",
+    "dev-key-change-in-production",
+):
+    raise ValueError(
+        "SECRET_KEY environment variable must be set to a non-default value in production."
+    )
+
 # Initialize Flask application
 app = Flask(__name__)
 app.config["DEBUG"] = DEBUG

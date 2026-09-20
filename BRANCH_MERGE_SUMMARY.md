@@ -37,6 +37,7 @@
 - `package.json`: resolved overlapping npm updates by keeping the newest compatible versions from the merged Dependabot branches (`cross-env`, `@types/node`, `@typescript-eslint/*`, `gulp-*`, `lint-staged`, `eslint-config-prettier`).
 - `requirements.txt`: resolved overlapping Python dependency updates by keeping the highest merged versions line-by-line (`stripe`, `requests`, `aiohttp`, `python-dotenv`, `cryptography`, `werkzeug`, `pytest*`, `black`, `flake8`, `mypy`, `isort`, `WTForms`, etc.).
 - Authentication-coupled account-creation changes from `origin/copilot/fix-banking-program-issue` were preserved, and the user model/tests were updated so protected routes can be exercised correctly in validation.
+- Follow-up review fixes restored production-only `SECRET_KEY` enforcement in the Flask startup path and narrowed `python-package.yml` to Python 3.12, matching the repository's declared runtime support.
 
 ## Excluded Branches
 - `origin/copilot/merge-non-main-branches-to-main` — Current integration branch for this task; excluded because a branch cannot be merged into itself.
