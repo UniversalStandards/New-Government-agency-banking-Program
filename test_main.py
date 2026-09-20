@@ -1,9 +1,10 @@
 """Basic tests for GOFAP application."""
 
 import pytest
+from unittest.mock import Mock, patch
 
 from main import app, db
-from models import User, UserRole
+from models import Account, User, UserRole
 
 
 @pytest.fixture
@@ -69,12 +70,27 @@ def test_create_account_page(authenticated_client):
     response = authenticated_client.get("/accounts/create")
     assert response.status_code == 200
     assert b"Create New Account" in response.data
+    assert b'name="csrf_token"' in response.data
+    assert b'value="credit"' in response.data
+    assert b'value="debit"' in response.data
+    assert b'value="external"' in response.data
+    assert b'<option value="business">Business Account</option>' not in response.data
+    assert b'<option value="treasury">Treasury Account</option>' not in response.data
+
+
+def _set_create_account_csrf(client, token="test-csrf-token"):
+    with client.session_transaction() as session:
+        session["create_account_csrf_token"] = token
+    return token
 
 
 def test_api_create_account_missing_fields(authenticated_client):
     """Test API account creation with missing fields."""
+    csrf_token = _set_create_account_csrf(authenticated_client)
     response = authenticated_client.post(
-        "/api/accounts/create", json={}, content_type="application/json"
+        "/api/accounts/create",
+        json={"csrf_token": csrf_token},
+        content_type="application/json",
     )
     assert response.status_code == 400
     data = response.get_json()
@@ -83,6 +99,34 @@ def test_api_create_account_missing_fields(authenticated_client):
 
 def test_api_create_account_valid(authenticated_client):
     """Test API account creation with valid data."""
+    csrf_token = _set_create_account_csrf(authenticated_client)
+    service = Mock()
+    service.create_account.return_value = {"success": True, "account_id": "acct_123"}
+
+    with patch("main.get_service", return_value=service):
+        response = authenticated_client.post(
+            "/api/accounts/create",
+            json={
+                "csrf_token": csrf_token,
+                "service": "stripe",
+                "account_type": "checking",
+                "account_name": "Test Account",
+            },
+            content_type="application/json",
+        )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "account_id" in data
+
+    with app.app_context():
+        account = Account.query.filter_by(account_name="Test Account").one()
+        assert account.external_id == "acct_123"
+
+
+def test_api_create_account_requires_csrf(authenticated_client):
+    """Test API account creation rejects requests without a valid CSRF token."""
     response = authenticated_client.post(
         "/api/accounts/create",
         json={
@@ -92,17 +136,17 @@ def test_api_create_account_valid(authenticated_client):
         },
         content_type="application/json",
     )
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert "account_id" in data
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Invalid CSRF token"
 
 
 def test_api_create_account_invalid_service(authenticated_client):
     """Test API account creation rejects unsupported services."""
+    csrf_token = _set_create_account_csrf(authenticated_client)
     response = authenticated_client.post(
         "/api/accounts/create",
         json={
+            "csrf_token": csrf_token,
             "service": "invalid",
             "account_type": "checking",
             "account_name": "Test Account",

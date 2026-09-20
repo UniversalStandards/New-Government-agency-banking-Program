@@ -5,14 +5,15 @@ Main application entry point with comprehensive Flask setup.
 
 import logging
 import os
-import uuid
+import secrets
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
 from models import db
+from services import get_service
 
 # Configure logging
 logging.basicConfig(
@@ -21,7 +22,7 @@ logging.basicConfig(
 
 # Import configuration settings
 try:
-    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY
+    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY, validate_config
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
@@ -32,6 +33,10 @@ except ImportError:
             "Never use hardcoded secrets in production."
         )
     DATABASE_URI = "sqlite:///gofap.db"
+
+    def validate_config():
+        return True
+
 
 if os.environ.get(
     "FLASK_ENV", "development"
@@ -51,6 +56,7 @@ app.config["DEBUG"] = DEBUG
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+validate_config()
 
 # Initialize extensions
 db.init_app(app)
@@ -64,8 +70,10 @@ login_manager.login_message_category = "info"
 logger = logging.getLogger(__name__)
 
 from api import api_bp
+
 # Import blueprints
 from auth import auth_bp
+
 # Import models after db initialization
 from models import Account, AccountType, Budget, User, UserRole
 
@@ -276,7 +284,9 @@ def accounts():
 def create_account():
     """Account creation page."""
     try:
-        return render_template("create_account.html")
+        csrf_token = secrets.token_urlsafe(32)
+        session["create_account_csrf_token"] = csrf_token
+        return render_template("create_account.html", csrf_token=csrf_token)
     except Exception as e:
         logging.warning(f"Could not render account creation page: {e}")
         return jsonify({"message": "GOFAP Account Creation"})
@@ -297,6 +307,15 @@ def api_create_account():
             return jsonify({"error": "Insufficient permissions"}), 403
 
         data = request.get_json() or {}
+        csrf_token = (data.get("csrf_token") or "").strip()
+        session_csrf_token = session.get("create_account_csrf_token", "")
+        if (
+            not csrf_token
+            or not session_csrf_token
+            or not secrets.compare_digest(csrf_token, session_csrf_token)
+        ):
+            return jsonify({"error": "Invalid CSRF token"}), 400
+
         service = (data.get("service") or "").strip().lower()
         account_type = (data.get("account_type") or "").strip().lower()
         account_name = (data.get("account_name") or "").strip()
@@ -342,12 +361,36 @@ def api_create_account():
                 400,
             )
 
+        provider_payload = {
+            "name": account_name,
+            "currency": data.get("currency", "USD"),
+        }
+        if service == "stripe":
+            provider_payload["email"] = data.get("customer_email")
+        provider_result = get_service(service).create_account(provider_payload)
+        if not provider_result.get("success"):
+            return (
+                jsonify(
+                    {
+                        "error": provider_result.get(
+                            "error", "Failed to create external account"
+                        )
+                    }
+                ),
+                502,
+            )
+
+        external_id = provider_result.get("account_id")
+        if not external_id:
+            logging.error("Account creation service %s returned no account_id", service)
+            return jsonify({"error": "Failed to create external account"}), 502
+
         account = Account(
             user_id=current_user.id,
             account_name=account_name,
             account_type=account_type_enum,
             external_service=service,
-            external_id=f"{service}_{uuid.uuid4().hex}",
+            external_id=external_id,
         )
         db.session.add(account)
         db.session.commit()
