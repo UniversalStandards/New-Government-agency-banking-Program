@@ -5,7 +5,7 @@ Flask-SQLAlchemy>=3.1.1
 Flask-Migrate>=4.1.0
 Flask-Login>=0.6.3
 Flask-WTF>=1.2.2
-WTForms>=3.0.1
+WTForms>=3.2.2
 
 # API integrations
 stripe>=15.0.1
