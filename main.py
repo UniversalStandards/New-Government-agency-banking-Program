@@ -286,11 +286,12 @@ def api_create_account():
     """API endpoint for creating accounts."""
     data = {}
     try:
-        if current_user.role not in [
-            UserRole.ADMIN,
-            UserRole.TREASURER,
-            UserRole.ACCOUNTANT,
-        ]:
+        current_role = (
+            current_user.role.value
+            if hasattr(current_user.role, "value")
+            else str(current_user.role)
+        )
+        if current_role not in {"admin", "treasurer", "accountant"}:
             return jsonify({"error": "Insufficient permissions"}), 403
 
         data = request.get_json() or {}
