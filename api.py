@@ -80,7 +80,9 @@ def get_accounts():
 def create_account():
     """Create a new account."""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
 
         # Validate required fields
         required_fields = ["account_name", "account_type"]

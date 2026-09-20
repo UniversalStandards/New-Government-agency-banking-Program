@@ -1,5 +1,6 @@
 """Test cases for current GOFAP API endpoints."""
 
+import json
 import os
 
 import pytest
@@ -136,6 +137,20 @@ def test_create_account_creates_current_user_account(user_client):
     assert data["success"] is True
     assert data["data"]["account_name"] == "New Savings Account"
     assert data["data"]["account_type"] == "savings"
+
+
+@pytest.mark.parametrize("payload", [["not", "an", "object"], "invalid", 1])
+def test_create_account_rejects_non_object_json(user_client, payload):
+    """Account creation should reject non-object JSON bodies with a JSON error."""
+    response = user_client.post(
+        "/api/v1/accounts",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {"error": "Request body must be a JSON object"}
 
 
 def test_get_transactions_returns_current_user_transactions(user_client, app):
