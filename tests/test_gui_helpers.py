@@ -7,12 +7,11 @@ import os
 import sys
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 # Add parent directory to path to import gui modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from gui.gui_helpers import create_accounts, create_accounts_async
+
 
 class TestCreateAccountsFunctions:
     """Test that create_accounts functions are properly separated."""
@@ -25,8 +24,7 @@ class TestCreateAccountsFunctions:
         """Test that create_accounts exists and is not async."""
         assert not asyncio.iscoroutinefunction(create_accounts)
 
-    @pytest.mark.asyncio
-    async def test_async_function_calls_correct_service(self):
+    def test_async_function_calls_correct_service(self):
         """Test that create_accounts_async routes to correct service function."""
         # Mock the service-specific functions
         with patch(
@@ -34,8 +32,10 @@ class TestCreateAccountsFunctions:
         ) as mock_modern:
             mock_modern.return_value = "test_account_id"
 
-            result = await create_accounts_async(
-                "modern_treasury", "test_api_key", {"name": "Test"}
+            result = asyncio.run(
+                create_accounts_async(
+                    "modern_treasury", "test_api_key", {"name": "Test"}
+                )
             )
 
             # Verify the modern treasury function was called
