@@ -202,7 +202,7 @@ def create_transaction():
             amount = Decimal(str(data["amount"]))
         except (InvalidOperation, TypeError):
             return jsonify({"error": "Invalid amount"}), 400
-        if not amount.is_finite():
+        if not amount.is_finite() or amount <= 0:
             return jsonify({"error": "Invalid amount"}), 400
 
         # Create transaction
