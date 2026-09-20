@@ -9,21 +9,24 @@ from flask import Flask
 
 from utils import safe_error_response
 
-def test_safe_error_response_logs_full_exception():
-    """Test that safe_error_response logs the full exception details."""
+
+def test_safe_error_response_logs_exception_type_and_traceback():
+    """Test that safe_error_response logs the exception type with traceback."""
     test_exception = ValueError("Database connection failed: localhost:5432")
 
     with patch("utils.logger") as mock_logger:
         result = safe_error_response(test_exception, "Database error occurred")
 
-        # Verify the full exception was logged
+        # Verify the exception type and traceback were logged
         mock_logger.error.assert_called_once()
         log_message = mock_logger.error.call_args[0][0]
         assert "ValueError" in log_message
-        assert "Database connection failed" in log_message
+        assert "Database connection failed" not in log_message
+        assert mock_logger.error.call_args.kwargs["exc_info"] is True
 
         # Verify generic message was returned
         assert result == "Database error occurred"
+
 
 def test_safe_error_response_returns_default_message():
     """Test that safe_error_response returns the default generic message."""
@@ -34,6 +37,7 @@ def test_safe_error_response_returns_default_message():
     # Should return default message, not the sensitive exception message
     assert result == "An error occurred"
     assert "sensitive data" not in result
+
 
 def test_safe_error_response_with_custom_message():
     """Test that safe_error_response returns custom message."""
@@ -47,6 +51,7 @@ def test_safe_error_response_with_custom_message():
     assert "/etc/secrets" not in result
     assert "config.yml" not in result
 
+
 def test_safe_error_response_prevents_stacktrace_exposure():
     """Test that safe_error_response doesn't expose stack traces."""
     test_exception = Exception("Traceback (most recent call last)...")
@@ -57,12 +62,13 @@ def test_safe_error_response_prevents_stacktrace_exposure():
     assert "Traceback" not in result
     assert result == "Operation failed"
 
+
 def test_safe_error_response_handles_different_exception_types():
     """Test that safe_error_response handles various exception types."""
     exceptions = [
         (ValueError("Invalid value"), "Validation error"),
         (KeyError("secret_key"), "Key not found"),
-        (RuntimeError("Runtime error"), "Runtime error occurred"),
+        (RuntimeError("Runtime error"), "Operation failed at runtime"),
         (TypeError("Type mismatch"), "Type error"),
     ]
 
@@ -72,6 +78,7 @@ def test_safe_error_response_handles_different_exception_types():
         # Ensure no exception details are in the result
         assert str(exception) not in result
 
+
 @pytest.fixture
 def app():
     """Create a test Flask app."""
@@ -79,10 +86,12 @@ def app():
     app.config["TESTING"] = True
     return app
 
+
 @pytest.fixture
 def client(app):
     """Create a test client."""
     return app.test_client()
+
 
 def test_route_error_handling_with_database_error(app, client):
     """Test that routes handle database errors securely."""
@@ -109,6 +118,7 @@ def test_route_error_handling_with_database_error(app, client):
     assert "192.168.1.100" not in data["error"]
     assert "admin" not in data["error"]
 
+
 def test_route_error_handling_with_api_error(app, client):
     """Test that routes handle API errors securely."""
     from flask import jsonify
@@ -132,6 +142,7 @@ def test_route_error_handling_with_api_error(app, client):
     # Ensure API keys and account IDs are not leaked
     assert "sk_test_" not in data["error"]
     assert "acct_" not in data["error"]
+
 
 def test_route_error_handling_with_file_path_error(app, client):
     """Test that routes handle file path errors securely."""
@@ -157,6 +168,7 @@ def test_route_error_handling_with_file_path_error(app, client):
     assert "/home/" not in data["error"]
     assert ".ssh" not in data["error"]
     assert "id_rsa" not in data["error"]
+
 
 def test_service_error_handling():
     """Test that service methods use safe error handling."""

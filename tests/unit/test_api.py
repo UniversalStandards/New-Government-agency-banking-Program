@@ -1,10 +1,11 @@
-"""Unit tests for API endpoints."""
+"""Unit tests for current API endpoints."""
 
 import json
 
+
 def test_health_endpoint(client):
-    """Test the health check endpoint."""
-    response = client.get("/api/health")
+    """Test the versioned API health check endpoint."""
+    response = client.get("/api/v1/health")
     assert response.status_code == 200
 
     data = json.loads(response.data)
@@ -12,77 +13,20 @@ def test_health_endpoint(client):
     assert "timestamp" in data
     assert data["version"] == "1.0.0"
 
-def test_users_get_endpoint(client):
-    """Test the users GET endpoint."""
-    response = client.get("/api/users")
-    assert response.status_code == 200
 
-    data = json.loads(response.data)
-    assert isinstance(data, list)
+def test_accounts_endpoint_requires_login(client):
+    """Protected account endpoints should require authentication."""
+    response = client.get("/api/v1/accounts")
+    assert response.status_code == 302
 
-def test_users_post_endpoint(client):
-    """Test creating a user via POST."""
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "first_name": "Test",
-        "last_name": "User",
-        "role": "employee",
-    }
 
-    response = client.post(
-        "/api/users", data=json.dumps(user_data), content_type="application/json"
-    )
-    assert response.status_code == 201
+def test_transactions_endpoint_requires_login(client):
+    """Protected transaction endpoints should require authentication."""
+    response = client.get("/api/v1/transactions")
+    assert response.status_code == 302
 
-    data = json.loads(response.data)
-    assert data["message"] == "User created successfully"
-    assert "user_id" in data
-
-def test_accounts_get_endpoint(client):
-    """Test the accounts GET endpoint."""
-    response = client.get("/api/accounts")
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-    assert isinstance(data, list)
-
-def test_transactions_get_endpoint(client):
-    """Test the transactions GET endpoint."""
-    response = client.get("/api/transactions")
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-    assert isinstance(data, list)
-
-def test_budget_endpoint(client):
-    """Test the budget information endpoint."""
-    response = client.get("/api/budget")
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-    assert isinstance(data, list)
-
-def test_payroll_get_endpoint(client):
-    """Test the payroll GET endpoint."""
-    response = client.get("/api/payroll")
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-    assert isinstance(data, list)
-
-def test_utilities_get_endpoint(client):
-    """Test the utilities GET endpoint."""
-    response = client.get("/api/utilities")
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-    assert isinstance(data, list)
 
 def test_404_error_handling(client):
-    """Test that 404 errors are handled properly."""
-    response = client.get("/api/nonexistent")
+    """Unknown versioned API endpoints should return not found."""
+    response = client.get("/api/v1/nonexistent")
     assert response.status_code == 404
-
-    data = json.loads(response.data)
-    assert data["error"] == "Not found"

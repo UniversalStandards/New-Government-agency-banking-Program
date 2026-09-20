@@ -1,8 +1,11 @@
 """Basic tests for GOFAP application."""
 
 import pytest
+from unittest.mock import Mock, patch
 
 from main import app, db
+from models import Account, User, UserRole
+
 
 @pytest.fixture
 def client():
@@ -16,42 +19,115 @@ def client():
             yield client
             db.drop_all()
 
+
+@pytest.fixture
+def authenticated_client(client):
+    """Create an authenticated admin client for protected routes."""
+    with app.app_context():
+        user = User(
+            username="admin",
+            email="admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            role=UserRole.ADMIN,
+        )
+        user.set_password("Admin1234")
+        db.session.add(user)
+        db.session.commit()
+
+        user_id = user.id
+
+    with client.session_transaction() as session:
+        session["_user_id"] = user_id
+        session["_fresh"] = True
+
+    return client
+
+
 def test_home_page(client):
     """Test that the home page loads successfully."""
     response = client.get("/")
     assert response.status_code == 200
     assert b"Welcome to GOFAP" in response.data
 
-def test_dashboard_page(client):
+
+def test_dashboard_page(authenticated_client):
     """Test that the dashboard page loads successfully."""
-    response = client.get("/dashboard")
+    response = authenticated_client.get("/dashboard")
     assert response.status_code == 200
     assert b"Dashboard" in response.data
 
-def test_accounts_page(client):
+
+def test_accounts_page(authenticated_client):
     """Test that the accounts page loads successfully."""
-    response = client.get("/accounts")
+    response = authenticated_client.get("/accounts")
     assert response.status_code == 200
     assert b"Account Management" in response.data
 
-def test_create_account_page(client):
+
+def test_create_account_page(authenticated_client):
     """Test that the create account page loads successfully."""
-    response = client.get("/accounts/create")
+    response = authenticated_client.get("/accounts/create")
     assert response.status_code == 200
     assert b"Create New Account" in response.data
+    assert b'name="csrf_token"' in response.data
+    assert b'value="credit"' in response.data
+    assert b'value="debit"' in response.data
+    assert b'value="external"' in response.data
+    assert b'<option value="business">Business Account</option>' not in response.data
+    assert b'<option value="treasury">Treasury Account</option>' not in response.data
 
-def test_api_create_account_missing_fields(client):
+
+def _set_create_account_csrf(client, token="test-csrf-token"):
+    with client.session_transaction() as session:
+        session["create_account_csrf_token"] = token
+    return token
+
+
+def test_api_create_account_missing_fields(authenticated_client):
     """Test API account creation with missing fields."""
-    response = client.post(
-        "/api/accounts/create", json={}, content_type="application/json"
+    csrf_token = _set_create_account_csrf(authenticated_client)
+    response = authenticated_client.post(
+        "/api/accounts/create",
+        json={"csrf_token": csrf_token},
+        content_type="application/json",
     )
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
 
-def test_api_create_account_valid(client):
+
+def test_api_create_account_valid(authenticated_client):
     """Test API account creation with valid data."""
-    response = client.post(
+    csrf_token = _set_create_account_csrf(authenticated_client)
+    service = Mock()
+    service.create_account.return_value = {"success": True, "account_id": "acct_123"}
+
+    with patch("main.get_service", return_value=service):
+        response = authenticated_client.post(
+            "/api/accounts/create",
+            json={
+                "csrf_token": csrf_token,
+                "service": "stripe",
+                "account_type": "checking",
+                "account_name": "Test Account",
+            },
+            content_type="application/json",
+        )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert "account_id" in data
+
+    with app.app_context():
+        account = Account.query.filter_by(account_name="Test Account").one()
+        assert account.external_id == "acct_123"
+
+
+def test_api_create_account_requires_csrf(authenticated_client):
+    """Test API account creation rejects requests without a valid CSRF token."""
+    response = authenticated_client.post(
         "/api/accounts/create",
         json={
             "service": "stripe",
@@ -60,10 +136,26 @@ def test_api_create_account_valid(client):
         },
         content_type="application/json",
     )
-    assert response.status_code == 200
-    data = response.get_json()
-    assert data["success"] is True
-    assert "account_id" in data
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Invalid CSRF token"
+
+
+def test_api_create_account_invalid_service(authenticated_client):
+    """Test API account creation rejects unsupported services."""
+    csrf_token = _set_create_account_csrf(authenticated_client)
+    response = authenticated_client.post(
+        "/api/accounts/create",
+        json={
+            "csrf_token": csrf_token,
+            "service": "invalid",
+            "account_type": "checking",
+            "account_name": "Test Account",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert "Invalid service" in response.get_json()["error"]
+
 
 def test_transactions_page(client):
     """Test that the transactions page loads successfully."""
@@ -71,11 +163,13 @@ def test_transactions_page(client):
     assert response.status_code == 200
     assert b"Transactions" in response.data
 
+
 def test_budgets_page(client):
     """Test that the budgets page loads successfully."""
     response = client.get("/budgets")
     assert response.status_code == 200
     assert b"Budget Management" in response.data
+
 
 def test_reports_page(client):
     """Test that the reports page loads successfully."""

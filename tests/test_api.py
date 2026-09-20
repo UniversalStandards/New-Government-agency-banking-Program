@@ -1,6 +1,4 @@
-"""
-Test cases for GOFAP API endpoints.
-"""
+"""Test cases for current GOFAP API endpoints."""
 
 import json
 import os
@@ -9,227 +7,214 @@ import pytest
 from flask import Flask
 from flask_login import LoginManager
 
-from models import AccountType  # noqa: F401; Transaction,
-from models import Account, User, UserRole, db
+from api import api_bp
+from models import (Account, AccountType, Transaction, TransactionType, User,
+                    UserRole, db)
+
 
 @pytest.fixture
 def app():
-    """Create test Flask application."""
+    """Create a test Flask application with the current API blueprint."""
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    # Fixed: Use environment variable for SECRET_KEY instead of hardcoding
     app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "default-secret-key")
 
-    # Initialize extensions
     db.init_app(app)
     login_manager = LoginManager(app)
     login_manager.login_view = "auth.login"
+    app.register_blueprint(api_bp)
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, user_id)
 
-    # Create tables
     with app.app_context():
         db.create_all()
 
-        # Create test data
         admin_user = User(
-            username="admin", email="admin@example.com", role=UserRole.ADMIN
+            username="admin",
+            email="admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            role=UserRole.ADMIN,
+            department="Finance",
         )
         admin_user.set_password("admin123")
-        db.session.add(admin_user)
 
         regular_user = User(
-            username="user", email="user@example.com", role=UserRole.USER
+            username="user",
+            email="user@example.com",
+            first_name="Regular",
+            last_name="User",
+            role=UserRole.USER,
+            department="Finance",
         )
         regular_user.set_password("user123")
-        db.session.add(regular_user)
 
-        # Create test account
+        db.session.add_all([admin_user, regular_user])
+        db.session.commit()
+
         test_account = Account(
             account_name="Test Account",
             account_type=AccountType.CHECKING,
             balance=1000.00,
-            user_id=1,
+            currency="USD",
+            user_id=regular_user.id,
         )
         db.session.add(test_account)
-
         db.session.commit()
 
-    return app
+        app.config["TEST_ADMIN_ID"] = admin_user.id
+        app.config["TEST_USER_ID"] = regular_user.id
+        app.config["TEST_ACCOUNT_ID"] = test_account.id
+
+        yield app
+
+        db.session.remove()
+        db.drop_all()
+
 
 @pytest.fixture
 def client(app):
     """Create test client."""
     return app.test_client()
 
-@pytest.fixture
-def admin_auth_headers():
-    """Get authentication headers for admin user."""
-    return {
-        "Authorization": "Bearer admin-token",  # In real tests, use proper JWT tokens
-        "Content-Type": "application/json",
-    }
 
 @pytest.fixture
-def user_auth_headers():
-    """Get authentication headers for regular user."""
-    return {"Authorization": "Bearer user-token", "Content-Type": "application/json"}
+def admin_client(client, app):
+    """Create an authenticated admin client."""
+    with client.session_transaction() as session:
+        session["_user_id"] = app.config["TEST_ADMIN_ID"]
+        session["_fresh"] = True
+    return client
 
-class TestUserEndpoints:
-    """Test user-related API endpoints."""
 
-    def test_get_users_as_admin(self, client, admin_auth_headers):
-        """Test getting all users as admin."""
-        response = client.get("/api/users", headers=admin_auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert "users" in data
-        assert len(data["users"]) >= 2
+@pytest.fixture
+def user_client(client, app):
+    """Create an authenticated regular user client."""
+    with client.session_transaction() as session:
+        session["_user_id"] = app.config["TEST_USER_ID"]
+        session["_fresh"] = True
+    return client
 
-    def test_get_users_as_regular_user(self, client, user_auth_headers):
-        """Test that regular users cannot get all users."""
-        response = client.get("/api/users", headers=user_auth_headers)
-        assert response.status_code == 403
 
-    def test_create_user(self, client, admin_auth_headers):
-        """Test creating a new user."""
-        user_data = {
-            "username": "newuser",
-            "email": "newuser@example.com",
-            "password": "newuser123",
-            "role": "USER",
-        }
-        response = client.post(
-            "/api/users", data=json.dumps(user_data), headers=admin_auth_headers
-        )
-        assert response.status_code == 201
-        data = json.loads(response.data)
-        assert data["username"] == "newuser"
+def test_health_check(client):
+    """The API health check should be public and healthy."""
+    response = client.get("/api/v1/health")
 
-class TestAccountEndpoints:
-    """Test account-related API endpoints."""
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "healthy"
+    assert data["version"] == "1.0.0"
 
-    def test_get_accounts(self, client, user_auth_headers):
-        """Test getting user accounts."""
-        response = client.get("/api/accounts", headers=user_auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert "accounts" in data
 
-    def test_create_account(self, client, user_auth_headers):
-        """Test creating a new account."""
-        account_data = {
+def test_get_accounts_returns_authenticated_user_accounts(user_client, app):
+    """Authenticated users should receive only their active accounts."""
+    response = user_client.get("/api/v1/accounts")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["count"] == 1
+    assert data["data"][0]["id"] == app.config["TEST_ACCOUNT_ID"]
+
+
+def test_create_account_creates_current_user_account(user_client):
+    """Authenticated users should be able to create accounts for themselves."""
+    response = user_client.post(
+        "/api/v1/accounts",
+        json={
             "account_name": "New Savings Account",
-            "account_type": "SAVINGS",
-            "initial_balance": 500.00,
-        }
-        response = client.post(
-            "/api/accounts", data=json.dumps(account_data), headers=user_auth_headers
+            "account_type": "savings",
+            "currency": "USD",
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["account_name"] == "New Savings Account"
+    assert data["data"]["account_type"] == "savings"
+
+
+@pytest.mark.parametrize("payload", [["not", "an", "object"], "invalid", 1])
+def test_create_account_rejects_non_object_json(user_client, payload):
+    """Account creation should reject non-object JSON bodies with a JSON error."""
+    response = user_client.post(
+        "/api/v1/accounts",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {"error": "Request body must be a JSON object"}
+
+
+def test_get_transactions_returns_current_user_transactions(user_client, app):
+    """Transaction listing should be scoped to the authenticated user."""
+    with app.app_context():
+        transaction = Transaction(
+            account_id=app.config["TEST_ACCOUNT_ID"],
+            user_id=app.config["TEST_USER_ID"],
+            transaction_type=TransactionType.DEPOSIT,
+            amount=25.00,
+            description="Seed transaction",
         )
-        assert response.status_code == 201
-        data = json.loads(response.data)
-        assert data["account_name"] == "New Savings Account"
-        assert data["balance"] == 500.00
+        db.session.add(transaction)
+        db.session.commit()
 
-    def test_get_account_balance(self, client, user_auth_headers):
-        """Test getting account balance."""
-        response = client.get("/api/accounts/1/balance", headers=user_auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert "balance" in data
-        assert data["balance"] == 1000.00
+    response = user_client.get("/api/v1/transactions")
 
-class TestTransactionEndpoints:
-    """Test transaction-related API endpoints."""
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["pagination"]["total"] == 1
+    assert data["data"][0]["description"] == "Seed transaction"
 
-    def test_create_transaction(self, client, user_auth_headers):
-        """Test creating a new transaction."""
-        transaction_data = {
-            "account_id": 1,
+
+def test_create_transaction_updates_balance(user_client, app):
+    """Creating a transaction should persist it and update the account balance."""
+    response = user_client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": app.config["TEST_ACCOUNT_ID"],
+            "transaction_type": "deposit",
             "amount": 100.00,
-            "transaction_type": "DEPOSIT",
             "description": "Test deposit",
-        }
-        response = client.post(
-            "/api/transactions",
-            data=json.dumps(transaction_data),
-            headers=user_auth_headers,
-        )
-        assert response.status_code == 201
-        data = json.loads(response.data)
-        assert data["amount"] == 100.00
-        assert data["transaction_type"] == "DEPOSIT"
+            "metadata": {"source": "pytest"},
+        },
+    )
 
-    def test_get_transactions(self, client, user_auth_headers):
-        """Test getting account transactions."""
-        response = client.get("/api/accounts/1/transactions", headers=user_auth_headers)
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert "transactions" in data
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["transaction_type"] == "deposit"
+    assert data["data"]["amount"] == 100.0
 
-class TestAuthenticationEndpoints:
-    """Test authentication endpoints."""
+    with app.app_context():
+        account = db.session.get(Account, app.config["TEST_ACCOUNT_ID"])
+        assert float(account.balance) == 1100.0
 
-    def test_login_valid_credentials(self, client):
-        """Test login with valid credentials."""
-        login_data = {"username": "admin", "password": "admin123"}
-        response = client.post(
-            "/api/auth/login",
-            data=json.dumps(login_data),
-            headers={"Content-Type": "application/json"},
-        )
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert "access_token" in data
 
-    def test_login_invalid_credentials(self, client):
-        """Test login with invalid credentials."""
-        login_data = {"username": "admin", "password": "wrongpassword"}
-        response = client.post(
-            "/api/auth/login",
-            data=json.dumps(login_data),
-            headers={"Content-Type": "application/json"},
-        )
-        assert response.status_code == 401
+def test_get_budgets_allows_admin_access(admin_client):
+    """Budget listing should be available to admin users."""
+    response = admin_client.get("/api/v1/budgets")
 
-    def test_logout(self, client, user_auth_headers):
-        """Test logout functionality."""
-        response = client.post("/api/auth/logout", headers=user_auth_headers)
-        assert response.status_code == 200
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["count"] == 0
 
-class TestSecurityValidation:
-    """Test security-related validations."""
 
-    def test_sql_injection_protection(self, client, user_auth_headers):
-        """Test that SQL injection is prevented."""
-        malicious_data = {
-            "username": "admin'; DROP TABLE users; --",
-            "password": "test",
-        }
-        response = client.post(
-            "/api/auth/login",
-            data=json.dumps(malicious_data),
-            headers={"Content-Type": "application/json"},
-        )
-        # Should not cause server error or expose database structure
-        assert response.status_code in [400, 401]
+def test_dashboard_stats_summarize_current_user_data(user_client):
+    """Dashboard stats should summarize the authenticated user's accounts."""
+    response = user_client.get("/api/v1/dashboard/stats")
 
-    def test_xss_prevention(self, client, user_auth_headers):
-        """Test XSS prevention in user input."""
-        xss_data = {
-            "account_name": '<script>alert("xss")</script>',
-            "account_type": "CHECKING",
-            "initial_balance": 100.00,
-        }
-        response = client.post(
-            "/api/accounts", data=json.dumps(xss_data), headers=user_auth_headers
-        )
-        # Input should be sanitized
-        if response.status_code == 201:
-            data = json.loads(response.data)
-            # Check that script tags are not present
-            assert "<script>" not in data["account_name"]
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["data"]["account_count"] == 1
+    assert data["data"]["total_balance"] == 1000.0

@@ -5,13 +5,15 @@ Main application entry point with comprehensive Flask setup.
 
 import logging
 import os
+import secrets
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 
 from models import db
+from services import get_service
 
 # Configure logging
 logging.basicConfig(
@@ -20,7 +22,7 @@ logging.basicConfig(
 
 # Import configuration settings
 try:
-    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY
+    from configs.settings import DATABASE_URI, DEBUG, SECRET_KEY, validate_config
 except ImportError:
     # Fallback if configs module is not available
     DEBUG = True
@@ -32,12 +34,29 @@ except ImportError:
         )
     DATABASE_URI = "sqlite:///gofap.db"
 
+    def validate_config():
+        return True
+
+
+if os.environ.get(
+    "FLASK_ENV", "development"
+).lower() == "production" and SECRET_KEY in (
+    "",
+    "dev-key-change-in-production",
+    "your-secret-key-change-in-production",
+    "your-super-secret-key-change-this-in-production",
+):
+    raise ValueError(
+        "SECRET_KEY environment variable must be set to a non-default value in production."
+    )
+
 # Initialize Flask application
 app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+validate_config()
 
 # Initialize extensions
 db.init_app(app)
@@ -56,21 +75,24 @@ from api import api_bp
 from auth import auth_bp
 
 # Import models after db initialization
-from models import Account, Budget, User, UserRole
+from models import Account, AccountType, Budget, User, UserRole
 
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
+
 
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
 
+
 # Template context processor
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
+
 
 # Add cache control headers for static files in development
 @app.after_request
@@ -83,6 +105,7 @@ def add_header(response):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
 
 # Register blueprints
 try:
@@ -155,6 +178,7 @@ try:
 except ImportError as e:
     logging.warning(f"Could not register data import CLI commands: {e}")
 
+
 # Main application routes
 @app.route("/")
 def home():
@@ -186,6 +210,7 @@ def home():
             }
         )
 
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -201,10 +226,12 @@ def dashboard():
             }
         )
 
+
 @app.route("/health")
 def health():
     """Health check endpoint (non-API)."""
     return jsonify({"status": "healthy", "service": "GOFAP"})
+
 
 @app.route("/transactions")
 def transactions():
@@ -214,6 +241,7 @@ def transactions():
     except:
         return jsonify({"message": "GOFAP Transaction Management"})
 
+
 @app.route("/budgets")
 def budgets():
     """Budgets page."""
@@ -221,6 +249,7 @@ def budgets():
         return render_template("budgets.html")
     except:
         return jsonify({"message": "GOFAP Budget Management"})
+
 
 @app.route("/reports")
 def reports():
@@ -230,12 +259,161 @@ def reports():
     except:
         return jsonify({"message": "GOFAP Reports and Analytics"})
 
+
 @app.route("/api/accounts", methods=["GET"])
 @login_required
 def get_accounts():
     """API endpoint to get user's accounts."""
     accounts = Account.query.filter_by(user_id=current_user.id, is_active=True).all()
     return jsonify([account.to_dict() for account in accounts])
+
+
+@app.route("/accounts")
+@login_required
+def accounts():
+    """Accounts management page."""
+    try:
+        return render_template("accounts.html")
+    except Exception as e:
+        logging.warning(f"Could not render accounts page: {e}")
+        return jsonify({"message": "GOFAP Account Management"})
+
+
+@app.route("/accounts/create")
+@login_required
+def create_account():
+    """Account creation page."""
+    try:
+        csrf_token = secrets.token_urlsafe(32)
+        session["create_account_csrf_token"] = csrf_token
+        return render_template("create_account.html", csrf_token=csrf_token)
+    except Exception as e:
+        logging.warning(f"Could not render account creation page: {e}")
+        return jsonify({"message": "GOFAP Account Creation"})
+
+
+@app.route("/api/accounts/create", methods=["POST"])
+@login_required
+def api_create_account():
+    """API endpoint for creating accounts."""
+    data = {}
+    try:
+        current_role = (
+            current_user.role.value
+            if hasattr(current_user.role, "value")
+            else str(current_user.role)
+        )
+        if current_role not in {"admin", "treasurer", "accountant"}:
+            return jsonify({"error": "Insufficient permissions"}), 403
+
+        data = request.get_json() or {}
+        csrf_token = (data.get("csrf_token") or "").strip()
+        session_csrf_token = session.get("create_account_csrf_token", "")
+        if (
+            not csrf_token
+            or not session_csrf_token
+            or not secrets.compare_digest(csrf_token, session_csrf_token)
+        ):
+            return jsonify({"error": "Invalid CSRF token"}), 400
+
+        service = (data.get("service") or "").strip().lower()
+        account_type = (data.get("account_type") or "").strip().lower()
+        account_name = (data.get("account_name") or "").strip()
+
+        missing_fields = [
+            field
+            for field, value in {
+                "service": service,
+                "account_type": account_type,
+                "account_name": account_name,
+            }.items()
+            if not value
+        ]
+        if missing_fields:
+            return (
+                jsonify(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"}
+                ),
+                400,
+            )
+
+        allowed_services = {"stripe", "modern_treasury"}
+        if service not in allowed_services:
+            return (
+                jsonify(
+                    {
+                        "error": "Invalid service. Valid values are: stripe, modern_treasury"
+                    }
+                ),
+                400,
+            )
+
+        try:
+            account_type_enum = AccountType(account_type)
+        except ValueError:
+            valid_account_types = ", ".join([account.value for account in AccountType])
+            return (
+                jsonify(
+                    {
+                        "error": f"Invalid account_type. Valid values are: {valid_account_types}"
+                    }
+                ),
+                400,
+            )
+
+        provider_payload = {
+            "name": account_name,
+            "currency": data.get("currency", "USD"),
+        }
+        if service == "stripe":
+            provider_payload["email"] = data.get("customer_email")
+        provider_result = get_service(service).create_account(provider_payload)
+        if not provider_result.get("success"):
+            return (
+                jsonify(
+                    {
+                        "error": provider_result.get(
+                            "error", "Failed to create external account"
+                        )
+                    }
+                ),
+                502,
+            )
+
+        external_id = provider_result.get("account_id")
+        if not external_id:
+            logging.error("Account creation service %s returned no account_id", service)
+            return jsonify({"error": "Failed to create external account"}), 502
+
+        account = Account(
+            user_id=current_user.id,
+            account_name=account_name,
+            account_type=account_type_enum,
+            external_service=service,
+            external_id=external_id,
+        )
+        db.session.add(account)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Account record created successfully",
+                "account_id": account.id,
+            }
+        )
+    except Exception:
+        logging.exception(
+            "Failed to create account (user_id=%s, service=%s, account_name=%s)",
+            current_user.id,
+            data.get("service"),
+            data.get("account_name"),
+        )
+        return (
+            jsonify({"error": "An internal error occurred. Please try again later."}),
+            500,
+        )
+
 
 @app.route("/payments")
 @login_required
@@ -245,6 +423,7 @@ def payments():
         return render_template("payments.html")
     except:
         return jsonify({"message": "GOFAP Payment Processing"})
+
 
 @app.route("/api/budgets", methods=["GET"])
 @login_required
@@ -258,17 +437,20 @@ def get_budgets():
         ).all()
     return jsonify([budget.to_dict() for budget in budgets])
 
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     """404 error handler."""
     return render_template("errors/404.html"), 404
 
+
 @app.errorhandler(500)
 def internal_server_error(error):
     """500 error handler."""
     db.session.rollback()
     return render_template("errors/500.html"), 500
+
 
 # Main routes - minimal routes, most are in blueprints
 

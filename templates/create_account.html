@@ -13,6 +13,7 @@
             </div>
             <div class="card-body">
                 <form id="createAccountForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <!-- Service Selection -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -55,8 +56,9 @@
                                 <option value="">Select account type</option>
                                 <option value="checking">Checking Account</option>
                                 <option value="savings">Savings Account</option>
-                                <option value="business">Business Account</option>
-                                <option value="treasury">Treasury Account</option>
+                                <option value="credit">Credit Account</option>
+                                <option value="debit">Debit Account</option>
+                                <option value="external">External Account</option>
                             </select>
                         </div>
                     </div>
