@@ -8,6 +8,7 @@ from flask import Flask
 from flask_login import LoginManager
 
 from api import api_bp
+from auth import auth_bp
 from models import (Account, AccountType, Transaction, TransactionType, User,
                     UserRole, db)
 
@@ -24,6 +25,7 @@ def app():
     db.init_app(app)
     login_manager = LoginManager(app)
     login_manager.login_view = "auth.login"
+    app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
 
     @login_manager.user_loader
@@ -108,6 +110,14 @@ def test_health_check(client):
     data = response.get_json()
     assert data["status"] == "healthy"
     assert data["version"] == "1.0.0"
+
+
+def test_unauthenticated_api_request_redirects_to_login(client):
+    """Unauthenticated requests should redirect to a registered login endpoint."""
+    response = client.get("/api/v1/accounts")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/auth/login")
 
 
 def test_get_accounts_returns_authenticated_user_accounts(user_client, app):
