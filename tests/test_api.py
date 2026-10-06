@@ -48,7 +48,7 @@ def app():
             email="user@example.com",
             first_name="Regular",
             last_name="User",
-            role=UserRole.USER,
+            role=UserRole.EMPLOYEE,
             department="Finance",
         )
         regular_user.set_password("user123")

@@ -5,7 +5,7 @@ import re
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
-from models import Department, User, db
+from models import Department, User, UserRole, db
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -105,7 +105,7 @@ def register():
                 first_name=first_name,
                 last_name=last_name,
                 department_id=int(department_id) if department_id else None,
-                role="user",
+                role=UserRole.EMPLOYEE,
             )
             user.set_password(password)
 

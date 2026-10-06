@@ -1,7 +1,7 @@
 """Database initialization script for GOFAP."""
 
 from main import app, db
-from models import Account, Budget, Department, User
+from models import Account, Budget, Department, User, UserRole
 
 def init_database():
     """Initialize the database with sample data."""
@@ -50,7 +50,7 @@ def init_database():
             email="admin@gofap.gov",
             first_name="System",
             last_name="Administrator",
-            role="admin",
+            role=UserRole.ADMIN,
             department_id=1,  # Treasury
         )
         admin_user.set_password("admin123!")
@@ -62,7 +62,7 @@ def init_database():
             email="demo@gofap.gov",
             first_name="Demo",
             last_name="User",
-            role="user",
+            role=UserRole.EMPLOYEE,
             department_id=2,  # Operations
         )
         demo_user.set_password("demo123!")
