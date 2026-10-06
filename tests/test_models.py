@@ -58,6 +58,8 @@ def sample_user(app):
         user.set_password("testpassword")
         db.session.add(user)
         db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
         return user
 
 def test_user_creation(sample_user):

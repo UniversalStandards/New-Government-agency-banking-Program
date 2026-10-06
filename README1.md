@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # <span style="color: #1E90FF;">Government Operations and Financial Accounting Platform</span> | <span style="color: #FF4500;">GOFAP</span>
 ## 🚀 Introduction
 
@@ -224,6 +223,3 @@ For more on GOFAP or to schedule a demo, contact:
 ✉️ [gofap@ofaps.spurs.gov](mailto:gofap@ofaps.spurs.gov)
 
 "We Account for Everything"
-=======
-# Payment Processor Project
->>>>>>> 1e2ffc62ea6a81bb1f09b22d222d76af84674118

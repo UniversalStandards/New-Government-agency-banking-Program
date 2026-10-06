@@ -41,7 +41,7 @@ jobs:
     
     steps:
     - name: Auto-label based on title and content
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -116,7 +116,7 @@ jobs:
           }
 
     - name: Auto-assign based on labels
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -158,7 +158,7 @@ jobs:
           }
 
     - name: Add automated response
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -216,7 +216,7 @@ jobs:
     
     steps:
     - name: Close stale automated issues
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -251,7 +251,7 @@ jobs:
           }
 
     - name: Update issue statistics
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -341,7 +341,7 @@ jobs:
     
     steps:
     - name: Link PR to issues
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
