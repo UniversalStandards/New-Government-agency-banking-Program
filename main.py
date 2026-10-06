@@ -306,7 +306,9 @@ def api_create_account():
         if current_role not in {"admin", "treasurer", "accountant"}:
             return jsonify({"error": "Insufficient permissions"}), 403
 
-        data = request.get_json() or {}
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
         csrf_token = (data.get("csrf_token") or "").strip()
         session_csrf_token = session.get("create_account_csrf_token", "")
         if (

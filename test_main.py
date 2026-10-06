@@ -1,5 +1,6 @@
 """Basic tests for GOFAP application."""
 
+import json
 import pytest
 from unittest.mock import Mock, patch
 
@@ -95,6 +96,20 @@ def test_api_create_account_missing_fields(authenticated_client):
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
+
+
+@pytest.mark.parametrize("payload", [["not", "an", "object"], "invalid", 1, None])
+def test_api_create_account_rejects_non_object_json(authenticated_client, payload):
+    """Test account creation rejects non-object JSON with a JSON error."""
+    response = authenticated_client.post(
+        "/api/accounts/create",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {"error": "Request body must be a JSON object"}
 
 
 def test_api_create_account_valid(authenticated_client):

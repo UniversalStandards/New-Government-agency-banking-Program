@@ -199,6 +199,31 @@ def test_create_transaction_updates_balance(user_client, app):
         assert float(account.balance) == 1100.0
 
 
+@pytest.mark.parametrize("amount", ["NaN", "Infinity", "-Infinity", 0, -1])
+def test_create_transaction_rejects_non_positive_or_non_finite_amounts(
+    user_client, app, amount
+):
+    """Invalid transaction amounts should not be persisted or affect balances."""
+    response = user_client.post(
+        "/api/v1/transactions",
+        json={
+            "account_id": app.config["TEST_ACCOUNT_ID"],
+            "transaction_type": "deposit",
+            "amount": amount,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Invalid amount"
+
+    with app.app_context():
+        account = db.session.get(Account, app.config["TEST_ACCOUNT_ID"])
+        assert float(account.balance) == 1000.0
+        assert Transaction.query.filter_by(
+            account_id=app.config["TEST_ACCOUNT_ID"]
+        ).count() == 0
+
+
 def test_get_budgets_allows_admin_access(admin_client):
     """Budget listing should be available to admin users."""
     response = admin_client.get("/api/v1/budgets")

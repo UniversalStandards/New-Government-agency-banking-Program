@@ -12,13 +12,13 @@ ENV FLASK_ENV=production
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies with pinned versions
+# Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        postgresql-client=13+225 \
-        gcc=4:10.2.1-1 \
-        libpq-dev=13.14-0+deb11u1 \
-        curl=7.74.0-1.3+deb11u13 \
+        postgresql-client \
+        gcc \
+        libpq-dev \
+        curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
